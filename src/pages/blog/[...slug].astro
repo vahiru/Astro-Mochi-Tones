@@ -1,6 +1,8 @@
 ---
+// src/pages/blog/[...slug].astro
 import { getCollection, type CollectionEntry } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
+import Waline from '../../components/Waline.astro';
 import '@material/web/icon/icon.js';
 import '@material/web/button/text-button.js';
 import '@material/web/divider/divider.js';
@@ -14,31 +16,50 @@ interface Props {
 
 export async function getStaticPaths() {
     const allPosts = await getCollection('blog');
-    const sortedPosts = allPosts.filter(p => !p.data.draft).sort((a, b) => {
-        const dateA = a.data.date ? new Date(a.data.date).valueOf() : 0;
-        const dateB = b.data.date ? new Date(b.data.date).valueOf() : 0;
-        return dateB - dateA;
-    });
+    const sortedPosts = allPosts
+        .filter(p => !p.data.draft)
+        .sort((a, b) => {
+            const dateA = a.data.date ? new Date(a.data.date).valueOf() : 0;
+            const dateB = b.data.date ? new Date(b.data.date).valueOf() : 0;
+            return dateB - dateA;
+        });
 
     return sortedPosts.map((post, index) => {
+        // 计算上一篇和下一篇
         const nextPost = index > 0 ? sortedPosts[index - 1] : null;
         const prevPost = index < sortedPosts.length - 1 ? sortedPosts[index + 1] : null;
-        return { params: { slug: post.slug }, props: { post, prevPost, nextPost } };
+        return { 
+            params: { slug: post.slug }, 
+            props: { post, prevPost, nextPost } 
+        };
     });
 }
 
 const { post, prevPost, nextPost } = Astro.props;
 const { Content, headings } = await post.render();
 
-const dateObj = post.data.date ? new Date(post.data.date) : new Date();
-const formattedDate = isNaN(dateObj.getTime()) ? '暂无日期' : dateObj.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+// 日期格式化
+let dateObj;
+try {
+    // @ts-ignore
+    const raw = post.data.date || new Date();
+    dateObj = new Date(raw);
+} catch(e) { dateObj = new Date(); }
 
+const formattedDate = isNaN(dateObj.getTime()) 
+    ? '暂无日期' 
+    : dateObj.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+
+// 生成无图时的 Banner 背景色
 const themes = ['primary', 'secondary', 'tertiary'];
 const themeColorVar = `var(--md-sys-color-${themes[post.data.title.length % themes.length]}-container)`;
 const onThemeColorVar = `var(--md-sys-color-on-${themes[post.data.title.length % themes.length]}-container)`;
+
+// SEO 描述
+const description = post.data.description || post.body.substring(0, 100);
 ---
 
-<Layout title={post.data.title}>
+<Layout title={post.data.title} description={description} image={post.data.cover}>
   
   <div class="blog-layout">
     
@@ -53,17 +74,23 @@ const onThemeColorVar = `var(--md-sys-color-on-${themes[post.data.title.length %
             </div>
 
             {post.data.cover ? (
-                <div class="cover-wrapper"><img src={post.data.cover} alt={post.data.title} class="post-cover" onerror="this.style.display='none'"/></div>
+                <div class="cover-wrapper">
+                    <img src={post.data.cover} alt={post.data.title} class="post-cover" onerror="this.style.display='none'"/>
+                </div>
             ) : (
                 <div class="title-banner" style={`background-color: ${themeColorVar}; color: ${onThemeColorVar}`}>
                    <md-icon class="banner-icon">article</md-icon>
                 </div>
             )}
             
-            <h1 class="post-title">{post.data.title}</h1>
-            <div class="post-meta">
-                <md-icon style="font-size: 18px; margin-right: 4px;">calendar_today</md-icon>
-                <span>{formattedDate}</span>
+            <div class="header-text">
+                <h1 class="post-title">{post.data.title}</h1>
+                <div class="post-meta">
+                    <div class="meta-item">
+                        <md-icon style="font-size: 18px;">calendar_today</md-icon>
+                        <span>{formattedDate}</span>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -76,8 +103,20 @@ const onThemeColorVar = `var(--md-sys-color-on-${themes[post.data.title.length %
         <md-divider></md-divider>
 
         <footer class="post-footer">
-            {post.data.tags?.map(tag => <a href={`/tags/${tag}`} class="tag-chip">#{tag}</a>)}
+            {post.data.tags && post.data.tags.length > 0 && (
+                <div class="tags-wrapper">
+                    <md-icon style="font-size: 20px; opacity: 0.7;">label</md-icon>
+                    <div class="tags-list">
+                        {post.data.tags.map(tag => (
+                            <a href={`/tags/${tag}`} class="tag-chip">#{tag}</a>
+                        ))}
+                    </div>
+                </div>
+            )}
         </footer>
+
+        <Waline />
+
       </article>
 
       <nav class="post-nav">
@@ -87,6 +126,7 @@ const onThemeColorVar = `var(--md-sys-color-on-${themes[post.data.title.length %
                 <div class="nav-title">{prevPost.data.title}</div>
             </a>
         ) : <div></div>}
+        
         {nextPost && (
             <a href={`/blog/${nextPost.slug}`} class="nav-link next">
                 <div class="nav-label">Next <md-icon>arrow_forward</md-icon></div>
@@ -94,18 +134,23 @@ const onThemeColorVar = `var(--md-sys-color-on-${themes[post.data.title.length %
             </a>
         )}
       </nav>
+
     </main>
 
     <aside class="toc-sidebar">
         <div class="toc-sticky">
             <div class="toc-header">On this page</div>
-            <ul class="toc-list">
-                {headings.filter(h => h.depth <= 3).map(h => (
-                    <li class={`toc-item depth-${h.depth}`}>
-                        <a href={`#${h.slug}`}>{h.text}</a>
-                    </li>
-                ))}
-            </ul>
+            {headings.length > 0 ? (
+                <ul class="toc-list">
+                    {headings.filter(h => h.depth <= 3).map(h => (
+                        <li class={`toc-item depth-${h.depth}`}>
+                            <a href={`#${h.slug}`}>{h.text}</a>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p style="opacity: 0.5; font-size: 0.9rem;">No headings</p>
+            )}
         </div>
     </aside>
 
@@ -133,118 +178,93 @@ const onThemeColorVar = `var(--md-sys-color-on-${themes[post.data.title.length %
 </script>
 
 <style is:global>
-  /* === Shiki 双主题代码高亮适配 === */
-  
-  /* 1. 默认(亮色)模式 */
+  /* === Shiki 代码高亮适配 === */
   .astro-code, .astro-code span {
     color: var(--shiki-light) !important;
     background-color: var(--shiki-light-bg) !important;
   }
-  
-  /* 2. 暗色模式 (通过 html.dark 类名触发) */
   :root.dark .astro-code, :root.dark .astro-code span {
     color: var(--shiki-dark) !important;
     background-color: var(--shiki-dark-bg) !important;
   }
 
-  /* 代码块容器美化 (仿图三) */
   .code-wrapper {
-      position: relative;
-      margin: 1.5rem 0;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid var(--md-sys-color-outline-variant); /* 细边框 */
+      position: relative; margin: 1.5rem 0; border-radius: 16px;
+      overflow: hidden; border: 1px solid var(--md-sys-color-outline-variant);
   }
-  
-  .astro-code {
-      padding: 1.5rem;
-      overflow-x: auto;
-      font-family: 'Fira Code', monospace;
-      font-size: 0.9rem;
-      line-height: 1.5;
-  }
-
-  /* 复制按钮 */
+  .astro-code { padding: 1.5rem; overflow-x: auto; font-family: 'Fira Code', monospace; font-size: 0.9rem; line-height: 1.5; }
   .copy-btn {
-      position: absolute; top: 8px; right: 8px;
+      position: absolute; top: 8px; right: 8px; width: 32px; height: 32px;
       background: var(--md-sys-color-surface-container-high);
       border: 1px solid var(--md-sys-color-outline-variant);
-      border-radius: 8px;
-      width: 32px; height: 32px;
-      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
       cursor: pointer; color: var(--md-sys-color-on-surface-variant);
-      transition: all 0.2s;
   }
   .copy-btn:hover { background: var(--md-sys-color-surface-variant); }
   .copy-btn span { font-size: 18px; }
 
-  /* 行内代码 */
-  .typo code:not(pre code) {
-      background-color: var(--md-sys-color-surface-container-high);
-      color: var(--md-sys-color-primary);
-      padding: 2px 6px; border-radius: 6px; font-size: 0.85em; font-family: monospace;
-  }
-  
   /* 排版细节 */
   .typo h2 { 
-      margin-top: 2.5rem; margin-bottom: 1rem; 
-      font-size: 1.75rem; font-weight: 500; 
-      color: var(--md-sys-color-on-surface);
-      scroll-margin-top: 100px; /* 锚点定位偏移 */
+      margin-top: 2.5rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 500; 
+      color: var(--md-sys-color-on-surface); scroll-margin-top: 80px;
   }
   .typo p { margin-bottom: 1.5rem; line-height: 1.7; color: var(--md-sys-color-on-surface-variant); }
-  .typo img { max-width: 100%; border-radius: 16px; display: block; margin: 2rem auto; }
+  .typo img { max-width: 100%; border-radius: 16px; display: block; margin: 2rem auto; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
   .typo blockquote {
       border-left: 4px solid var(--md-sys-color-primary);
       background: var(--md-sys-color-surface-container-low);
       margin: 2rem 0; padding: 1rem 1.5rem; border-radius: 0 12px 12px 0;
   }
+  .typo a { color: var(--md-sys-color-primary); text-decoration: none; font-weight: 500; }
+  .typo a:hover { text-decoration: underline; }
+  .typo code:not(pre code) {
+      background-color: var(--md-sys-color-surface-container-high);
+      color: var(--md-sys-color-primary);
+      padding: 2px 6px; border-radius: 6px; font-size: 0.85em; font-family: monospace;
+  }
 </style>
 
 <style>
-    /* === 核心布局 Grid === */
     .blog-layout {
-        max-width: 1400px; /* 限制最大宽度 */
-        margin: 0 auto;
-        padding: 0;
-        display: grid;
-        gap: 2rem;
-        /* 默认单列 (移动端) */
-        grid-template-columns: 1fr; 
+        max-width: 1400px; margin: 0 auto; padding: 0;
+        display: grid; gap: 2rem; grid-template-columns: 1fr;
     }
 
-    /* === 响应式布局逻辑 === */
     @media (min-width: 1200px) {
-        .blog-layout {
-            /* 宽屏下：左侧内容 1fr，右侧 Sidebar 固定 280px */
-            grid-template-columns: 1fr 280px;
-            padding: 0 2rem;
-            align-items: start;
-        }
-        .toc-sidebar { display: block !important; } /* 显示大纲 */
+        .blog-layout { grid-template-columns: 1fr 280px; padding: 0 2rem; align-items: start; }
+        .toc-sidebar { display: block !important; }
     }
 
-    /* === 文章卡片 === */
-    .article-wrapper { min-width: 0; } /* 防止 Grid 溢出 */
+    .article-wrapper { min-width: 0; }
     .post-card {
         background-color: var(--md-sys-color-surface);
-        border-radius: 24px;
-        padding: 1.5rem;
-        /* 仅在宽屏下加阴影和内边距 */
+        border-radius: 24px; padding: 1.5rem;
     }
     @media (min-width: 768px) { 
         .post-card { padding: 3rem 4rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     }
 
-    /* === Header 细节 === */
-    .post-title { font-size: 2.5rem; line-height: 1.2; margin-bottom: 1rem; color: var(--md-sys-color-on-surface); }
-    .post-meta { display: flex; align-items: center; color: var(--md-sys-color-on-surface-variant); margin-bottom: 2rem; }
-    .cover-wrapper, .title-banner { border-radius: 24px; margin-bottom: 2rem; overflow: hidden; }
-    .cover-wrapper { height: 360px; } .post-cover { width: 100%; height: 100%; object-fit: cover; }
-    .title-banner { height: 200px; display: flex; align-items: center; justify-content: center; }
+    .post-header { margin-bottom: 2rem; }
+    .back-nav { margin-bottom: 1.5rem; margin-left: -12px; }
+    .cover-wrapper { width: 100%; height: 360px; border-radius: 24px; overflow: hidden; margin-bottom: 2rem; background-color: var(--md-sys-color-surface-variant); }
+    .post-cover { width: 100%; height: 100%; object-fit: cover; }
+    .title-banner { width: 100%; height: 200px; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; }
     .banner-icon { font-size: 64px; opacity: 0.5; }
+    .post-title { font-size: 2.5rem; line-height: 1.2; margin-bottom: 1rem; color: var(--md-sys-color-on-surface); }
+    .post-meta { display: flex; gap: 12px; color: var(--md-sys-color-on-surface-variant); align-items: center; }
+    .meta-item { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; }
+    
+    .post-content { padding: 2rem 0; }
+    
+    .post-footer { padding-top: 1.5rem; margin-bottom: 2rem; }
+    .tags-wrapper { display: flex; align-items: center; gap: 12px; color: var(--md-sys-color-on-surface-variant); }
+    .tags-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag-chip { 
+        padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; text-decoration: none;
+        background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+    }
 
-    /* === 底部导航 === */
+    /* Nav */
     .post-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 3rem; }
     .nav-link {
         padding: 1.5rem; border-radius: 16px; background: var(--md-sys-color-surface-container);
@@ -252,37 +272,21 @@ const onThemeColorVar = `var(--md-sys-color-on-${themes[post.data.title.length %
     }
     .nav-link:hover { transform: translateY(-2px); background: var(--md-sys-color-surface-container-high); }
     .nav-label { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--md-sys-color-primary); margin-bottom: 4px; }
-    .nav-title { font-weight: 600; color: var(--md-sys-color-on-surface); line-height: 1.3; }
+    .nav-title { font-weight: 600; color: var(--md-sys-color-on-surface); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .nav-link.next { text-align: right; align-items: flex-end; }
-     
-      
 
-    /* === 右侧大纲 (TOC) === */
-    .toc-sidebar { display: none; /* 默认隐藏 */ }
-    
+    /* TOC */
+    .toc-sidebar { display: none; }
     .toc-sticky {
-        position: sticky;
-        top: 2rem; /* 距离顶部 2rem 固定 */
-        padding-left: 1rem;
+        position: sticky; top: 2rem; padding-left: 1rem;
         border-left: 1px solid var(--md-sys-color-outline-variant);
     }
-    .toc-header {
-        font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
-        color: var(--md-sys-color-on-surface); margin-bottom: 1rem;
-    }
+    .toc-header { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--md-sys-color-on-surface); margin-bottom: 1rem; }
     .toc-list { list-style: none; padding: 0; margin: 0; }
     .toc-item a {
-        display: block; text-decoration: none; font-size: 0.9rem;
-        color: var(--md-sys-color-on-surface-variant);
-        padding: 4px 0; line-height: 1.4;
-        transition: color 0.2s;
+        display: block; text-decoration: none; font-size: 0.9rem; color: var(--md-sys-color-on-surface-variant);
+        padding: 4px 0; transition: color 0.2s;
     }
     .toc-item a:hover { color: var(--md-sys-color-primary); }
     .depth-3 { padding-left: 1rem; }
-    
-    .post-footer { margin-top: 2rem; display: flex; gap: 8px; flex-wrap: wrap; }
-    .tag-chip { 
-        padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; text-decoration: none;
-        background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
-    }
 </style>
