@@ -1,0 +1,67 @@
+---
+// src/components/Pagination.astro
+import '@material/web/button/filled-tonal-button.js';
+import '@material/web/icon/icon.js';
+
+const { page } = Astro.props; // 接收 Astro 的分页对象
+
+const isFirstPage = page.currentPage === 1;
+const isLastPage = page.currentPage === page.lastPage;
+---
+
+<nav class="pagination-nav" aria-label="Pagination Navigation">
+    <a href={page.url.prev || "#"} class={`nav-btn ${isFirstPage ? 'disabled' : ''}`} aria-disabled={isFirstPage}>
+        <md-icon>arrow_back</md-icon>
+        <span>Previous</span>
+    </a>
+
+    <span class="page-info">
+        Page {page.currentPage} of {page.lastPage}
+    </span>
+
+    <a href={page.url.next || "#"} class={`nav-btn ${isLastPage ? 'disabled' : ''}`} aria-disabled={isLastPage}>
+        <span>Next</span>
+        <md-icon>arrow_forward</md-icon>
+    </a>
+</nav>
+
+<style>
+  .pagination-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 24px;
+    background-color: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+    transition: background-color 0.2s, transform 0.2s;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+  
+  .nav-btn:hover:not(.disabled) {
+    background-color: var(--md-sys-color-surface-container-high);
+    transform: translateY(-2px);
+  }
+
+  .nav-btn.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: default;
+  }
+
+  .page-info {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 1rem;
+    font-weight: 500;
+  }
+</style>

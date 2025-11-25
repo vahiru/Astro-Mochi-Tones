@@ -1,0 +1,119 @@
+---
+// src/components/PostCard.astro
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+
+// ============================================================
+// 🛑 核心修复逻辑：手动强制转换日期
+// ============================================================
+let dateObj;
+
+// 1. 尝试把数据转成 Date 对象
+try {
+    // 如果本来就是 Date，直接用；如果是字符串，new Date() 转一下
+    dateObj = new Date(post.data.date);
+} catch (e) {
+    // 如果转换失败，给个当前时间兜底，防止页面崩溃
+    dateObj = new Date(); 
+}
+
+// 2. 再次检查是否有效 (处理 Invalid Date 情况)
+if (isNaN(dateObj.getTime())) {
+    dateObj = new Date(); // 还是不行？那就给个默认值
+}
+
+// 3. 格式化日期
+const dateStr = dateObj.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+});
+// ============================================================
+
+// 颜色生成逻辑 (保持不变)
+const themes = [
+  { bg: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' },
+  { bg: 'var(--md-sys-color-secondary-container)', color: 'var(--md-sys-color-on-secondary-container)' },
+  { bg: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)' },
+  { bg: 'var(--md-sys-color-error-container)', color: 'var(--md-sys-color-on-error-container)' },
+];
+const titleStr = post.data.title || "Untitled"; // 防止标题为空
+const index = titleStr.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % themes.length;
+const theme = themes[index];
+---
+
+<a href={`/blog/${post.slug}`} class="blog-card">
+  <div class="card-image-container">
+    {post.data.cover ? (
+      <img src={post.data.cover} alt={post.data.title} class="card-image" />
+    ) : (
+      <div class="placeholder-bg" style={`background-color: ${theme.bg}; color: ${theme.color};`}>
+        {post.data.categories && post.data.categories.length > 0 ? (
+             <span style="font-size: 4rem; font-weight: bold; opacity: 0.5;">{post.data.categories[0][0]}</span>
+        ) : (
+             <span class="material-symbols-rounded" style="font-size: 64px; font-weight: 300;">auto_stories</span>
+        )}
+      </div>
+    )}
+  </div>
+
+  <div class="content">
+    <h3 class="headline">{post.data.title}</h3>
+    
+    <div class="meta-row">
+        <span class="date">{dateStr}</span>
+        
+        {post.data.categories && post.data.categories.length > 0 && (
+            <span class="category-badge">{post.data.categories[0]}</span>
+        )}
+    </div>
+  </div>
+  
+  <md-ripple></md-ripple>
+</a>
+
+<script>
+  import '@material/web/ripple/ripple.js';
+</script>
+
+<style>
+  .blog-card {
+    display: flex; flex-direction: column; position: relative;
+    background-color: var(--md-sys-color-surface);
+    border-radius: 24px; overflow: hidden; height: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none; color: inherit;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .blog-card:hover { transform: translateY(-4px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
+  .card-image-container {
+    height: 220px; width: 100%; position: relative; overflow: hidden;
+    background-color: var(--md-sys-color-surface-variant);
+  }
+  .card-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .placeholder-bg {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  }
+
+  .content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
+  .headline { margin: 0 0 1rem 0; font-size: 1.25rem; font-weight: 500; line-height: 1.3; }
+  
+  .meta-row {
+      margin-top: auto;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      color: var(--md-sys-color-on-surface-variant);
+  }
+  
+  .category-badge {
+      background-color: var(--md-sys-color-surface-container-high);
+      padding: 2px 8px; border-radius: 8px; font-size: 0.75rem;
+  }
+</style>

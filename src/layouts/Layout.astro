@@ -1,0 +1,199 @@
+---
+// src/layouts/Layout.astro
+import BaseHead from '../components/BaseHead.astro';
+import NavRail from '../components/NavRail.astro';
+import Footer from '../components/Footer.astro';
+import SearchWidget from '../components/SearchWidget.astro';
+import '../styles/global.css';
+
+interface Props {
+	title?: string;
+    description?: string;
+    image?: string;
+}
+
+const { 
+    title = "Vahiru's Blog",
+    description = "猫猫的自留地",
+    image = "/favicon.svg" // 默认分享图，建议换成你的 OG Image 路径
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+        <BaseHead title={title} description={description} image={image} />
+        
+        <script is:inline>
+            const theme = (() => {
+                if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+                    return localStorage.getItem('theme');
+                }
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    return 'dark';
+                }
+                return 'light';
+            })();
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+        </script>
+	</head>
+	<body>
+        <div id="scrim" class="scrim"></div>
+
+        <header class="mobile-top-bar">
+			<button id="menu-btn" class="icon-btn" aria-label="Menu">
+				<md-icon>menu</md-icon>
+			</button>
+			<div class="header-title">{title}</div>
+            <button class="icon-btn search-trigger" aria-label="Search">
+                <md-icon>search</md-icon>
+            </button>
+		</header>
+		
+        <div class="app-layout">
+            <NavRail />
+            
+            <main class="main-content">
+                <div class="content-inner">
+				    <slot />
+                </div>
+                <Footer />
+			</main>
+		</div>
+
+        <SearchWidget />
+
+        <script>
+            // 导入 Material Web 组件 (避开 SSR 报错)
+            import '@material/web/icon/icon.js';
+            import '@material/web/button/elevated-button.js';
+            import '@material/web/ripple/ripple.js';
+
+            // === 移动端菜单逻辑 ===
+            const menuBtn = document.getElementById('menu-btn');
+            const scrim = document.getElementById('scrim');
+            const body = document.body;
+
+            menuBtn?.addEventListener('click', () => body.classList.add('drawer-open'));
+            scrim?.addEventListener('click', () => body.classList.remove('drawer-open'));
+            
+            // 路由跳转自动关闭菜单 (View Transitions 兼容)
+            document.addEventListener('astro:after-swap', () => body.classList.remove('drawer-open'));
+
+            // === 搜索按钮逻辑 ===
+            // 绑定所有带 aria-label="Search" 的按钮
+            const searchBtns = document.querySelectorAll('button[aria-label="Search"]');
+            searchBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.dispatchEvent(new Event('open-search'));
+                });
+            });
+        </script>
+	</body>
+</html>
+
+<style>
+    /* === 布局结构 === */
+    .app-layout {
+        display: contents; /* 让子元素直接参与 Body 的 Grid 布局 (Desktop) */
+    }
+
+    /* === 主内容区域 === */
+    .main-content {
+        background-color: var(--md-sys-color-surface-container);
+        transition: background-color 0.3s ease;
+        
+        /* Flex 布局让 Footer 沉底 */
+        display: flex;
+        flex-direction: column;
+        
+        /* 滚动与定位 */
+        position: relative;
+    }
+    
+    .content-inner {
+        flex: 1; /* 撑开高度 */
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* === 移动端遮罩层 === */
+    .scrim {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+        z-index: 1100; opacity: 0; pointer-events: none; 
+        transition: opacity 0.3s;
+    }
+    body.drawer-open .scrim { opacity: 1; pointer-events: auto; }
+
+    /* === 图标按钮通用样式 === */
+    .icon-btn { 
+        width: 48px; height: 48px; 
+        display: flex; align-items: center; justify-content: center; 
+        color: var(--md-sys-color-on-surface);
+        border-radius: 50%;
+    }
+    .icon-btn:hover { background-color: rgba(0,0,0,0.05); }
+
+    /* =================================================================
+       Desktop Layout (>= 993px) - 使用 global.css 定义的 Grid
+       ================================================================= */
+    @media (min-width: 993px) {
+        .mobile-top-bar { display: none; } /* 隐藏移动端 Header */
+        
+        .main-content {
+            /* 桌面端圆角 */
+            border-top-left-radius: 28px;
+            border-bottom-left-radius: 28px;
+            
+            /* 位于 Grid 第二列 */
+            grid-column: 2 / 3; 
+            
+            /* 独立滚动 */
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .content-inner { padding: 2rem 3rem; }
+    }
+
+    /* =================================================================
+       Mobile Layout (<= 992px) - 块级流式布局
+       ================================================================= */
+    @media (max-width: 992px) {
+        /* 移动端 Header */
+        .mobile-top-bar {
+            display: flex; position: fixed; top: 0; left: 0; right: 0;
+            height: 64px; z-index: 100; 
+            background: var(--md-sys-color-surface);
+            padding: 0 8px;
+            align-items: center; justify-content: space-between;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .header-title {
+            font-size: 1.25rem; font-weight: 500; color: var(--md-sys-color-on-surface);
+        }
+        
+        /* 内容区适配 */
+        .main-content {
+            grid-column: 1 / -1; /* 占满全宽 */
+            border-radius: 0; /* 移除圆角 */
+            
+            /* 顶部避让 Header */
+            padding-top: 64px; 
+            
+            /* 高度自动，跟随 body 滚动 */
+            height: auto; 
+            min-height: 100vh;
+            overflow-y: visible;
+            
+            /* 背景色统一 */
+            background-color: var(--md-sys-color-surface); 
+        }
+        
+        .content-inner { padding: 1rem; }
+    }
+</style>

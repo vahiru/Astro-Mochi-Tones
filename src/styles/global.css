@@ -1,0 +1,80 @@
+/* src/styles/global.css */
+
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0");
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+:root {
+  --sidebar-width: 88px;
+  --md-icon-font: 'Material Symbols Rounded';
+
+  /* Colors (Light) */
+  --md-sys-color-primary: #6750a4;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #eaddff;
+  --md-sys-color-on-primary-container: #21005d;
+  --md-sys-color-secondary-container: #e8def8;
+  --md-sys-color-on-secondary-container: #1d192b;
+  --md-sys-color-surface: #fffbfe;
+  --md-sys-color-on-surface: #1c1b1f;
+  --md-sys-color-surface-container: #f3edf7; 
+  --md-sys-color-surface-container-low: #f7f2fa; 
+  --md-sys-color-surface-container-high: #ece6f0;
+  --md-sys-color-surface-variant: #e7e0ec;
+  --md-sys-color-on-surface-variant: #49454f;
+  --md-sys-color-outline-variant: #cac4d0;
+  --md-sys-color-scrim: #000000;
+}
+
+.dark {
+  /* Colors (Dark) */
+  --md-sys-color-primary: #d0bcff;
+  --md-sys-color-on-primary: #381e72;
+  --md-sys-color-primary-container: #4f378b;
+  --md-sys-color-on-primary-container: #eaddff;
+  --md-sys-color-secondary-container: #4a4458;
+  --md-sys-color-on-secondary-container: #e8def8;
+  --md-sys-color-surface: #141218;
+  --md-sys-color-on-surface: #e6e1e5;
+  --md-sys-color-surface-container: #1d1b20;
+  --md-sys-color-surface-container-low: #1d1b20;
+  --md-sys-color-surface-container-high: #2b2930;
+  --md-sys-color-surface-variant: #49454f;
+  --md-sys-color-on-surface-variant: #cac4d0;
+  --md-sys-color-outline-variant: #49454f;
+}
+
+/* === 全局重置 === */
+body {
+  margin: 0; padding: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  
+  /* 桌面端默认 Grid 布局 */
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-rows: 100vh;
+  
+  height: 100vh; 
+  width: 100vw;
+  overflow: hidden; /* Body 不滚动 */
+  
+  /* 【关键修复】强制顶对齐，防止内容垂直居中 */
+  align-items: start; 
+  justify-content: start;
+}
+
+button { border: none; background: transparent; padding: 0; margin: 0; font-family: inherit; cursor: pointer; }
+a { text-decoration: none; color: inherit; }
+md-icon { display: inline-flex; width: 24px; height: 24px; overflow: hidden; font-family: 'Material Symbols Rounded' !important; }
+:not(:defined) { visibility: hidden; }
+
+/* === 移动端适配 (<= 992px) === */
+@media (max-width: 992px) {
+  body {
+    display: block !important; /* 取消 Grid */
+    height: auto !important;
+    overflow-y: auto !important; /* 允许 Body 滚动 */
+    overflow-x: hidden;
+  }
+}

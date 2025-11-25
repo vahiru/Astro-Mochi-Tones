@@ -1,0 +1,88 @@
+---
+// src/components/Footer.astro
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="copyright">
+      © {year} My Material Blog. 保留所有权利。
+    </div>
+    <nav class="footer-links" aria-label="Footer Navigation">
+      <a href="/privacy" class="footer-link">隐私政策</a>
+      <a href="/terms" class="footer-link">服务条款</a>
+      <a href="https://github.com/yourusername" target="_blank" rel="noopener noreferrer" class="footer-link">
+        GitHub <md-icon class="external-icon">open_in_new</md-icon>
+      </a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+    import '@material/web/icon/icon.js';
+</script>
+
+<style>
+  .site-footer {
+    background-color: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface-variant);
+    padding: 24px 0;
+    margin-top: auto; /* 确保页脚位于页面底部 */
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+  }
+
+  /* 桌面端样式布局 */
+  @media (min-width: 768px) {
+    .footer-content {
+      flex-direction: row;
+      justify-content: space-between;
+      padding: 0 64px;
+    }
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .footer-link {
+    text-decoration: none;
+    color: inherit;
+    font-size: 0.875rem; /* Body Small */
+    line-height: 20px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s;
+  }
+
+  .footer-link:hover {
+    color: var(--md-sys-color-primary);
+    text-decoration: underline;
+  }
+  
+  .copyright {
+      font-size: 0.875rem; /* Body Small */
+      color: var(--md-sys-color-on-surface-variant);
+      text-align: center;
+  }
+  
+  /* 外部链接图标样式 */
+  .external-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+  }
+</style>
