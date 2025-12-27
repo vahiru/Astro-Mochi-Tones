@@ -1,6 +1,12 @@
 {
     "name": "astro-mochi-tones",
     "version": "1.0.0",
+    "type": "module",
+    "main": "./index.ts",
+    "exports": {
+        ".": "./index.ts",
+        "./package.json": "./package.json"
+    },
     "description": "Mochi Tones 是一个基于 Astro 框架和 Material Design 3 开发的博客主题",
     "license": "GPL-3.0",
     "keywords": [
