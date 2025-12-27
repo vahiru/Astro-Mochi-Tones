@@ -21,6 +21,15 @@
         "astro": "^5.0.0"
     },
     "dependencies": {
-        "astro-theme-provider": "^0.7.1"
+        "astro-theme-provider": "^0.7.1",
+        "@astrojs/rss": "^4.0.0",
+        "@astrojs/sitemap": "^3.0.0",
+        "@material/material-color-utilities": "^0.3.0",
+        "@material/web": "^2.0.0",
+        "@waline/client": "^3.0.0",
+        "fuse.js": "^7.0.0",
+        "markdown-it": "^14.0.0",
+        "sanitize-html": "^2.0.0",
+        "striptags": "^3.0.0"
     }
 }
