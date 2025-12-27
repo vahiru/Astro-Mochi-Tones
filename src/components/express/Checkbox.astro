@@ -1,0 +1,82 @@
+---
+interface Props {
+    checked?: boolean;
+    color?:
+        | "default"
+        | "red"
+        | "orange"
+        | "yellow"
+        | "green"
+        | "cyan"
+        | "blue"
+        | "purple";
+    symbol?: "plus" | "minus" | "times";
+    label?: string;
+}
+
+const { checked = false, color = "default", symbol, label } = Astro.props;
+
+// Determine symbol icon
+let icon = "check"; // default checkmark
+if (symbol === "plus") icon = "add";
+if (symbol === "minus") icon = "remove";
+if (symbol === "times") icon = "close";
+
+// Styles for checked state
+const colors = {
+    default: "var(--md-sys-color-primary)",
+    red: "#d32f2f",
+    orange: "#f57c00",
+    yellow: "#fbc02d",
+    green: "#388e3c",
+    cyan: "#0097a7",
+    blue: "#1976d2",
+    purple: "#7b1fa2",
+};
+
+const activeColor = colors[color] || colors.default;
+---
+
+<div
+    class={`checkbox ${checked ? "checked" : ""}`}
+    style={checked ? `--active-color: ${activeColor}` : ""}
+>
+    <div class="box">
+        {checked && <span class="material-symbols-rounded icon">{icon}</span>}
+    </div>
+    <div class="label">
+        <slot>{label}</slot>
+    </div>
+</div>
+
+<style>
+    .checkbox {
+        display: flex;
+        align-items: center;
+        margin: 0.5rem 0;
+        cursor: default;
+    }
+    .box {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--md-sys-color-outline);
+        border-radius: 4px;
+        margin-right: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .checkbox.checked .box {
+        background-color: var(--active-color, var(--md-sys-color-primary));
+        border-color: var(--active-color, var(--md-sys-color-primary));
+    }
+    .icon {
+        font-size: 16px;
+        color: white;
+        font-weight: bold;
+    }
+    .label {
+        line-height: 1.4;
+    }
+</style>

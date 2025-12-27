@@ -1,0 +1,150 @@
+---
+---
+
+<dialog id="theme-dialog" class="theme-dialog">
+  <div class="dialog-content">
+    <h3 class="dialog-title">Customize Theme</h3>
+    
+    <div class="color-section">
+      <p class="section-label">Preset Colors</p>
+      <div class="preset-colors">
+        <button class="color-btn" style="background-color: #6750a4;" data-color="#6750a4"></button>
+        <button class="color-btn" style="background-color: #9c4146;" data-color="#9c4146"></button>
+        <button class="color-btn" style="background-color: #006a6a;" data-color="#006a6a"></button>
+        <button class="color-btn" style="background-color: #5d5f00;" data-color="#5d5f00"></button>
+        <button class="color-btn" style="background-color: #006e1c;" data-color="#006e1c"></button>
+      </div>
+    </div>
+
+    <div class="color-section">
+      <p class="section-label">Custom Color</p>
+      <div class="custom-picker">
+        <input type="color" id="color-input" value="#6750a4" />
+        <label for="color-input">Pick a color</label>
+      </div>
+    </div>
+
+    <div class="dialog-actions">
+      <button id="close-dialog" class="close-btn">Close</button>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .theme-dialog {
+    border: none;
+    border-radius: 28px;
+    padding: 0;
+    /* 强制背景色 */
+    background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    min-width: 300px;
+  }
+  .theme-dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+  .dialog-content { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+  .dialog-title { margin: 0; font-size: 1.5rem; font-weight: 400; }
+  .section-label { font-size: 0.9rem; font-weight: 500; color: var(--md-sys-color-primary); margin-bottom: 12px; }
+  .preset-colors { display: flex; gap: 12px; flex-wrap: wrap; }
+  
+  .color-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--md-sys-color-outline-variant, #79747e);
+    cursor: pointer; transition: transform 0.2s;
+  }
+  .color-btn:hover { transform: scale(1.1); }
+  
+  .custom-picker { display: flex; align-items: center; gap: 12px; }
+  input[type="color"] { border: none; width: 48px; height: 48px; cursor: pointer; background: none; }
+  .dialog-actions { display: flex; justify-content: flex-end; }
+  
+  .close-btn {
+      padding: 10px 24px;
+      color: var(--md-sys-color-primary);
+      font-weight: 500;
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-radius: 20px;
+  }
+  .close-btn:hover { background-color: rgba(0,0,0,0.05); }
+</style>
+
+<script>
+  import { argbFromHex, themeFromSourceColor, hexFromArgb } from "@material/material-color-utilities";
+
+  // 核心功能：打开弹窗
+  const dialog = document.getElementById('theme-dialog');
+  
+  window.addEventListener('open-theme-picker', () => {
+      console.log('Received open-theme-picker event');
+      if (dialog) {
+          // @ts-ignore
+          dialog.showModal();
+      } else {
+          console.error('Dialog element not found!');
+      }
+  });
+
+  // 关闭
+  document.getElementById('close-dialog')?.addEventListener('click', () => {
+    // @ts-ignore
+    dialog?.close();
+  });
+
+  // 颜色应用逻辑 (保持不变)
+  function applyTheme(hexColor) {
+    localStorage.setItem('source-color', hexColor);
+    const isDark = document.documentElement.classList.contains('dark');
+    const theme = themeFromSourceColor(argbFromHex(hexColor));
+    const scheme = isDark ? theme.schemes.dark : theme.schemes.light;
+    const body = document.body;
+    
+    const tokenMap = {
+      primary: 'primary', onPrimary: 'on-primary',
+      primaryContainer: 'primary-container', onPrimaryContainer: 'on-primary-container',
+      secondary: 'secondary', onSecondary: 'on-secondary',
+      secondaryContainer: 'secondary-container', onSecondaryContainer: 'on-secondary-container',
+      surface: 'surface', onSurface: 'on-surface',
+      surfaceContainer: 'surface-container',
+      surfaceContainerHigh: 'surface-container-high',
+    };
+
+    for (const [key, token] of Object.entries(tokenMap)) {
+        // @ts-ignore
+        if (scheme[key]) {
+            const colorHex = hexFromArgb(scheme[key]);
+            body.style.setProperty(`--md-sys-color-${token}`, colorHex);
+        }
+    }
+  }
+
+  // Bindings
+  document.querySelectorAll('.color-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // @ts-ignore
+      const color = e.target.getAttribute('data-color');
+      applyTheme(color);
+    });
+  });
+
+  const colorInput = document.getElementById('color-input');
+  colorInput?.addEventListener('input', (e) => {
+    // @ts-ignore
+    applyTheme(e.target.value);
+  });
+
+  const savedColor = localStorage.getItem('source-color');
+  if (savedColor) {
+    applyTheme(savedColor);
+    // @ts-ignore
+    if(colorInput) colorInput.value = savedColor;
+  }
+  
+  // Observer
+  const observer = new MutationObserver(() => {
+     const currentColor = localStorage.getItem('source-color') || '#6750a4';
+     applyTheme(currentColor);
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+</script>

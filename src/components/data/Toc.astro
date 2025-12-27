@@ -1,0 +1,65 @@
+---
+interface Props {
+    title?: string;
+    wiki?: string; // Not used in this static impl but kept for compatibility
+    open?: boolean;
+}
+
+const { title = "Table of Contents", open = true } = Astro.props;
+---
+
+<div class="wiki-toc">
+    {title && <div class="toc-header">{title}</div>}
+    <div class="toc-body">
+        <slot />
+    </div>
+</div>
+
+<style>
+    .wiki-toc {
+        background-color: var(--md-sys-color-surface-container);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        border: 1px solid var(--md-sys-color-outline-variant);
+    }
+    .toc-header {
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    }
+    .toc-body {
+        font-size: 0.95rem;
+    }
+    /* Style the list inside the slot */
+    .toc-body :global(ul) {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+    }
+    .toc-body :global(li) {
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+    }
+    .toc-body :global(a) {
+        text-decoration: none;
+        color: var(--md-sys-color-on-surface-variant);
+        display: block;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition:
+            background 0.2s,
+            color 0.2s;
+    }
+    .toc-body :global(a:hover) {
+        background-color: var(--md-sys-color-surface-variant);
+        color: var(--md-sys-color-primary);
+    }
+    /* Indent nested lists */
+    .toc-body :global(ul ul) {
+        padding-left: 1.5rem;
+        margin-top: 0.25rem;
+    }
+</style>

@@ -1,0 +1,89 @@
+---
+interface Props {
+    href: string;
+    title?: string;
+    icon?: string;
+    desc?: string; // If provided, shows description. If "true", ideally we fetch it, but here we might just show the prop if string.
+}
+
+const { href, title, icon, desc } = Astro.props;
+// If title is missing, we might default to href or "Link"
+const displayTitle = title || href;
+---
+
+<a href={href} class="link-card" target="_blank" rel="noopener noreferrer">
+    {icon && <img src={icon} alt="" class="link-icon" />}
+    <div class="link-content">
+        <div class="link-title">{displayTitle}</div>
+        {desc && desc !== "true" && <div class="link-desc">{desc}</div>}
+        <div class="link-url">{href}</div>
+    </div>
+    <span class="material-symbols-rounded link-arrow">open_in_new</span>
+</a>
+
+<style>
+    .link-card {
+        display: flex;
+        align-items: center;
+        background: var(--md-sys-color-surface-container-low);
+        border: 1px solid var(--md-sys-color-outline-variant);
+        border-radius: 12px;
+        padding: 12px;
+        margin: 1rem 0;
+        transition: all 0.2s ease;
+        text-decoration: none !important;
+        color: var(--md-sys-color-on-surface);
+    }
+
+    .link-card:hover {
+        background: var(--md-sys-color-surface-container);
+        border-color: var(--md-sys-color-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .link-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        margin-right: 12px;
+        object-fit: cover;
+    }
+
+    .link-content {
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .link-title {
+        font-weight: 600;
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .link-desc {
+        font-size: 0.875rem;
+        color: var(--md-sys-color-on-surface-variant);
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .link-url {
+        font-size: 0.75rem;
+        color: var(--md-sys-color-primary);
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .link-arrow {
+        margin-left: 12px;
+        color: var(--md-sys-color-on-surface-variant);
+        font-size: 20px;
+    }
+</style>

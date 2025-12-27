@@ -1,0 +1,80 @@
+---
+// src/pages/categories/[category]/[...page].astro
+import { getCollection } from "astro:content";
+import type { GetStaticPaths, Page } from "astro";
+import type { CollectionEntry } from "astro:content";
+import Layout from "../../../layouts/Layout.astro";
+import PostCard from "../../../components/PostCard.astro";
+import Pagination from "../../../components/Pagination.astro";
+import "@material/web/icon/icon.js";
+
+export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
+    const allPosts = await getCollection("blog");
+    const posts = allPosts
+        .filter((p) => !p.data.draft)
+        .sort((a, b) => {
+            return (
+                (b.data.date ? b.data.date.valueOf() : 0) -
+                (a.data.date ? a.data.date.valueOf() : 0)
+            );
+        });
+
+    // 提取所有分类 (扁平化处理)
+    const allCategories = new Set<string>(
+        posts.flatMap((post) => (post.data.categories || []) as string[]),
+    );
+
+    return Array.from(allCategories).flatMap((category: string) => {
+        const filteredPosts = posts.filter((post) =>
+            post.data.categories?.includes(category),
+        );
+        return paginate(filteredPosts, {
+            params: { category },
+            pageSize: 6,
+        });
+    });
+};
+
+interface Props {
+    page: Page<CollectionEntry<"blog">>;
+}
+
+const { page } = Astro.props;
+const { category } = Astro.params;
+---
+
+<Layout title={`分类: ${category}`}>
+    <div class="container">
+        <header class="header">
+            <h1><md-icon>folder</md-icon> {category}</h1>
+            <p>共 {page.total} 篇文章</p>
+        </header>
+        <div class="grid">
+            {page.data.map((post) => <PostCard post={post} />)}
+        </div>
+        <Pagination page={page} />
+    </div>
+</Layout>
+
+<style>
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem 0;
+    }
+    .header {
+        margin-bottom: 2rem;
+        color: var(--md-sys-color-primary);
+    }
+    .header h1 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 0.5rem;
+    }
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
+    }
+</style>

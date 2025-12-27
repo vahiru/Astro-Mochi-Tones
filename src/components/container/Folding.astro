@@ -1,0 +1,74 @@
+---
+interface Props {
+    title?: string;
+    open?: boolean;
+    color?:
+        | "default"
+        | "red"
+        | "orange"
+        | "yellow"
+        | "green"
+        | "cyan"
+        | "blue"
+        | "purple";
+}
+
+const { title = "Details", open = false, color = "default" } = Astro.props;
+
+const colors = {
+    default: "var(--md-sys-color-primary)",
+    red: "#d32f2f",
+    orange: "#f57c00",
+    yellow: "#fbc02d",
+    green: "#388e3c",
+    cyan: "#0097a7",
+    blue: "#1976d2",
+    purple: "#7b1fa2",
+};
+
+const accent = colors[color] || colors.default;
+---
+
+<details class="folding-box" open={open} style={`--folding-color: ${accent}`}>
+    <summary>
+        <span class="material-symbols-rounded arrow">chevron_right</span>
+        <span class="title">{title}</span>
+    </summary>
+    <div class="content">
+        <slot />
+    </div>
+</details>
+
+<style>
+    .folding-box {
+        border: 1px solid var(--md-sys-color-outline-variant);
+        border-radius: 8px;
+        margin: 1rem 0;
+        overflow: hidden;
+        background-color: var(--md-sys-color-surface);
+    }
+    summary {
+        background-color: var(--md-sys-color-surface-container-low);
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        list-style: none; /* Hide default triangle */
+        font-weight: 500;
+        color: var(--folding-color);
+    }
+    summary::-webkit-details-marker {
+        display: none;
+    }
+    .arrow {
+        margin-right: 0.5rem;
+        transition: transform 0.2s;
+    }
+    details[open] .arrow {
+        transform: rotate(90deg);
+    }
+    .content {
+        padding: 1rem;
+        border-top: 1px solid var(--md-sys-color-outline-variant);
+    }
+</style>

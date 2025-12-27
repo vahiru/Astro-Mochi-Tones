@@ -1,0 +1,178 @@
+---
+// src/pages/archives/[...page].astro
+import { getCollection } from "astro:content";
+import type { GetStaticPaths, Page } from "astro";
+import type { CollectionEntry } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import PostCard from "../../components/PostCard.astro";
+import Pagination from "../../components/Pagination.astro";
+
+export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
+    const allPosts = await getCollection("blog");
+    const sortedPosts = allPosts
+        .filter((post) => !post.data.draft)
+        .sort((a, b) => {
+            const da = a.data.date ? a.data.date.valueOf() : 0;
+            const db = b.data.date ? b.data.date.valueOf() : 0;
+            return db - da;
+        });
+    return paginate(sortedPosts, { pageSize: 6 });
+};
+
+interface Props {
+    page: Page<CollectionEntry<"blog">>;
+}
+
+const { page } = Astro.props;
+
+// === 1. 获取所有“分类” (Categories) 而不是标签 ===
+const allPosts = await getCollection("blog");
+const catMap = new Map();
+allPosts.forEach((post) => {
+    if (!post.data.draft) {
+        // 读取 categories 字段
+        post.data.categories?.forEach((cat) => {
+            catMap.set(cat, (catMap.get(cat) || 0) + 1);
+        });
+    }
+});
+const sortedCats = Array.from(catMap.entries()).sort((a, b) => b[1] - a[1]);
+
+// === 2. 按年份分组 ===
+const postsByYear: Record<string, CollectionEntry<"blog">[]> = page.data.reduce(
+    (acc: Record<string, CollectionEntry<"blog">[]>, post) => {
+        const d = post.data.date ? new Date(post.data.date) : new Date();
+        const y = isNaN(d.getTime()) ? "其他" : d.getFullYear();
+        if (!acc[y]) acc[y] = [];
+        acc[y].push(post);
+        return acc;
+    },
+    {},
+);
+const sortedYears = Object.keys(postsByYear).sort(
+    (a, b) => parseInt(b) - parseInt(a),
+);
+---
+
+<Layout title={`归档 - 第 ${page.currentPage} 页`}>
+    <div class="archive-container">
+        <section class="tags-section">
+            <div class="section-header">
+                <span class="section-label">CATEGORIES</span>
+            </div>
+
+            <div class="tags-scroller">
+                {
+                    sortedCats.length > 0 ? (
+                        sortedCats.map(([cat, count]) => (
+                            // 注意链接是 /categories/...
+                            <a href={`/categories/${cat}`} class="tag-card">
+                                <div class="tag-name">{cat}</div>
+                                <div class="tag-count">{count} 篇文章</div>
+                            </a>
+                        ))
+                    ) : (
+                        <div style="opacity: 0.5; padding-left: 4px;">
+                            暂无分类
+                        </div>
+                    )
+                }
+            </div>
+        </section>
+
+        <div class="timeline-list">
+            {
+                sortedYears.map((year) => (
+                    <section class="year-section">
+                        <div class="year-sticky">
+                            <h2 class="year-title">{year}</h2>
+                        </div>
+                        <div class="posts-grid">
+                            {postsByYear[year].map((post) => (
+                                <PostCard post={post} />
+                            ))}
+                        </div>
+                    </section>
+                ))
+            }
+        </div>
+
+        <Pagination page={page} />
+    </div>
+</Layout>
+
+<style>
+    /* 样式与之前保持一致 */
+    .archive-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 0;
+    }
+    .tags-section {
+        margin-bottom: 4rem;
+    }
+    .section-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        color: var(--md-sys-color-on-surface-variant);
+        margin-bottom: 1rem;
+        padding-left: 4px;
+    }
+    .tags-scroller {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+        padding-bottom: 16px;
+        padding-left: 4px;
+        scrollbar-width: thin;
+    }
+    .tag-card {
+        flex: 0 0 auto;
+        width: 160px;
+        height: 100px;
+        background-color: var(--md-sys-color-surface-container-high);
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        text-decoration: none;
+        transition: transform 0.2s;
+    }
+    .tag-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .tag-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--md-sys-color-on-surface);
+    }
+    .tag-count {
+        font-size: 0.8rem;
+        color: var(--md-sys-color-on-surface-variant);
+    }
+
+    .year-section {
+        margin-bottom: 4rem;
+    }
+    .year-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--md-sys-color-primary);
+        margin-bottom: 1.5rem;
+        border-bottom: 4px solid var(--md-sys-color-primary-container);
+        display: inline-block;
+    }
+    .posts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
+    }
+    @media (max-width: 768px) {
+        .posts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

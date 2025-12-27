@@ -1,0 +1,54 @@
+---
+interface Props {
+    o1: string; // The objective text
+}
+
+const { o1 } = Astro.props;
+---
+
+<div class="express-okr">
+    <div class="okr-objective">
+        <div class="o-badge">O</div>
+        <div class="o-content">{o1}</div>
+    </div>
+    <div class="okr-results">
+        <slot />
+    </div>
+</div>
+
+<style>
+    .express-okr {
+        margin: 2rem 0;
+        border: 1px solid var(--md-sys-color-outline-variant);
+        border-radius: 12px;
+        overflow: hidden;
+        background-color: var(--md-sys-color-surface);
+    }
+    .okr-objective {
+        padding: 1.5rem;
+        background-color: var(--md-sys-color-surface-container);
+        display: flex;
+        align-items: flex-start;
+    }
+    .o-badge {
+        background-color: var(--md-sys-color-primary);
+        color: var(--md-sys-color-on-primary);
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    .o-content {
+        font-size: 1.1rem;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+    .okr-results {
+        padding: 0 1.5rem;
+    }
+</style>

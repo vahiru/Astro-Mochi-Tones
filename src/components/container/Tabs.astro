@@ -1,0 +1,113 @@
+---
+interface Props {
+    active?: number; // default active tab index (0-based)
+    align?: "left" | "center";
+}
+
+const { active = 0, align = "left" } = Astro.props;
+
+// Logic: We need to render the tab headers and content.
+// Since Astro slots are opaque, we can't easily extract "titles" from children components server-side without some pattern.
+// Pattern: <Tabs> <TabItem title="A">...</TabItem> </Tabs>
+// However, standard slot content is rendered. We might need a client-side solution or a specific prop structure.
+
+// Approach: Client-side tabs.
+// Render all content.
+// We need the *titles* to build the header.
+// We can ask the user to pass a list of titles? Or rely on the `TabItem` to emit its title.
+// Astro slots don't emit props up.
+
+// Let's use a `tabs` prop for titles, and slots corresponding to them?
+// Or just let <TabItem> render a data-title attribute, and JS builds the nav?
+---
+
+<div class="tabs-container" data-active={active}>
+    <div class={`tabs-nav ${align}`}></div>
+    <div class="tabs-content">
+        <slot />
+    </div>
+</div>
+
+<script>
+    class Tabs {
+        constructor(el) {
+            this.el = el;
+            this.nav = el.querySelector(".tabs-nav");
+            this.content = el.querySelector(".tabs-content");
+            this.items = [...this.content.children]; // Assumes children are the tab items
+            this.init();
+        }
+
+        init() {
+            const activeIdx = parseInt(this.el.dataset.active || "0");
+
+            this.items.forEach((item, idx) => {
+                const title =
+                    item.getAttribute("data-title") || `Tab ${idx + 1}`;
+                const btn = document.createElement("button");
+                btn.textContent = title;
+                btn.className = `tab-btn ${idx === activeIdx ? "active" : ""}`;
+                btn.onclick = () => this.switch(idx);
+                this.nav.appendChild(btn);
+
+                if (idx === activeIdx) item.classList.add("active");
+                else item.classList.remove("active");
+            });
+        }
+
+        switch(idx) {
+            const btns = this.nav.children;
+            this.items.forEach((item, i) => {
+                if (i === idx) {
+                    item.classList.add("active");
+                    btns[i].classList.add("active");
+                } else {
+                    item.classList.remove("active");
+                    btns[i].classList.remove("active");
+                }
+            });
+        }
+    }
+
+    document.querySelectorAll(".tabs-container").forEach((el) => new Tabs(el));
+</script>
+
+<style>
+    .tabs-container {
+        margin: 2rem 0;
+        border: 1px solid var(--md-sys-color-outline-variant);
+        border-radius: 12px;
+        overflow: hidden;
+        background-color: var(--md-sys-color-surface);
+    }
+    .tabs-nav {
+        display: flex;
+        border-bottom: 1px solid var(--md-sys-color-outline-variant);
+        background-color: var(--md-sys-color-surface-container-low);
+        overflow-x: auto;
+    }
+    .tabs-nav.center {
+        justify-content: center;
+    }
+    :global(.tab-btn) {
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        font-weight: 500;
+        color: var(--md-sys-color-on-surface-variant);
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+        background: none;
+        border: none;
+    }
+    :global(.tab-btn:hover) {
+        background-color: var(--md-sys-color-surface-variant);
+        color: var(--md-sys-color-on-surface);
+    }
+    :global(.tab-btn.active) {
+        color: var(--md-sys-color-primary);
+        border-bottom: 2px solid var(--md-sys-color-primary);
+    }
+    .tabs-content {
+        padding: 1.5rem;
+    }
+</style>

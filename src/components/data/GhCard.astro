@@ -1,0 +1,46 @@
+---
+interface Props {
+    repo?: string; // user/repo format
+    user?: string; // user name if displaying user card
+    theme?: "light" | "dark";
+}
+
+const { repo, user, theme = "dark" } = Astro.props;
+const target = repo ? repo : user;
+const isRepo = !!repo;
+
+// Using github-readme-stats as a reliable fallback for static sites
+// Ideally we'd use the Stellaris API but that requires a backend server.
+// readme-stats provides usage SVG cards.
+
+const baseUrl = "https://github-readme-stats.vercel.app/api";
+let src = "";
+
+if (isRepo) {
+    src = `${baseUrl}/pin/?username=${target.split("/")[0]}&repo=${target.split("/")[1]}&theme=${theme === "dark" ? "radical" : "default"}`;
+} else {
+    src = `${baseUrl}/?username=${target}&theme=${theme === "dark" ? "radical" : "default"}&show_icons=true`;
+}
+
+const href = `https://github.com/${target}`;
+---
+
+<a href={href} class="gh-card" target="_blank" rel="noopener noreferrer">
+    <img src={src} alt={`${target} github card`} loading="lazy" />
+</a>
+
+<style>
+    .gh-card {
+        display: inline-block;
+        margin: 1rem 0;
+        transition: transform 0.2s;
+    }
+    .gh-card:hover {
+        transform: translateY(-2px);
+    }
+    .gh-card img {
+        height: 150px; /* Standard height */
+        max-width: 100%;
+        border-radius: 6px;
+    }
+</style>

@@ -1,0 +1,19 @@
+---
+interface Props {
+    src: string;
+}
+
+const { src } = Astro.props;
+---
+
+<img src={src} class="express-icon" />
+
+<style>
+    .express-icon {
+        display: inline-block;
+        height: 1.2em;
+        width: auto;
+        vertical-align: text-bottom;
+        margin: 0 0.125rem;
+    }
+</style>

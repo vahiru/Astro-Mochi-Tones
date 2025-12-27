@@ -1,0 +1,60 @@
+---
+interface Props {
+    tag: string;
+    url?: string;
+    color?:
+        | "default"
+        | "red"
+        | "orange"
+        | "yellow"
+        | "green"
+        | "cyan"
+        | "blue"
+        | "purple";
+}
+
+const { tag, url = "#", color = "default" } = Astro.props;
+
+const colors = {
+    default: {
+        bg: "var(--md-sys-color-surface-variant)",
+        text: "var(--md-sys-color-on-surface-variant)",
+    },
+    red: { bg: "#ffebee", text: "#c62828" },
+    orange: { bg: "#fff3e0", text: "#ef6c00" },
+    yellow: { bg: "#fffde7", text: "#f9a825" },
+    green: { bg: "#e8f5e9", text: "#2e7d32" },
+    cyan: { bg: "#e0f7fa", text: "#00838f" },
+    blue: { bg: "#e3f2fd", text: "#1565c0" },
+    purple: { bg: "#f3e5f5", text: "#6a1b9a" },
+};
+
+const style = colors[color] || colors.default;
+---
+
+<a
+    href={url}
+    class="express-hashtag"
+    style={`background-color: ${style.bg}; color: ${style.text};`}
+>
+    <span class="hash">#</span>{tag}
+</a>
+
+<style>
+    .express-hashtag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.875rem;
+        margin: 0 4px;
+        transition: opacity 0.2s;
+    }
+    .express-hashtag:hover {
+        opacity: 0.8;
+    }
+    .hash {
+        opacity: 0.6;
+        margin-right: 2px;
+    }
+</style>

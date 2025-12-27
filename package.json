@@ -1,0 +1,26 @@
+{
+    "name": "astro-mochi-tones",
+    "version": "1.0.0",
+    "description": "Mochi Tones 是一个基于 Astro 框架和 Material Design 3 开发的博客主题",
+    "license": "GPL-3.0",
+    "keywords": [
+        "astro",
+        "withastro",
+        "astro-integration",
+        "theme",
+        "blog",
+        "material-design"
+    ],
+    "author": "vahiru",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/vahiru/Astro-Mochi-Tones"
+    },
+    "homepage": "https://github.com/vahiru/Astro-Mochi-Tones",
+    "devDependencies": {
+        "astro": "^5.0.0"
+    },
+    "dependencies": {
+        "astro-theme-provider": "^0.7.1"
+    }
+}

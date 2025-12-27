@@ -1,0 +1,49 @@
+---
+interface Props {
+    links: { text: string; url: string; active?: boolean }[];
+}
+
+const { links } = Astro.props;
+---
+
+<nav class="express-navbar">
+    {
+        links.map((link) => (
+            <a
+                href={link.url}
+                class={`nav-link ${link.active ? "active" : ""}`}
+            >
+                {link.text}
+            </a>
+        ))
+    }
+</nav>
+
+<style>
+    .express-navbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background-color: var(--md-sys-color-surface-container);
+        border-radius: 8px;
+        margin: 2rem 0;
+        justify-content: center;
+    }
+    .nav-link {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        text-decoration: none;
+        color: var(--md-sys-color-on-surface-variant);
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .nav-link:hover {
+        background-color: var(--md-sys-color-surface-variant);
+        color: var(--md-sys-color-on-surface);
+    }
+    .nav-link.active {
+        background-color: var(--md-sys-color-primary);
+        color: var(--md-sys-color-on-primary);
+    }
+</style>

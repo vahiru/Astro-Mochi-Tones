@@ -1,0 +1,105 @@
+---
+interface Props {
+    title?: string;
+    author?: string;
+    date?: string;
+    footer?: string;
+}
+
+const { title, author, date, footer } = Astro.props;
+---
+
+<div class="express-reel">
+    <div class="reel-rod rod-top"></div>
+
+    <div class="reel-body">
+        {
+            (title || author || date) && (
+                <div class="reel-header">
+                    {title && <div class="reel-title">{title}</div>}
+                    <div class="reel-meta">
+                        {author && <span class="reel-author">{author}</span>}
+                        {date && <span class="reel-date">{date}</span>}
+                    </div>
+                </div>
+            )
+        }
+
+        <div class="reel-content">
+            <slot />
+        </div>
+
+        {footer && <div class="reel-footer">{footer}</div>}
+    </div>
+
+    <div class="reel-rod rod-bottom"></div>
+</div>
+
+<style>
+    .express-reel {
+        margin: 2rem 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .reel-rod {
+        width: 110%; /* Rods are wider than paper */
+        height: 12px;
+        background: linear-gradient(to right, #8d6e63, #d7ccc8, #8d6e63);
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        position: relative;
+        z-index: 10;
+    }
+    .rod-top {
+        margin-bottom: -4px;
+    }
+    .rod-bottom {
+        margin-top: -4px;
+    }
+
+    .reel-body {
+        background-color: #fcf8e3; /* Light yellowish paper */
+        color: #5d4037;
+        width: 90%;
+        padding: 3rem 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        writing-mode: vertical-rl; /* Traditional vertical text */
+        min-height: 300px;
+        font-family: "SimSun", "Songti SC", serif;
+        display: flex;
+        align-items: center; /* Center horizontally in vertical mode */
+        overflow-x: auto;
+    }
+
+    .reel-header {
+        margin-left: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    } /* Remember vertical-rl: margin-left is top spacing visual */
+    .reel-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    .reel-meta {
+        font-size: 0.875rem;
+        display: flex;
+        gap: 1rem;
+    }
+
+    .reel-content {
+        font-size: 1.25rem;
+        line-height: 2;
+        flex-grow: 1;
+    }
+
+    .reel-footer {
+        margin-right: 2rem;
+        font-size: 0.8rem;
+        align-self: flex-end;
+    }
+</style>

@@ -1,0 +1,82 @@
+---
+interface Props {
+    title?: string;
+    author?: string;
+    date?: string;
+    footer?: string;
+    style?: "underline" | "simple";
+}
+
+const { title, author, date, footer, style = "simple" } = Astro.props;
+---
+
+<div class={`express-paper ${style}`}>
+    {
+        (title || author || date) && (
+            <div class="paper-header">
+                {title && <div class="paper-title">{title}</div>}
+                <div class="paper-meta">
+                    {author && <span class="paper-author">{author}</span>}
+                    {date && <span class="paper-date">{date}</span>}
+                </div>
+            </div>
+        )
+    }
+
+    <div class="paper-content">
+        <slot />
+    </div>
+
+    {footer && <div class="paper-footer">{footer}</div>}
+</div>
+
+<style>
+    .express-paper {
+        background-color: var(--md-sys-color-surface-container-low);
+        padding: 2rem;
+        margin: 2rem 0;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        font-family: "Times New Roman", serif; /* Classic paper font feel */
+        position: relative;
+    }
+
+    .express-paper.underline {
+        background-image: linear-gradient(
+            transparent 1.9rem,
+            var(--md-sys-color-outline-variant) 2rem
+        );
+        background-size: 100% 2rem;
+        line-height: 2rem;
+        background-color: var(--md-sys-color-surface);
+    }
+
+    .paper-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .paper-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .paper-meta {
+        font-size: 0.875rem;
+        color: var(--md-sys-color-on-surface-variant);
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    .paper-content {
+        font-size: 1.1rem;
+        text-align: justify;
+    }
+
+    .paper-footer {
+        margin-top: 2rem;
+        text-align: right;
+        font-size: 0.875rem;
+        color: var(--md-sys-color-on-surface-variant);
+    }
+</style>

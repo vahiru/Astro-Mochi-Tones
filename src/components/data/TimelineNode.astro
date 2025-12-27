@@ -1,0 +1,47 @@
+---
+interface Props {
+    date?: string;
+}
+
+const { date } = Astro.props;
+---
+
+<div class="timeline-node">
+    <div class="node-point"></div>
+    {date && <div class="node-date">{date}</div>}
+    <div class="node-content">
+        <slot />
+    </div>
+</div>
+
+<style>
+    .timeline-node {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+    .node-point {
+        position: absolute;
+        left: calc(
+            -2rem - 5px
+        ); /* Line width (2px) + padding (2rem) + half point (4px) adjustment */
+        top: 0.25rem;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: var(--md-sys-color-primary);
+        border: 2px solid var(--md-sys-color-surface);
+        box-shadow: 0 0 0 2px var(--md-sys-color-primary-container);
+    }
+    .node-date {
+        font-size: 0.75rem;
+        color: var(--md-sys-color-primary);
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+    }
+    .node-content {
+        background-color: var(--md-sys-color-surface-container-low);
+        padding: 1rem;
+        border-radius: 12px;
+        font-size: 0.95rem;
+    }
+</style>

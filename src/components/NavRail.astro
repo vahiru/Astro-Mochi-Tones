@@ -1,0 +1,178 @@
+---
+// src/components/NavRail.astro
+import ColorPicker from './ColorPicker.astro'; 
+const pathname = Astro.url.pathname;
+
+const navItems = [
+  { label: 'Home', icon: 'home', href: '/', active: pathname === '/' },
+  { label: 'Blog', icon: 'inventory_2', href: '/archives', active: pathname.startsWith('/archives') },
+  { label: 'About', icon: 'face', href: '/about', active: pathname.startsWith('/about') },
+  { label: 'Friends', icon: 'group', href: '/friends' , active: pathname.startsWith('/friends') },
+];
+---
+
+<nav class="nav-rail">
+  <div class="rail-fab-wrapper">
+    <button class="search-fab" aria-label="Search"><md-icon>search</md-icon><md-ripple></md-ripple></button>
+  </div>
+
+  <div class="drawer-header">
+    <span class="drawer-title">Menu</span>
+  </div>
+
+  <div class="nav-group">
+    {navItems.map(item => (
+      <a href={item.href} class={`nav-item ${item.active ? 'active' : ''}`}>
+        <div class="icon-container"><md-icon>{item.icon}</md-icon><md-ripple></md-ripple></div>
+        <span class="label">{item.label}</span>
+      </a>
+    ))}
+  </div>
+
+  <div class="spacer"></div>
+
+  <div class="nav-group bottom-group">
+    
+    <a href="/rss.xml" target="_blank" class="nav-item rss-btn">
+       <div class="icon-container"><md-icon>rss_feed</md-icon><md-ripple></md-ripple></div>
+       <span class="label">RSS</span>
+    </a>
+
+    <button id="palette-btn" class="nav-item" type="button">
+      <div class="icon-container"><md-icon>palette</md-icon><md-ripple></md-ripple></div>
+      <span class="label">Color</span>
+    </button>
+    
+    <button id="theme-toggle" class="nav-item" type="button">
+      <div class="icon-container"><md-icon id="theme-icon">dark_mode</md-icon><md-ripple></md-ripple></div>
+      <span class="label">Theme</span>
+    </button>
+  </div>
+
+  <ColorPicker />
+</nav>
+
+<script>
+    document.getElementById('palette-btn')?.addEventListener('click', (e) => { e.preventDefault(); window.dispatchEvent(new Event('open-theme-picker')); });
+    
+    const handleToggle = () => {
+        document.documentElement.classList.toggle("dark");
+        const isDark = document.documentElement.classList.contains("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+        updateIcon();
+    };
+    const updateIcon = () => {
+        const isDark = document.documentElement.classList.contains("dark");
+        const icon = document.getElementById("theme-icon");
+        if (icon) icon.innerText = isDark ? "light_mode" : "dark_mode";
+    };
+    document.getElementById("theme-toggle")?.addEventListener("click", handleToggle);
+    updateIcon();
+</script>
+
+<style>
+  /* === Desktop Styles (>= 993px) === */
+  @media (min-width: 993px) {
+    .nav-rail {
+      width: 88px; min-width: 88px; padding: 12px 0 24px 0;
+      align-items: center; border-right: 1px solid transparent;
+      position: sticky; top: 0; height: 100vh;
+      background-color: var(--md-sys-color-surface);
+      display: flex; flex-direction: column; box-sizing: border-box; z-index: 100;
+    }
+    .drawer-header { display: none; }
+    .rail-fab-wrapper { margin-bottom: 20px; margin-top: 4px; }
+    .search-fab {
+      position: relative; width: 56px; height: 56px; border-radius: 16px; border: none; cursor: pointer;
+      background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
+      display: flex; align-items: center; justify-content: center; transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .search-fab:hover { transform: scale(1.05); }
+    .nav-group { display: flex; flex-direction: column; gap: 12px; width: 100%; align-items: center; }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 100%; gap: 4px; text-decoration: none; background: transparent; border: none; cursor: pointer;
+      color: var(--md-sys-color-on-surface-variant); position: relative; padding: 0;
+    }
+    .icon-container {
+      position: relative; width: 56px; height: 32px; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center; transition: background 0.2s; overflow: hidden;
+    }
+    .nav-item.active .icon-container {
+        background-color: var(--md-sys-color-secondary-container);
+        color: var(--md-sys-color-on-secondary-container);
+    }
+    .nav-item.active .label { font-weight: 700; color: var(--md-sys-color-on-surface); }
+    
+    /* RSS 按钮特别样式：悬浮时图标变色 (Tertiary) */
+    .rss-btn:hover .icon-container {
+        color: var(--md-sys-color-tertiary);
+        background-color: var(--md-sys-color-tertiary-container);
+    }
+    
+    .label { font-size: 11px; font-weight: 500; text-align: center; }
+  }
+
+  /* === Mobile Styles (<= 992px) === */
+  @media (max-width: 992px) {
+    .nav-rail {
+      position: fixed; top: 64px; left: 0; bottom: 0;
+      width: 300px; max-width: 80vw;
+      background-color: var(--md-sys-color-surface-container-low) !important;
+      border-top-right-radius: 28px; border-bottom-right-radius: 28px;
+      z-index: 1300;
+      transform: translateX(-100%);
+      transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+      
+      /* 【关键】只保留垂直 Padding，左右不加 Padding，由子元素 Margin 控制 */
+      padding: 24px 0; 
+      
+      display: flex; flex-direction: column; align-items: flex-start;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+      
+      /* 允许滚动，防止内容溢出 */
+      overflow-y: auto;
+    }
+    
+    :global(body.drawer-open) .nav-rail { transform: translateX(0); }
+    
+    .rail-fab-wrapper { display: none; }
+    .drawer-header { padding: 0 28px; margin-bottom: 12px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); }
+    
+    .nav-group { width: 100%; display: flex; flex-direction: column; gap: 4px; }
+    
+    /* 底部组加点上边距 */
+    .bottom-group { margin-top: 12px; border-top: 1px solid var(--md-sys-color-outline-variant); padding-top: 12px; }
+
+    /* 【关键修复：胶囊布局】 */
+    .nav-item {
+      display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
+      text-decoration: none; background: transparent; border: none; cursor: pointer;
+      color: var(--md-sys-color-on-surface-variant); position: relative;
+      
+      height: 56px;
+      /* 左右留 12px 边距 */
+      margin: 0 12px;
+      /* 宽度自动填满剩余空间 */
+      width: calc(100% - 24px); 
+      
+      border-radius: 28px; /* 完整圆角 */
+      padding-left: 16px; 
+      gap: 12px;
+      box-sizing: border-box; /* 确保 padding 不撑破宽度 */
+    }
+
+    .icon-container { width: 24px; height: 24px; background-color: transparent !important; }
+    
+    /* 选中态：整行变色 */
+    .nav-item.active {
+      background-color: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
+    }
+    
+    .label { font-size: 14px; font-weight: 500; }
+  }
+  
+  .spacer { flex-grow: 1; }
+</style>

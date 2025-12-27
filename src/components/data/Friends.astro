@@ -1,0 +1,23 @@
+---
+import Sites from "./Sites.astro";
+
+// Friends is an alias for Sites
+interface LinkItem {
+    title: string;
+    url: string;
+    avatar?: string;
+    description?: string;
+    screenshot?: string;
+}
+
+interface Props {
+    items?: LinkItem[];
+    group?: string;
+}
+
+const props = Astro.props;
+---
+
+<Sites {...props}>
+    <slot />
+</Sites>

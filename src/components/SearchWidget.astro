@@ -1,0 +1,186 @@
+---
+import '@material/web/icon/icon.js';
+import '@material/web/iconbutton/icon-button.js';
+---
+
+<dialog id="search-dialog" class="search-dialog">
+  <div class="search-container">
+    <div class="search-header">
+      <md-icon class="search-icon">search</md-icon>
+      <input 
+        type="text" 
+        id="search-input" 
+        placeholder="Search..." 
+        autocomplete="off" 
+      />
+      <button id="close-search" class="icon-btn">
+        <md-icon>close</md-icon>
+      </button>
+    </div>
+
+    <div id="search-results" class="search-results">
+        <div class="empty-state">
+            <p>Type to search...</p>
+        </div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  import Fuse from 'fuse.js';
+
+  const dialog = document.getElementById('search-dialog');
+  const closeBtn = document.getElementById('close-search');
+  const input = document.getElementById('search-input');
+  const resultsContainer = document.getElementById('search-results');
+
+  let fuse;
+  let posts = [];
+
+  async function initSearch() {
+    if (posts.length > 0) return;
+    
+    try {
+        // 1. 获取我们清洗过的纯文本 JSON
+        const res = await fetch('/search.json');
+        posts = await res.json();
+        
+        // 2. 配置 Fuse.js (核心智能算法)
+        fuse = new Fuse(posts, {
+            // 搜索哪些字段
+            keys: [
+                { name: 'title', weight: 1.0 },       // 标题权重最高
+                { name: 'description', weight: 0.7 }, // 描述次之
+                { name: 'content', weight: 0.3 }      // 正文权重最低
+            ],
+            includeScore: true,
+            includeMatches: true, // 如果你想做高亮，需要开启这个
+            threshold: 0.3,       // 模糊阈值：0.0 是完全匹配，1.0 是完全不匹配。0.3 比较自然
+            ignoreLocation: true, // 搜索全文，不限制关键词出现的位置
+            minMatchCharLength: 2 // 至少输入2个字才开始搜
+        });
+    } catch (e) {
+        console.error('Failed to load search index', e);
+    }
+  }
+
+  // 打开搜索
+  window.addEventListener('open-search', async () => {
+    // @ts-ignore
+    dialog?.showModal();
+    await initSearch();
+    // @ts-ignore
+    input?.focus();
+  });
+
+  // 关闭逻辑
+  closeBtn?.addEventListener('click', () => {
+      // @ts-ignore
+      dialog?.close();
+      // @ts-ignore
+      input.value = ''; // 清空
+      // @ts-ignore
+      resultsContainer.innerHTML = '<div class="empty-state"><p>Type to search...</p></div>';
+  });
+
+  dialog?.addEventListener('click', (e) => {
+    // @ts-ignore
+    if (e.target === dialog) dialog.close();
+  });
+
+  // 搜索逻辑
+  input?.addEventListener('input', (e) => {
+    // @ts-ignore
+    const query = e.target.value;
+    
+    if (!query || query.length < 1) {
+        // @ts-ignore
+        resultsContainer.innerHTML = '<div class="empty-state"><p>Type to search...</p></div>';
+        return;
+    }
+
+    // 执行搜索
+    // @ts-ignore
+    const results = fuse.search(query);
+    
+    if (results.length === 0) {
+        // @ts-ignore
+        resultsContainer.innerHTML = '<div class="empty-state"><p>No results found.</p></div>';
+        return;
+    }
+
+    // 渲染结果 (截取正文作为预览)
+    // @ts-ignore
+    const html = results.slice(0, 20).map(result => {
+        const item = result.item;
+        
+        // 生成一个简单的预览文本
+        let snippet = item.description;
+        if (!snippet && item.content) {
+            // 如果没有描述，从正文里截取前 60 个字
+            snippet = item.content.substring(0, 60) + '...';
+        }
+
+        return `
+            <a href="${item.slug}" class="result-item">
+                <div class="text-area">
+                    <div class="item-title">${item.title}</div>
+                    <div class="item-desc">${snippet}</div>
+                </div>
+                <span class="arrow-icon material-symbols-rounded">arrow_forward</span>
+            </a>
+        `;
+    }).join('');
+
+    // @ts-ignore
+    resultsContainer.innerHTML = html;
+  });
+</script>
+
+<style>
+  /* ... 样式部分保持你之前觉得好看的那一版 ... */
+  .search-dialog {
+    border: none; border-radius: 28px; padding: 0;
+    background-color: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 90vw; max-width: 600px; max-height: 80vh;
+    margin: auto; overflow: hidden;
+  }
+  .search-dialog::backdrop { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
+  .search-container { display: flex; flex-direction: column; height: 100%; }
+  
+  .search-header {
+    display: flex; align-items: center; gap: 16px; padding: 16px 24px;
+    background-color: var(--md-sys-color-surface-container-high);
+    border-bottom: 1px solid transparent;
+  }
+  .search-icon { color: var(--md-sys-color-on-surface-variant); font-size: 24px; }
+  
+  #search-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    font-size: 1.1rem; color: var(--md-sys-color-on-surface); font-family: inherit; height: 40px;
+  }
+  
+  .icon-btn {
+      background: none; border: none; padding: 8px; cursor: pointer; border-radius: 50%;
+      color: var(--md-sys-color-on-surface); display: flex; align-items: center; justify-content: center;
+  }
+  .icon-btn:hover { background-color: rgba(0,0,0,0.05); }
+
+  .search-results { flex: 1; overflow-y: auto; padding: 12px; }
+
+  :global(.result-item) {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; margin-bottom: 4px; border-radius: 16px;
+    text-decoration: none; color: inherit; transition: background-color 0.2s;
+  }
+  :global(.result-item:hover) { background-color: var(--md-sys-color-surface-container-highest); }
+  
+  :global(.text-area) { flex: 1; padding-right: 16px; overflow: hidden; }
+  :global(.item-title) { font-size: 1rem; font-weight: 500; margin-bottom: 4px; color: var(--md-sys-color-on-surface); }
+  :global(.item-desc) { font-size: 0.85rem; color: var(--md-sys-color-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  :global(.arrow-icon) { font-size: 20px; color: var(--md-sys-color-on-surface-variant); opacity: 0.5; }
+
+  .empty-state { display: flex; align-items: center; justify-content: center; height: 100px; color: var(--md-sys-color-on-surface-variant); opacity: 0.6; }
+</style>

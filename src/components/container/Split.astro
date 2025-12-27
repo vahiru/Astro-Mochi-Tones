@@ -1,0 +1,21 @@
+---
+
+---
+
+<div class="split-container">
+  <slot />
+</div>
+
+<style>
+  .split-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin: 2rem 0;
+  }
+  @media (max-width: 768px) {
+    .split-container {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

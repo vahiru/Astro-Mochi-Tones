@@ -1,0 +1,70 @@
+---
+interface Props {
+    color?:
+        | "default"
+        | "red"
+        | "orange"
+        | "yellow"
+        | "green"
+        | "cyan"
+        | "blue"
+        | "purple"
+        | "light"
+        | "dark"
+        | "warning"
+        | "error";
+    title?: string;
+}
+
+const { color = "default", title } = Astro.props;
+
+// Map colors to styles
+const colors = {
+    default: {
+        border: "var(--md-sys-color-outline)",
+        bg: "var(--md-sys-color-surface-container-low)",
+        text: "var(--md-sys-color-on-surface)",
+    },
+    red: { border: "#ef5350", bg: "#ffebee", text: "#c62828" },
+    orange: { border: "#ffa726", bg: "#fff3e0", text: "#ef6c00" },
+    yellow: { border: "#fdd835", bg: "#fffde7", text: "#f9a825" },
+    green: { border: "#66bb6a", bg: "#e8f5e9", text: "#2e7d32" },
+    cyan: { border: "#26c6da", bg: "#e0f7fa", text: "#00838f" },
+    blue: { border: "#42a5f5", bg: "#e3f2fd", text: "#1565c0" },
+    purple: { border: "#ab47bc", bg: "#f3e5f5", text: "#6a1b9a" },
+    light: { border: "#bdbdbd", bg: "#f5f5f5", text: "#616161" },
+    dark: { border: "#424242", bg: "#212121", text: "#ffffff" },
+    warning: { border: "#ffa726", bg: "#fff8e1", text: "#ff8f00" },
+    error: { border: "#ef5350", bg: "#ffebee", text: "#c62828" },
+};
+
+const style = colors[color] || colors.default;
+---
+
+<div
+    class="note"
+    style={`border-left-color: ${style.border}; background-color: ${style.bg}; color: ${style.text};`}
+>
+    {title && <div class="note-title">{title}</div>}
+    <div class="note-content">
+        <slot />
+    </div>
+</div>
+
+<style>
+    .note {
+        padding: 1rem;
+        border-left-width: 4px;
+        border-left-style: solid;
+        border-radius: 4px;
+        margin: 1rem 0;
+    }
+    .note-title {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        font-size: 1.1em;
+    }
+    .note-content {
+        line-height: 1.6;
+    }
+</style>

@@ -1,0 +1,36 @@
+---
+interface Props {
+    icon?: string;
+}
+
+const { icon = "format_quote" } = Astro.props;
+---
+
+<div class="express-quot">
+    <span class="material-symbols-rounded quot-icon">{icon}</span>
+    <div class="quot-content">
+        <slot />
+    </div>
+</div>
+
+<style>
+    .express-quot {
+        position: relative;
+        padding: 2rem;
+        text-align: center;
+        margin: 2rem 0;
+    }
+    .quot-icon {
+        font-size: 48px;
+        color: var(--md-sys-color-primary);
+        opacity: 0.2;
+        display: block;
+        margin: 0 auto 1rem;
+    }
+    .quot-content {
+        font-size: 1.25rem;
+        font-weight: 500;
+        line-height: 1.6;
+        color: var(--md-sys-color-on-surface);
+    }
+</style>

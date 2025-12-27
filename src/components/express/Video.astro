@@ -1,0 +1,75 @@
+---
+interface Props {
+    src?: string; // Direct URL
+    bilibili?: string; // BV ID
+    youtube?: string; // Video ID
+    width?: string;
+    autoplay?: boolean;
+}
+
+const {
+    src,
+    bilibili,
+    youtube,
+    width = "100%",
+    autoplay = false,
+} = Astro.props;
+
+// Helper to construct URLs
+let embedSrc = "";
+if (bilibili) {
+    embedSrc = `//player.bilibili.com/player.html?bvid=${bilibili}&page=1&high_quality=1&autoplay=${autoplay ? 1 : 0}`;
+} else if (youtube) {
+    embedSrc = `https://www.youtube.com/embed/${youtube}?autoplay=${autoplay ? 1 : 0}`;
+}
+
+const style = `width: ${width}; margin: 2rem auto; display: block;`;
+---
+
+{
+    src ? (
+        <video
+            src={src}
+            controls
+            style={style}
+            autoplay={autoplay}
+            width="100%"
+            class="express-video"
+        >
+            Your browser does not support the video tag.
+        </video>
+    ) : (
+        <div class="express-video-embed" style={style}>
+            <iframe
+                src={embedSrc}
+                scrolling="no"
+                border="0"
+                frameborder="no"
+                framespacing="0"
+                allowfullscreen="true"
+                loading="lazy"
+            />
+        </div>
+    )
+}
+
+<style>
+    .express-video {
+        border-radius: 12px;
+    }
+    .express-video-embed {
+        position: relative;
+        padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+        height: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #000;
+    }
+    .express-video-embed iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+</style>

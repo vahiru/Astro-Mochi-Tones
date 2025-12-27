@@ -1,0 +1,74 @@
+---
+interface Props {
+    checked?: boolean;
+    color?:
+        | "default"
+        | "red"
+        | "orange"
+        | "yellow"
+        | "green"
+        | "cyan"
+        | "blue"
+        | "purple";
+    label?: string;
+}
+
+const { checked = false, color = "default", label } = Astro.props;
+
+const colors = {
+    default: "var(--md-sys-color-primary)",
+    red: "#d32f2f",
+    orange: "#f57c00",
+    yellow: "#fbc02d",
+    green: "#388e3c",
+    cyan: "#0097a7",
+    blue: "#1976d2",
+    purple: "#7b1fa2",
+};
+
+const activeColor = colors[color] || colors.default;
+---
+
+<div
+    class={`radio ${checked ? "checked" : ""}`}
+    style={checked ? `--active-color: ${activeColor}` : ""}
+>
+    <div class="circle">
+        {checked && <div class="dot" />}
+    </div>
+    <div class="label">
+        <slot>{label}</slot>
+    </div>
+</div>
+
+<style>
+    .radio {
+        display: flex;
+        align-items: center;
+        margin: 0.5rem 0;
+        cursor: default;
+    }
+    .circle {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--md-sys-color-outline);
+        border-radius: 50%;
+        margin-right: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .radio.checked .circle {
+        border-color: var(--active-color, var(--md-sys-color-primary));
+    }
+    .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: var(--active-color, var(--md-sys-color-primary));
+    }
+    .label {
+        line-height: 1.4;
+    }
+</style>

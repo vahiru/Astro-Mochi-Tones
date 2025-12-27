@@ -1,0 +1,21 @@
+---
+
+---
+
+<span class="psw" title="Hover to view"><slot /></span>
+<style>
+    .psw {
+        background-color: var(--md-sys-color-on-surface);
+        color: transparent;
+        border-radius: 2px;
+        padding: 0 2px;
+        transition:
+            color 0.2s,
+            background-color 0.2s;
+        cursor: default;
+    }
+    .psw:hover {
+        background-color: var(--md-sys-color-surface-variant);
+        color: var(--md-sys-color-on-surface);
+    }
+</style>

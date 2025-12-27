@@ -1,0 +1,123 @@
+---
+interface Props {
+    src: string;
+    desc?: string; // used as alt and caption
+    download?: boolean | string; // if truthy, show download link. If string, use as download url.
+    width?: string;
+    height?: string;
+    padding?: string;
+    bg?: string;
+    fancybox?: boolean;
+}
+
+const {
+    src,
+    desc,
+    download,
+    width,
+    height,
+    padding,
+    bg,
+    fancybox = true,
+} = Astro.props;
+
+// Determine download link
+let downloadUrl: string | undefined;
+if (download === true || download === "true") {
+    downloadUrl = src;
+} else if (typeof download === "string" && download) {
+    downloadUrl = download;
+}
+
+const containerStyle = [
+    bg && `background-color: ${bg}`,
+    padding && `padding: ${padding}`,
+    width && `width: ${width}`,
+]
+    .filter(Boolean)
+    .join("; ");
+
+const imgStyle = [
+    height && `height: ${height}; object-fit: contain;`,
+    width && `width: 100%;`, // If wrapper has width, img fills it
+]
+    .filter(Boolean)
+    .join("; ");
+---
+
+<div class="express-image-wrapper">
+    <figure class="express-figure" style={containerStyle}>
+        <a
+            href={src}
+            data-fancybox={fancybox ? "gallery" : undefined}
+            data-caption={desc}
+        >
+            <img src={src} alt={desc || ""} style={imgStyle} loading="lazy" />
+        </a>
+        {desc && <figcaption>{desc}</figcaption>}
+        {
+            downloadUrl && (
+                <a
+                    href={downloadUrl}
+                    class="download-btn"
+                    download
+                    target="_blank"
+                    title="Download"
+                >
+                    <span class="material-symbols-rounded">download</span>
+                </a>
+            )
+        }
+    </figure>
+</div>
+
+<style>
+    .express-image-wrapper {
+        display: flex;
+        justify-content: center;
+        margin: 2rem 0;
+    }
+    .express-figure {
+        position: relative;
+        margin: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: transparent; /* default */
+        max-width: 100%;
+    }
+    .express-figure img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px; /* Inner radius if padding exists */
+        display: block;
+    }
+    figcaption {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--md-sys-color-on-surface-variant);
+        text-align: center;
+    }
+    .download-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        backdrop-filter: blur(4px);
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .express-figure:hover .download-btn {
+        opacity: 1;
+    }
+</style>

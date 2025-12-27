@@ -1,0 +1,95 @@
+---
+interface Props {
+    text: string;
+}
+
+const { text } = Astro.props;
+---
+
+<div class="express-copy">
+    <span class="copy-text">{text}</span>
+    <button class="copy-btn" data-text={text} title="Copy to clipboard">
+        <span class="material-symbols-rounded icon">content_copy</span>
+        <span class="copy-feedback">Copied!</span>
+    </button>
+</div>
+
+<script>
+    function setupCopy() {
+        const btns = document.querySelectorAll(".copy-btn");
+        btns.forEach((btn) => {
+            btn.addEventListener("click", async () => {
+                const text = btn.getAttribute("data-text");
+                if (text) {
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        btn.classList.add("copied");
+                        setTimeout(() => {
+                            btn.classList.remove("copied");
+                        }, 2000);
+                    } catch (err) {
+                        console.error("Failed to copy", err);
+                    }
+                }
+            });
+        });
+    }
+    setupCopy();
+    // If viewing transition is used, might need to re-run on swap
+    document.addEventListener("astro:after-swap", setupCopy);
+</script>
+
+<style>
+    .express-copy {
+        display: flex;
+        align-items: center;
+        background-color: var(--md-sys-color-surface-container);
+        border: 1px solid var(--md-sys-color-outline-variant);
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        margin: 1rem 0;
+        font-family: monospace;
+    }
+    .copy-text {
+        flex-grow: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-right: 1rem;
+    }
+    .copy-btn {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--md-sys-color-primary);
+        transition: background 0.2s;
+    }
+    .copy-btn:hover {
+        background-color: var(--md-sys-color-surface-variant);
+    }
+    .copy-btn .icon {
+        font-size: 20px;
+    }
+    .copy-feedback {
+        position: absolute;
+        top: -30px;
+        right: 0;
+        background: var(--md-sys-color-inverse-surface);
+        color: var(--md-sys-color-inverse-on-surface);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        white-space: nowrap;
+    }
+    .copy-btn.copied .copy-feedback {
+        opacity: 1;
+    }
+</style>

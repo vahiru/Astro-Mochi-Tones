@@ -1,0 +1,297 @@
+---
+// src/pages/blog/[...slug].astro
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Waline from '../../components/Waline.astro';
+import '@material/web/icon/icon.js';
+import '@material/web/button/text-button.js';
+import '@material/web/divider/divider.js';
+import '@material/web/iconbutton/icon-button.js';
+
+interface Props {
+    post: CollectionEntry<'blog'>;
+    prevPost: CollectionEntry<'blog'> | null;
+    nextPost: CollectionEntry<'blog'> | null;
+}
+
+export async function getStaticPaths() {
+    const allPosts = await getCollection('blog');
+    const sortedPosts = allPosts
+        .filter(p => !p.data.draft)
+        .sort((a, b) => {
+            const dateA = a.data.date ? new Date(a.data.date).valueOf() : 0;
+            const dateB = b.data.date ? new Date(b.data.date).valueOf() : 0;
+            return dateB - dateA;
+        });
+
+    return sortedPosts.map((post, index) => {
+        // 计算上一篇和下一篇
+        const nextPost = index > 0 ? sortedPosts[index - 1] : null;
+        const prevPost = index < sortedPosts.length - 1 ? sortedPosts[index + 1] : null;
+        return { 
+            params: { slug: post.slug }, 
+            props: { post, prevPost, nextPost } 
+        };
+    });
+}
+
+const { post, prevPost, nextPost } = Astro.props;
+const { Content, headings } = await post.render();
+
+// 日期格式化
+let dateObj;
+try {
+    // @ts-ignore
+    const raw = post.data.date || new Date();
+    dateObj = new Date(raw);
+} catch(e) { dateObj = new Date(); }
+
+const formattedDate = isNaN(dateObj.getTime()) 
+    ? '暂无日期' 
+    : dateObj.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+
+// 生成无图时的 Banner 背景色
+const themes = ['primary', 'secondary', 'tertiary'];
+const themeColorVar = `var(--md-sys-color-${themes[post.data.title.length % themes.length]}-container)`;
+const onThemeColorVar = `var(--md-sys-color-on-${themes[post.data.title.length % themes.length]}-container)`;
+
+// SEO 描述
+const description = post.data.description || post.body.substring(0, 100);
+---
+
+<Layout 
+  title={post.data.title} 
+  description={description} 
+  image={post.data.cover}
+  articleDate={post.data.date}
+>
+  
+  <div class="blog-layout">
+    
+    <main class="article-wrapper">
+      <article class="post-card">
+        
+        <header class="post-header">
+            <div class="back-nav">
+                <md-text-button href="/">
+                    <md-icon slot="icon">arrow_back</md-icon>返回首页
+                </md-text-button>
+            </div>
+
+            {post.data.cover ? (
+                <div class="cover-wrapper">
+                    <img src={post.data.cover} alt={post.data.title} class="post-cover" onerror="this.style.display='none'"/>
+                </div>
+            ) : (
+                <div class="title-banner" style={`background-color: ${themeColorVar}; color: ${onThemeColorVar}`}>
+                   <md-icon class="banner-icon">article</md-icon>
+                </div>
+            )}
+            
+            <div class="header-text">
+                <h1 class="post-title">{post.data.title}</h1>
+                <div class="post-meta">
+                    <div class="meta-item">
+                        <md-icon style="font-size: 18px;">calendar_today</md-icon>
+                        <span>{formattedDate}</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <md-divider></md-divider>
+
+        <div class="post-content typo">
+            <Content />
+        </div>
+
+        <md-divider></md-divider>
+
+        <footer class="post-footer">
+            {post.data.tags && post.data.tags.length > 0 && (
+                <div class="tags-wrapper">
+                    <md-icon style="font-size: 20px; opacity: 0.7;">label</md-icon>
+                    <div class="tags-list">
+                        {post.data.tags.map(tag => (
+                            <a href={`/tags/${tag}`} class="tag-chip">#{tag}</a>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </footer>
+
+        <Waline />
+
+      </article>
+
+      <nav class="post-nav">
+        {prevPost ? (
+            <a href={`/blog/${prevPost.slug}`} class="nav-link prev">
+                <div class="nav-label"><md-icon>arrow_back</md-icon> Previous</div>
+                <div class="nav-title">{prevPost.data.title}</div>
+            </a>
+        ) : <div></div>}
+        
+        {nextPost && (
+            <a href={`/blog/${nextPost.slug}`} class="nav-link next">
+                <div class="nav-label">Next <md-icon>arrow_forward</md-icon></div>
+                <div class="nav-title">{nextPost.data.title}</div>
+            </a>
+        )}
+      </nav>
+
+    </main>
+
+    <aside class="toc-sidebar">
+        <div class="toc-sticky">
+            <div class="toc-header">On this page</div>
+            {headings.length > 0 ? (
+                <ul class="toc-list">
+                    {headings.filter(h => h.depth <= 3).map(h => (
+                        <li class={`toc-item depth-${h.depth}`}>
+                            <a href={`#${h.slug}`}>{h.text}</a>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p style="opacity: 0.5; font-size: 0.9rem;">No headings</p>
+            )}
+        </div>
+    </aside>
+
+  </div>
+</Layout>
+
+<script>
+    const preBlocks = document.querySelectorAll('pre');
+    preBlocks.forEach(pre => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'code-wrapper';
+        pre.parentNode?.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.innerHTML = '<span class="material-symbols-rounded">content_copy</span>';
+        btn.onclick = async () => {
+            await navigator.clipboard.writeText(pre.innerText);
+            btn.innerHTML = '<span class="material-symbols-rounded">check</span>';
+            setTimeout(() => btn.innerHTML = '<span class="material-symbols-rounded">content_copy</span>', 2000);
+        };
+        wrapper.appendChild(btn);
+    });
+</script>
+
+<style is:global>
+  /* === Shiki 代码高亮适配 === */
+  .astro-code, .astro-code span {
+    color: var(--shiki-light) !important;
+    background-color: var(--shiki-light-bg) !important;
+  }
+  :root.dark .astro-code, :root.dark .astro-code span {
+    color: var(--shiki-dark) !important;
+    background-color: var(--shiki-dark-bg) !important;
+  }
+
+  .code-wrapper {
+      position: relative; margin: 1.5rem 0; border-radius: 16px;
+      overflow: hidden; border: 1px solid var(--md-sys-color-outline-variant);
+  }
+  .astro-code { padding: 1.5rem; overflow-x: auto; font-family: 'Fira Code', monospace; font-size: 0.9rem; line-height: 1.5; }
+  .copy-btn {
+      position: absolute; top: 8px; right: 8px; width: 32px; height: 32px;
+      background: var(--md-sys-color-surface-container-high);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--md-sys-color-on-surface-variant);
+  }
+  .copy-btn:hover { background: var(--md-sys-color-surface-variant); }
+  .copy-btn span { font-size: 18px; }
+
+  /* 排版细节 */
+  .typo h2 { 
+      margin-top: 2.5rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 500; 
+      color: var(--md-sys-color-on-surface); scroll-margin-top: 80px;
+  }
+  .typo p { margin-bottom: 1.5rem; line-height: 1.7; color: var(--md-sys-color-on-surface-variant); }
+  .typo img { max-width: 100%; border-radius: 16px; display: block; margin: 2rem auto; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .typo blockquote {
+      border-left: 4px solid var(--md-sys-color-primary);
+      background: var(--md-sys-color-surface-container-low);
+      margin: 2rem 0; padding: 1rem 1.5rem; border-radius: 0 12px 12px 0;
+  }
+  .typo a { color: var(--md-sys-color-primary); text-decoration: none; font-weight: 500; }
+  .typo a:hover { text-decoration: underline; }
+  .typo code:not(pre code) {
+      background-color: var(--md-sys-color-surface-container-high);
+      color: var(--md-sys-color-primary);
+      padding: 2px 6px; border-radius: 6px; font-size: 0.85em; font-family: monospace;
+  }
+</style>
+
+<style>
+    .blog-layout {
+        max-width: 1400px; margin: 0 auto; padding: 0;
+        display: grid; gap: 2rem; grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 1200px) {
+        .blog-layout { grid-template-columns: 1fr 280px; padding: 0 2rem; align-items: start; }
+        .toc-sidebar { display: block !important; }
+    }
+
+    .article-wrapper { min-width: 0; }
+    .post-card {
+        background-color: var(--md-sys-color-surface);
+        border-radius: 24px; padding: 1.5rem;
+    }
+    @media (min-width: 768px) { 
+        .post-card { padding: 3rem 4rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    }
+
+    .post-header { margin-bottom: 2rem; }
+    .back-nav { margin-bottom: 1.5rem; margin-left: -12px; }
+    .cover-wrapper { width: 100%; height: 360px; border-radius: 24px; overflow: hidden; margin-bottom: 2rem; background-color: var(--md-sys-color-surface-variant); }
+    .post-cover { width: 100%; height: 100%; object-fit: cover; }
+    .title-banner { width: 100%; height: 200px; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; }
+    .banner-icon { font-size: 64px; opacity: 0.5; }
+    .post-title { font-size: 2.5rem; line-height: 1.2; margin-bottom: 1rem; color: var(--md-sys-color-on-surface); }
+    .post-meta { display: flex; gap: 12px; color: var(--md-sys-color-on-surface-variant); align-items: center; }
+    .meta-item { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; }
+    
+    .post-content { padding: 2rem 0; }
+    
+    .post-footer { padding-top: 1.5rem; margin-bottom: 2rem; }
+    .tags-wrapper { display: flex; align-items: center; gap: 12px; color: var(--md-sys-color-on-surface-variant); }
+    .tags-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag-chip { 
+        padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; text-decoration: none;
+        background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+    }
+
+    /* Nav */
+    .post-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 3rem; }
+    .nav-link {
+        padding: 1.5rem; border-radius: 16px; background: var(--md-sys-color-surface-container);
+        text-decoration: none; transition: transform 0.2s; display: flex; flex-direction: column;
+    }
+    .nav-link:hover { transform: translateY(-2px); background: var(--md-sys-color-surface-container-high); }
+    .nav-label { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--md-sys-color-primary); margin-bottom: 4px; }
+    .nav-title { font-weight: 600; color: var(--md-sys-color-on-surface); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .nav-link.next { text-align: right; align-items: flex-end; }
+
+    /* TOC */
+    .toc-sidebar { display: none; }
+    .toc-sticky {
+        position: sticky; top: 2rem; padding-left: 1rem;
+        border-left: 1px solid var(--md-sys-color-outline-variant);
+    }
+    .toc-header { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--md-sys-color-on-surface); margin-bottom: 1rem; }
+    .toc-list { list-style: none; padding: 0; margin: 0; }
+    .toc-item a {
+        display: block; text-decoration: none; font-size: 0.9rem; color: var(--md-sys-color-on-surface-variant);
+        padding: 4px 0; transition: color 0.2s;
+    }
+    .toc-item a:hover { color: var(--md-sys-color-primary); }
+    .depth-3 { padding-left: 1rem; }
+</style>

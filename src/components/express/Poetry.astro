@@ -1,0 +1,54 @@
+---
+interface Props {
+    title?: string;
+    author?: string;
+}
+
+const { title, author } = Astro.props;
+---
+
+<div class="express-poetry">
+    {
+        (title || author) && (
+            <div class="poetry-header">
+                {title && <div class="poetry-title">{title}</div>}
+                {author && <div class="poetry-author">{author}</div>}
+            </div>
+        )
+    }
+    <div class="poetry-content">
+        <slot />
+    </div>
+</div>
+
+<style>
+    .express-poetry {
+        padding: 2rem;
+        margin: 2rem 0;
+        background-color: var(--md-sys-color-surface-container);
+        border-radius: 12px;
+        text-align: center;
+    }
+    .poetry-header {
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--md-sys-color-outline-variant);
+        padding-bottom: 1rem;
+        display: inline-block;
+        min-width: 50%;
+    }
+    .poetry-title {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .poetry-author {
+        font-size: 0.875rem;
+        color: var(--md-sys-color-on-surface-variant);
+    }
+    .poetry-content {
+        white-space: pre-wrap;
+        line-height: 2;
+        font-family: serif;
+        font-size: 1.1rem;
+    }
+</style>

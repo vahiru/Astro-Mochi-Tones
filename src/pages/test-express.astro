@@ -1,0 +1,186 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Mark from "../components/express/Mark.astro";
+import Link from "../components/express/Link.astro";
+import Note from "../components/express/Note.astro";
+import Image from "../components/express/Image.astro";
+import Checkbox from "../components/express/Checkbox.astro";
+import Radio from "../components/express/Radio.astro";
+import Paper from "../components/express/Paper.astro";
+import Reel from "../components/express/Reel.astro";
+import Bvideo from "../components/express/Bvideo.astro";
+import Video from "../components/express/Video.astro";
+import Icon from "../components/express/Icon.astro";
+import Hashtag from "../components/express/Hashtag.astro";
+import Quot from "../components/express/Quot.astro";
+import Poetry from "../components/express/Poetry.astro";
+import Copy from "../components/express/Copy.astro";
+import Navbar from "../components/express/Navbar.astro";
+import Psw from "../components/express/Psw.astro";
+import Kbd from "../components/express/Kbd.astro";
+import U from "../components/express/U.astro";
+import Emp from "../components/express/Emp.astro";
+import Wavy from "../components/express/Wavy.astro";
+import Del from "../components/express/Del.astro";
+import OKR from "../components/express/OKR.astro";
+import KeyResult from "../components/express/KeyResult.astro";
+
+const okrLinks = [
+    { text: "Article", url: "#", active: true },
+    { text: "Project", url: "#" },
+    { text: "Comments", url: "#" },
+    { text: "GitHub", url: "#" },
+];
+---
+
+<Layout title="Express Plugins Test">
+    <main class="container">
+        <h1>Express Components Test</h1>
+
+        <section>
+            <h2>Mark & Colors</h2>
+            <p>
+                <Mark color="default">Default</Mark>
+                <Mark color="red">Red</Mark>
+                <Mark color="orange">Orange</Mark>
+                <Mark color="yellow">Yellow</Mark>
+                <Mark color="green">Green</Mark>
+                <Mark color="cyan">Cyan</Mark>
+                <Mark color="blue">Blue</Mark>
+                <Mark color="purple">Purple</Mark>
+                <Mark color="light">Light</Mark>
+                <Mark color="dark">Dark</Mark>
+                <Mark color="warning">Warning</Mark>
+                <Mark color="error">Error</Mark>
+            </p>
+        </section>
+
+        <section>
+            <h2>Text Decoration</h2>
+            <p>
+                Password: <Psw>Secret</Psw><br />
+                Keyboard: <Kbd>Ctrl</Kbd> + <Kbd>C</Kbd><br />
+                Underline: <U>Important</U><br />
+                Emphasis: <Emp>Look here</Emp><br />
+                Wavy: <Wavy>Spelling error?</Wavy><br />
+                Delete: <Del>Old price</Del>
+            </p>
+        </section>
+
+        <section>
+            <h2>Icon & Hashtag</h2>
+            <p>
+                Icon: <Icon src="/favicon.svg" /> (Favicon)<br />
+                Hashtags:
+                <Hashtag tag="Stellaris" color="cyan" />
+                <Hashtag tag="Hexo" color="blue" />
+                <Hashtag tag="Astro" color="orange" />
+            </p>
+        </section>
+
+        <section>
+            <h2>Checkboxes & Radios</h2>
+            <Checkbox>Unchecked</Checkbox>
+            <Checkbox checked>Checked</Checkbox>
+            <Checkbox checked color="green" symbol="plus">Green Plus</Checkbox>
+            <Radio>Option 1</Radio>
+            <Radio checked>Option 2</Radio>
+        </section>
+
+        <section>
+            <h2>Copy & Navbar</h2>
+            <Copy text="npm install astro" />
+            <Navbar links={okrLinks} />
+        </section>
+
+        <section>
+            <h2>Note</h2>
+            <Note title="Default Note">This is a default note.</Note>
+            <Note title="Warning" color="warning">Be careful!</Note>
+            <Note title="Error" color="error">Something went wrong.</Note>
+            <Note title="Success" color="green">Everything is fine.</Note>
+        </section>
+
+        <section>
+            <h2>Quot & Poetry</h2>
+            <Quot> 愿我们的意志化作群星，直达银河系的彼端 </Quot>
+
+            <Poetry title="定风波" author="苏轼">
+                莫听穿林打叶声，何妨吟啸且徐行。
+                竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。
+            </Poetry>
+        </section>
+
+        <section>
+            <h2>Paper & Reel</h2>
+            <Paper title="Paper Title" author="Author" date="2024">
+                This is a paper styled container. It mimics a document.
+            </Paper>
+
+            <Reel title="Reel Title">
+                This is a reel container. It has a vertical layout and scrolls
+                horizontally if needed. Perfect for traditional Chinese text or
+                artistic display.
+            </Reel>
+        </section>
+
+        <section>
+            <h2>Link Card</h2>
+            <Link
+                href="https://astro.build"
+                title="Astro"
+                desc="The web framework for content-driven websites."
+            />
+        </section>
+
+        <section>
+            <h2>Image</h2>
+            <Image
+                src="https://via.placeholder.com/600x400"
+                desc="Placeholder Image"
+                download="true"
+            />
+        </section>
+
+        <section>
+            <h2>OKR</h2>
+            <OKR o1="2025 Vision">
+                <KeyResult kr="Functionality" percent={1}>
+                    All components implemented.
+                </KeyResult>
+                <KeyResult kr="Design" percent={0.8}>
+                    Looks good but needs polish.
+                </KeyResult>
+                <KeyResult kr="Testing" percent={0.2} status="at_risk">
+                    Need more unit tests.
+                </KeyResult>
+            </OKR>
+        </section>
+
+        <section>
+            <h2>Video</h2>
+            <h3>Bilibili</h3>
+            <Bvideo bv="BV1ae4y127K5" />
+
+            <h3>Standard Video</h3>
+            <Video youtube="LB8KwiiUGy0" />
+        </section>
+    </main>
+</Layout>
+
+<style>
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    section {
+        margin-bottom: 4rem;
+        border-bottom: 1px dashed var(--md-sys-color-outline-variant);
+        padding-bottom: 2rem;
+    }
+    h2 {
+        margin-bottom: 2rem;
+        color: var(--md-sys-color-primary);
+    }
+</style>

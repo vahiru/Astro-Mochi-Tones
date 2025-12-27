@@ -1,0 +1,218 @@
+---
+// src/components/Footer.astro
+import '@material/web/icon/icon.js';
+const year = new Date().getFullYear();
+---
+
+<div class="footer-wave-wrapper">
+  <div class="footer-wave" aria-hidden="true"></div>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    
+    <div class="footer-body">
+      
+      <div class="footer-brand">
+        <div class="brand-header">
+          <span class="brand-name">Vahiru's Blog</span>
+        </div>
+        <p class="brand-slogan">
+         愿你能被这个世界温柔以待，愿你我皆能在时光中安然前行。
+        </p>
+      </div>
+
+      <nav class="footer-nav">
+        
+        <div class="nav-column">
+          <h3 class="nav-title">Social</h3>
+          <ul class="nav-list">
+            <li><a href="https://github.com/vahiru" target="_blank">GitHub</a></li>
+            <li><a href="http://x.com/vahiru" target="_blank">X (Twitter)</a></li>
+            <li><a href="https://t.me/vahiru" target="_blank">Telegram</a></li>
+            <li><a href="/rss.xml">Blog RSS</a></li>
+          </ul>
+        </div>
+
+      </nav>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="copyright">
+        &copy; {year} Vahiru. All rights reserved.
+      </div>
+      
+      <div class="theme-credit">
+        Theme <a href="https://github.com/vahiru/Astro-Mochi-Tones" target="_blank">Mochi Tones</a>
+      </div>
+    </div>
+
+  </div>
+</footer>
+
+<style>
+  /* === 1. 顶部波浪线 (带强力投影) === */
+  .footer-wave-wrapper {
+    width: 100%;
+    margin-top: 80px;
+    /* 关键：给波浪加阴影，制造“覆盖在页面上”的层级感 */
+    filter: drop-shadow(0 -6px 10px rgba(0, 0, 0, 0.08));
+    position: relative;
+    z-index: 10;
+  }
+
+  .footer-wave {
+    width: 100%;
+    height: 15px;
+    
+    /* 核心颜色：必须与 footer 背景一致 (Secondary Container) */
+    background-image: radial-gradient(
+      circle at 10px -5px, 
+      transparent 12px, 
+      var(--md-sys-color-secondary-container) 13px
+    );
+    background-size: 20px 20px;
+    background-repeat: repeat-x;
+    background-position: bottom;
+    
+    display: block;
+    position: relative;
+    top: 1px;
+  }
+
+  /* === 2. 页脚容器 === */
+  .site-footer {
+    background-color: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    font-family: 'Roboto', sans-serif;
+    padding-bottom: 32px;
+  }
+
+  .footer-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* === 3. 主体布局 === */
+  .footer-body {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 48px;
+    padding-bottom: 40px;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  /* 左侧：品牌 */
+  .footer-brand {
+    max-width: 400px;
+  }
+
+  .brand-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+    /* 这里的文字颜色要跟随容器变化 */
+    color: var(--md-sys-color-on-secondary-container);
+  }
+  .brand-icon { font-size: 32px; width: 32px; height: 32px; color: var(--md-sys-color-primary); }
+  .brand-name { font-size: 1.5rem; font-weight: 500; letter-spacing: -0.5px; }
+
+  .brand-slogan {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--md-sys-color-on-secondary-container);
+    opacity: 0.8;
+  }
+
+  /* 右侧：导航组 */
+  .footer-nav {
+    display: flex;
+    gap: 80px;
+  }
+
+  .nav-column {
+    display: flex; flex-direction: column; gap: 20px;
+  }
+
+  .nav-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--md-sys-color-on-secondary-container);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+  }
+
+  /* === 4. 列表样式重置 === */
+  ul.nav-list {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .nav-list li {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .nav-list a {
+    text-decoration: none;
+    font-size: 0.95rem;
+    /* 使用 on-secondary-container 确保对比度 */
+    color: var(--md-sys-color-on-secondary-container);
+    position: relative;
+    opacity: 0.75; /* 稍微淡一点 */
+    transition: opacity 0.2s, color 0.2s;
+  }
+  
+  .nav-list a:hover {
+    opacity: 1;
+    text-decoration: underline;
+    color: var(--md-sys-color-primary);
+  }
+
+  /* === 5. 底部版权行 === */
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 24px;
+    /* 极淡的分割线，颜色适配 */
+    border-top: 1px solid rgba(0,0,0,0.08);
+    
+    font-size: 0.85rem;
+    color: var(--md-sys-color-on-secondary-container);
+    opacity: 0.8;
+  }
+
+  .theme-credit a {
+    color: inherit;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .theme-credit a:hover {
+    text-decoration: underline;
+    color: var(--md-sys-color-primary);
+  }
+
+  /* === 移动端适配 === */
+  @media (max-width: 900px) {
+    .footer-body { flex-direction: column; gap: 40px; }
+    .footer-nav { 
+        justify-content: flex-start; 
+        flex-wrap: wrap; 
+        gap: 40px; 
+    }
+    .footer-bottom { 
+        flex-direction: column; 
+        align-items: flex-start; 
+        gap: 16px; 
+    }
+  }
+</style>

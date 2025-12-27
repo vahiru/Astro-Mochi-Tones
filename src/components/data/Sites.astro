@@ -1,0 +1,33 @@
+---
+import FriendLink from "./FriendLink.astro";
+
+interface LinkItem {
+    title: string;
+    url: string;
+    avatar?: string;
+    description?: string;
+    screenshot?: string;
+}
+
+interface Props {
+    items?: LinkItem[];
+    group?: string; // Optional group name if we implement global data store later
+}
+
+const { items = [] } = Astro.props;
+---
+
+<div class="sites-grid">
+    {items.map((item) => <FriendLink {...item} />)}
+    <slot />
+    {/* For manual FriendLink children */}
+</div>
+
+<style>
+    .sites-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+</style>

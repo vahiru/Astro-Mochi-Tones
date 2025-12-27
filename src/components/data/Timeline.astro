@@ -1,0 +1,52 @@
+---
+interface Props {
+    api?: string;
+    user?: string;
+    type?: "issues" | "releases";
+}
+
+const { api, user, type } = Astro.props;
+
+// Note: Dynamic API fetching would typically happen client-side or during build.
+// For now, this component mainly serves as a container for TimelineNodes (static).
+// If API is provided, we adds a data attribute for client-side scripts to potentially hook into.
+---
+
+<div class="timeline" data-api={api} data-user={user} data-type={type}>
+    <slot />
+    {api && <div class="timeline-loading">Loading timeline...</div>}
+</div>
+
+<script>
+    // Basic client-side fetch implementation for demo purposes if API is present
+    // This is a placeholder for the full logic which handles GitHub/Gitea parsing
+    const timelines = document.querySelectorAll(".timeline[data-api]");
+    timelines.forEach(async (tl) => {
+        const api = tl.getAttribute("data-api");
+        if (!api) return;
+
+        try {
+            // In a real implementation, we would fetch and render nodes here.
+            // For this demo, we just update the loading text or leave it.
+            // const res = await fetch(api);
+            // const data = await res.json();
+            // ... render logic ...
+        } catch (e) {
+            console.error("Failed to load timeline", e);
+        }
+    });
+</script>
+
+<style>
+    .timeline {
+        position: relative;
+        margin: 2rem 0;
+        padding-left: 2rem;
+        border-left: 2px solid var(--md-sys-color-surface-container-high);
+    }
+    .timeline-loading {
+        padding: 1rem;
+        color: var(--md-sys-color-on-surface-variant);
+        font-size: 0.875rem;
+    }
+</style>

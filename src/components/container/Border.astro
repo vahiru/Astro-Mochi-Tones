@@ -1,0 +1,70 @@
+---
+interface Props {
+    title?: string;
+    color?:
+        | "default"
+        | "red"
+        | "orange"
+        | "yellow"
+        | "green"
+        | "cyan"
+        | "blue"
+        | "purple";
+}
+
+const { title, color = "default" } = Astro.props;
+
+const colors = {
+    default: {
+        border: "var(--md-sys-color-outline)",
+        bg: "var(--md-sys-color-surface)",
+    },
+    red: { border: "#ef5350", bg: "#ffebee" },
+    orange: { border: "#ffa726", bg: "#fff3e0" },
+    yellow: { border: "#fdd835", bg: "#fffde7" },
+    green: { border: "#66bb6a", bg: "#e8f5e9" },
+    cyan: { border: "#26c6da", bg: "#e0f7fa" },
+    blue: { border: "#42a5f5", bg: "#e3f2fd" },
+    purple: { border: "#ab47bc", bg: "#f3e5f5" },
+};
+
+const style = colors[color] || colors.default;
+---
+
+<div class="border-box" style={`border-color: ${style.border};`}>
+    {
+        title && (
+            <div
+                class="border-title"
+                style={`background-color: ${style.bg}; color: ${style.border}`}
+            >
+                {title}
+            </div>
+        )
+    }
+    <div class="border-content">
+        <slot />
+    </div>
+</div>
+
+<style>
+    .border-box {
+        border: 2px solid;
+        border-radius: 12px;
+        margin: 2rem 0;
+        position: relative;
+        padding: 1.5rem;
+    }
+    .border-title {
+        position: absolute;
+        top: -0.75rem; /* half height approx */
+        left: 1rem;
+        padding: 0 0.5rem;
+        font-weight: bold;
+        font-size: 0.9rem;
+        line-height: 1.5rem;
+    }
+    .border-content {
+        /* Styles for content */
+    }
+</style>
