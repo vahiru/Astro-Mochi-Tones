@@ -1,18 +1,27 @@
 ---
 // src/components/Waline.astro
+import themeConfig from 'astro-mochi-tones:config';
+
+const serverURL = themeConfig.waline?.serverURL;
 ---
 
-<div id="waline"></div>
+{serverURL && <div id="waline" data-server-url={serverURL}></div>}
 
-<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css" />
+{serverURL && <link rel="stylesheet" href="https://unpkg.com/@waline/client@3/dist/waline.css" />}
 
-<script>
+{serverURL && <script>
   import { init } from '@waline/client';
 
+  const container = document.getElementById('waline');
+  const serverURL = container?.dataset.serverUrl;
+
+  if (!container || !serverURL) {
+    throw new Error('Waline serverURL is missing.');
+  }
+
   const waline = init({
-    el: '#waline',
-    // ⚠️ 记得替换成你的真实后端地址
-    serverURL: 'waline-fawn-nine.vercel.app', 
+    el: container,
+    serverURL,
     pageview: true, 
     comment: true,
     emoji: [
@@ -21,7 +30,7 @@
     ],
     dark: 'html.dark',
   });
-</script>
+</script>}
 
 <style is:global>
   /* === Material Design 3 深度适配 === */

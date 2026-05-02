@@ -1,7 +1,12 @@
 ---
 // src/components/Footer.astro
 import '@material/web/icon/icon.js';
+import themeConfig from 'astro-mochi-tones:config';
+
 const year = new Date().getFullYear();
+const siteTitle = themeConfig.title;
+const author = themeConfig.author || siteTitle;
+const slogan = themeConfig.footerSlogan || themeConfig.description || '';
 ---
 
 <div class="footer-wave-wrapper">
@@ -15,11 +20,9 @@ const year = new Date().getFullYear();
       
       <div class="footer-brand">
         <div class="brand-header">
-          <span class="brand-name">Vahiru's Blog</span>
+          <span class="brand-name">{siteTitle}</span>
         </div>
-        <p class="brand-slogan">
-         愿你能被这个世界温柔以待，愿你我皆能在时光中安然前行。
-        </p>
+        {slogan && <p class="brand-slogan">{slogan}</p>}
       </div>
 
       <nav class="footer-nav">
@@ -39,7 +42,7 @@ const year = new Date().getFullYear();
 
     <div class="footer-bottom">
       <div class="copyright">
-        &copy; {year} Vahiru. All rights reserved.
+        &copy; {year} {author}. All rights reserved.
       </div>
       
       <div class="theme-credit">

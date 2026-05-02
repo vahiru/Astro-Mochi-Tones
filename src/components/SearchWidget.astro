@@ -37,6 +37,17 @@ import '@material/web/iconbutton/icon-button.js';
   let fuse;
   let posts = [];
 
+  function showEmptyState(message) {
+    if (!resultsContainer) return;
+    resultsContainer.replaceChildren();
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    const text = document.createElement('p');
+    text.textContent = message;
+    empty.appendChild(text);
+    resultsContainer.appendChild(empty);
+  }
+
   async function initSearch() {
     if (posts.length > 0) return;
     
@@ -79,8 +90,7 @@ import '@material/web/iconbutton/icon-button.js';
       dialog?.close();
       // @ts-ignore
       input.value = ''; // 清空
-      // @ts-ignore
-      resultsContainer.innerHTML = '<div class="empty-state"><p>Type to search...</p></div>';
+      showEmptyState('Type to search...');
   });
 
   dialog?.addEventListener('click', (e) => {
@@ -94,8 +104,7 @@ import '@material/web/iconbutton/icon-button.js';
     const query = e.target.value;
     
     if (!query || query.length < 1) {
-        // @ts-ignore
-        resultsContainer.innerHTML = '<div class="empty-state"><p>Type to search...</p></div>';
+        showEmptyState('Type to search...');
         return;
     }
 
@@ -104,14 +113,14 @@ import '@material/web/iconbutton/icon-button.js';
     const results = fuse.search(query);
     
     if (results.length === 0) {
-        // @ts-ignore
-        resultsContainer.innerHTML = '<div class="empty-state"><p>No results found.</p></div>';
+        showEmptyState('No results found.');
         return;
     }
 
-    // 渲染结果 (截取正文作为预览)
-    // @ts-ignore
-    const html = results.slice(0, 20).map(result => {
+    if (!resultsContainer) return;
+    resultsContainer.replaceChildren();
+
+    results.slice(0, 20).forEach(result => {
         const item = result.item;
         
         // 生成一个简单的预览文本
@@ -121,19 +130,29 @@ import '@material/web/iconbutton/icon-button.js';
             snippet = item.content.substring(0, 60) + '...';
         }
 
-        return `
-            <a href="${item.slug}" class="result-item">
-                <div class="text-area">
-                    <div class="item-title">${item.title}</div>
-                    <div class="item-desc">${snippet}</div>
-                </div>
-                <span class="arrow-icon material-symbols-rounded">arrow_forward</span>
-            </a>
-        `;
-    }).join('');
+        const link = document.createElement('a');
+        link.href = item.slug;
+        link.className = 'result-item';
 
-    // @ts-ignore
-    resultsContainer.innerHTML = html;
+        const textArea = document.createElement('div');
+        textArea.className = 'text-area';
+
+        const title = document.createElement('div');
+        title.className = 'item-title';
+        title.textContent = item.title || 'Untitled';
+
+        const desc = document.createElement('div');
+        desc.className = 'item-desc';
+        desc.textContent = snippet || '';
+
+        const icon = document.createElement('span');
+        icon.className = 'arrow-icon material-symbols-rounded';
+        icon.textContent = 'arrow_forward';
+
+        textArea.append(title, desc);
+        link.append(textArea, icon);
+        resultsContainer.appendChild(link);
+    });
   });
 </script>
 

@@ -4,6 +4,7 @@ import BaseHead from "../components/BaseHead.astro";
 import NavRail from "../components/NavRail.astro";
 import Footer from "../components/Footer.astro";
 import SearchWidget from "../components/SearchWidget.astro";
+import themeConfig from "astro-mochi-tones:config";
 import "../styles/global.css";
 
 interface Props {
@@ -14,10 +15,8 @@ interface Props {
 }
 
 const {
-    title = "Vahiru's Blog",
-    description = "猫猫的自留地",
-    // ⚠️ [修改点 1] 默认图片改为 /images/ 目录下的文件
-    // 请确保你的 public/images/ 目录下真有这张图，后缀是 png/jpg/webp 都可以，这里改对就行
+    title = themeConfig.title,
+    description = themeConfig.description || "",
     image: _image,
     articleDate,
 } = Astro.props;
@@ -44,7 +43,7 @@ const resolveImage = (imgSrc: string) => {
 
 const canonicalURL = new URL(Astro.url.pathname, siteBase);
 const socialImageURL = resolveImage(image); // 使用新函数处理
-const siteTitle = "Vahiru's Blog";
+const siteTitle = themeConfig.title;
 const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
 ---
 
@@ -56,7 +55,7 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
         <link
             rel="alternate"
             type="application/rss+xml"
-            title="Vahiru's Blog RSS Feed"
+            title={`${siteTitle} RSS Feed`}
             href="/rss.xml"
         />
 

@@ -3,6 +3,7 @@ import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
 import sanitizeHtml from 'sanitize-html';
 import MarkdownIt from 'markdown-it';
+import themeConfig from 'astro-mochi-tones:config';
 
 const parser = new MarkdownIt();
 
@@ -15,8 +16,8 @@ export async function GET(context) {
     .sort((a, b) => new Date(b.data.date).valueOf() - new Date(a.data.date).valueOf());
 
   return rss({
-    title: "Vahiru's Blog",
-    description: '猫猫的自留地',
+    title: themeConfig.title,
+    description: themeConfig.description || '',
     site: context.site,
     // 生成 RSS 项
     items: posts.map((post) => ({
