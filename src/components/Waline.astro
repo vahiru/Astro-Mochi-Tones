@@ -3,17 +3,28 @@
 import themeConfig from 'astro-mochi-tones:config';
 
 const serverURL = themeConfig.waline?.serverURL;
+const walineConfig = themeConfig.waline;
 ---
 
-{serverURL && <div id="waline" data-server-url={serverURL}></div>}
+{serverURL && (
+  <div
+    id="waline"
+    data-server-url={serverURL}
+    data-pageview={String(walineConfig?.pageview ?? true)}
+    data-comment={String(walineConfig?.comment ?? true)}
+    data-dark={walineConfig?.dark ?? "html.dark"}
+    data-emojis={JSON.stringify(walineConfig?.emojis ?? [])}
+  />
+)}
 
-{serverURL && <link rel="stylesheet" href="https://unpkg.com/@waline/client@3/dist/waline.css" />}
+{serverURL && <link rel="stylesheet" href={walineConfig?.cssURL} />}
 
 {serverURL && <script>
   import { init } from '@waline/client';
 
   const container = document.getElementById('waline');
   const serverURL = container?.dataset.serverUrl;
+  const emojis = JSON.parse(container?.dataset.emojis || '[]');
 
   if (!container || !serverURL) {
     throw new Error('Waline serverURL is missing.');
@@ -22,13 +33,10 @@ const serverURL = themeConfig.waline?.serverURL;
   const waline = init({
     el: container,
     serverURL,
-    pageview: true, 
-    comment: true,
-    emoji: [
-      '//unpkg.com/@waline/emojis@1.1.0/weibo',
-      '//unpkg.com/@waline/emojis@1.1.0/bilibili',
-    ],
-    dark: 'html.dark',
+    pageview: container.dataset.pageview === 'true', 
+    comment: container.dataset.comment === 'true',
+    emoji: emojis,
+    dark: container.dataset.dark || 'html.dark',
   });
 </script>}
 

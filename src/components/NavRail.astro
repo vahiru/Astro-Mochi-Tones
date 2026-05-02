@@ -1,23 +1,27 @@
 ---
 // src/components/NavRail.astro
 import ColorPicker from './ColorPicker.astro'; 
-const pathname = Astro.url.pathname;
+import themeConfig from 'astro-mochi-tones:config';
 
-const navItems = [
-  { label: 'Home', icon: 'home', href: '/', active: pathname === '/' },
-  { label: 'Blog', icon: 'inventory_2', href: '/archives', active: pathname.startsWith('/archives') },
-  { label: 'About', icon: 'face', href: '/about', active: pathname.startsWith('/about') },
-  { label: 'Friends', icon: 'group', href: '/friends' , active: pathname.startsWith('/friends') },
-];
+const pathname = Astro.url.pathname;
+const { nav } = themeConfig;
+
+const navItems = nav.items.map((item) => {
+  const active = item.activePattern
+    ? new RegExp(item.activePattern).test(pathname)
+    : pathname === item.href;
+
+  return { ...item, active };
+});
 ---
 
 <nav class="nav-rail">
   <div class="rail-fab-wrapper">
-    <button class="search-fab" aria-label="Search"><md-icon>search</md-icon><md-ripple></md-ripple></button>
+    <button class="search-fab" aria-label={themeConfig.labels.search}><md-icon>search</md-icon><md-ripple></md-ripple></button>
   </div>
 
   <div class="drawer-header">
-    <span class="drawer-title">Menu</span>
+    <span class="drawer-title">{nav.drawerTitle}</span>
   </div>
 
   <div class="nav-group">
@@ -33,26 +37,26 @@ const navItems = [
 
   <div class="nav-group bottom-group">
     
-    <a href="/rss.xml" target="_blank" class="nav-item rss-btn">
-       <div class="icon-container"><md-icon>rss_feed</md-icon><md-ripple></md-ripple></div>
-       <span class="label">RSS</span>
+    <a href={themeConfig.rssPath} target="_blank" class="nav-item rss-btn">
+       <div class="icon-container"><md-icon>{nav.rssIcon}</md-icon><md-ripple></md-ripple></div>
+       <span class="label">{nav.rssLabel}</span>
     </a>
 
     <button id="palette-btn" class="nav-item" type="button">
-      <div class="icon-container"><md-icon>palette</md-icon><md-ripple></md-ripple></div>
-      <span class="label">Color</span>
+      <div class="icon-container"><md-icon>{nav.colorIcon}</md-icon><md-ripple></md-ripple></div>
+      <span class="label">{nav.colorLabel}</span>
     </button>
     
     <button id="theme-toggle" class="nav-item" type="button">
-      <div class="icon-container"><md-icon id="theme-icon">dark_mode</md-icon><md-ripple></md-ripple></div>
-      <span class="label">Theme</span>
+      <div class="icon-container"><md-icon id="theme-icon">{nav.darkIcon}</md-icon><md-ripple></md-ripple></div>
+      <span class="label">{nav.themeLabel}</span>
     </button>
   </div>
 
   <ColorPicker />
 </nav>
 
-<script>
+<script define:vars={{ darkIcon: nav.darkIcon, lightIcon: nav.lightIcon }}>
     document.getElementById('palette-btn')?.addEventListener('click', (e) => { e.preventDefault(); window.dispatchEvent(new Event('open-theme-picker')); });
     
     const handleToggle = () => {
@@ -64,7 +68,7 @@ const navItems = [
     const updateIcon = () => {
         const isDark = document.documentElement.classList.contains("dark");
         const icon = document.getElementById("theme-icon");
-        if (icon) icon.innerText = isDark ? "light_mode" : "dark_mode";
+        if (icon) icon.innerText = isDark ? lightIcon : darkIcon;
     };
     document.getElementById("theme-toggle")?.addEventListener("click", handleToggle);
     updateIcon();

@@ -3,6 +3,7 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Waline from '../../components/Waline.astro';
+import themeConfig from 'astro-mochi-tones:config';
 import '@material/web/icon/icon.js';
 import '@material/web/button/text-button.js';
 import '@material/web/divider/divider.js';
@@ -37,6 +38,7 @@ export async function getStaticPaths() {
 
 const { post, prevPost, nextPost } = Astro.props;
 const { Content, headings } = await post.render();
+const { labels } = themeConfig;
 
 // 日期格式化
 let dateObj;
@@ -47,8 +49,8 @@ try {
 } catch(e) { dateObj = new Date(); }
 
 const formattedDate = isNaN(dateObj.getTime()) 
-    ? '暂无日期' 
-    : dateObj.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+    ? labels.noDate
+    : dateObj.toLocaleDateString(themeConfig.lang, { year: 'numeric', month: 'long', day: 'numeric' });
 
 // 生成无图时的 Banner 背景色
 const themes = ['primary', 'secondary', 'tertiary'];
@@ -74,7 +76,7 @@ const description = post.data.description || post.body.substring(0, 100);
         <header class="post-header">
             <div class="back-nav">
                 <md-text-button href="/">
-                    <md-icon slot="icon">arrow_back</md-icon>返回首页
+                    <md-icon slot="icon">arrow_back</md-icon>{labels.backHome}
                 </md-text-button>
             </div>
 
@@ -127,14 +129,14 @@ const description = post.data.description || post.body.substring(0, 100);
       <nav class="post-nav">
         {prevPost ? (
             <a href={`/blog/${prevPost.slug}`} class="nav-link prev">
-                <div class="nav-label"><md-icon>arrow_back</md-icon> Previous</div>
+                <div class="nav-label"><md-icon>arrow_back</md-icon> {labels.previousPost}</div>
                 <div class="nav-title">{prevPost.data.title}</div>
             </a>
         ) : <div></div>}
         
         {nextPost && (
             <a href={`/blog/${nextPost.slug}`} class="nav-link next">
-                <div class="nav-label">Next <md-icon>arrow_forward</md-icon></div>
+                <div class="nav-label">{labels.nextPost} <md-icon>arrow_forward</md-icon></div>
                 <div class="nav-title">{nextPost.data.title}</div>
             </a>
         )}
@@ -144,7 +146,7 @@ const description = post.data.description || post.body.substring(0, 100);
 
     <aside class="toc-sidebar">
         <div class="toc-sticky">
-            <div class="toc-header">On this page</div>
+            <div class="toc-header">{labels.tocTitle}</div>
             {headings.length > 0 ? (
                 <ul class="toc-list">
                     {headings.filter(h => h.depth <= 3).map(h => (
@@ -154,7 +156,7 @@ const description = post.data.description || post.body.substring(0, 100);
                     ))}
                 </ul>
             ) : (
-                <p style="opacity: 0.5; font-size: 0.9rem;">No headings</p>
+                <p style="opacity: 0.5; font-size: 0.9rem;">{labels.noHeadings}</p>
             )}
         </div>
     </aside>

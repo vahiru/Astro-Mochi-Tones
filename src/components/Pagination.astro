@@ -2,25 +2,29 @@
 // src/components/Pagination.astro
 import '@material/web/button/filled-tonal-button.js';
 import '@material/web/icon/icon.js';
+import themeConfig from 'astro-mochi-tones:config';
 
 const { page } = Astro.props; // 接收 Astro 的分页对象
 
 const isFirstPage = page.currentPage === 1;
 const isLastPage = page.currentPage === page.lastPage;
+const pageInfo = themeConfig.labels.pageInfoTemplate
+  .replaceAll('{current}', String(page.currentPage))
+  .replaceAll('{total}', String(page.lastPage));
 ---
 
 <nav class="pagination-nav" aria-label="Pagination Navigation">
     <a href={page.url.prev || "#"} class={`nav-btn ${isFirstPage ? 'disabled' : ''}`} aria-disabled={isFirstPage}>
         <md-icon>arrow_back</md-icon>
-        <span>Previous</span>
+        <span>{themeConfig.labels.paginationPrevious}</span>
     </a>
 
     <span class="page-info">
-        Page {page.currentPage} of {page.lastPage}
+        {pageInfo}
     </span>
 
     <a href={page.url.next || "#"} class={`nav-btn ${isLastPage ? 'disabled' : ''}`} aria-disabled={isLastPage}>
-        <span>Next</span>
+        <span>{themeConfig.labels.paginationNext}</span>
         <md-icon>arrow_forward</md-icon>
     </a>
 </nav>

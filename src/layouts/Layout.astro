@@ -22,7 +22,7 @@ const {
 } = Astro.props;
 
 // 如果没传图片，就用默认的
-const image = _image || "/images/default-og.png";
+const image = _image || themeConfig.defaultImage;
 
 // 1. 获取站点域名
 const siteBase = Astro.site ? Astro.site.href : "http://localhost:4321";
@@ -42,13 +42,13 @@ const resolveImage = (imgSrc: string) => {
 };
 
 const canonicalURL = new URL(Astro.url.pathname, siteBase);
-const socialImageURL = resolveImage(image); // 使用新函数处理
+const socialImageURL = resolveImage(image);
 const siteTitle = themeConfig.title;
 const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang={themeConfig.lang}>
     <head>
         <BaseHead title={pageTitle} description={description} image={image} />
 
@@ -56,14 +56,14 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
             rel="alternate"
             type="application/rss+xml"
             title={`${siteTitle} RSS Feed`}
-            href="/rss.xml"
+            href={themeConfig.rssPath}
         />
 
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={description} />
         <meta property="og:url" content={canonicalURL} />
         <meta property="og:site_name" content={siteTitle} />
-        <meta property="og:locale" content="zh_CN" />
+        <meta property="og:locale" content={themeConfig.locale} />
         <meta property="og:image" content={socialImageURL} />
 
         {
@@ -84,11 +84,6 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={socialImageURL} />
-
-        <link
-            rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-        />
 
         <script is:inline>
             const theme = (() => {
@@ -113,11 +108,11 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
         <div id="scrim" class="scrim"></div>
 
         <header class="mobile-top-bar">
-            <button id="menu-btn" class="icon-btn" aria-label="Menu">
+            <button id="menu-btn" class="icon-btn" aria-label={themeConfig.labels.menu}>
                 <md-icon>menu</md-icon>
             </button>
             <div class="header-title">{title}</div>
-            <button class="icon-btn search-trigger" aria-label="Search">
+            <button class="icon-btn search-trigger" aria-label={themeConfig.labels.search}>
                 <md-icon>search</md-icon>
             </button>
         </header>
@@ -155,7 +150,7 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
             );
 
             const searchBtns = document.querySelectorAll(
-                'button[aria-label="Search"]',
+                "button.search-trigger, button.search-fab",
             );
             searchBtns.forEach((btn) => {
                 btn.addEventListener("click", (e) => {

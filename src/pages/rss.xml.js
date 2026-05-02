@@ -37,6 +37,6 @@ export async function GET(context) {
         }
       }),
     })),
-    customData: `<language>zh-cn</language>`,
+    customData: `<language>${themeConfig.lang}</language>`,
   });
 }

@@ -1,16 +1,26 @@
 ---
 import '@material/web/icon/icon.js';
 import '@material/web/iconbutton/icon-button.js';
+import themeConfig from 'astro-mochi-tones:config';
+
+const { labels } = themeConfig;
 ---
 
-<dialog id="search-dialog" class="search-dialog">
+<dialog
+  id="search-dialog"
+  class="search-dialog"
+  data-search-path={themeConfig.searchPath}
+  data-empty-message={labels.searchEmpty}
+  data-no-results-message={labels.searchNoResults}
+  data-untitled={labels.untitled}
+>
   <div class="search-container">
     <div class="search-header">
       <md-icon class="search-icon">search</md-icon>
       <input 
         type="text" 
         id="search-input" 
-        placeholder="Search..." 
+        placeholder={labels.searchPlaceholder}
         autocomplete="off" 
       />
       <button id="close-search" class="icon-btn">
@@ -20,7 +30,7 @@ import '@material/web/iconbutton/icon-button.js';
 
     <div id="search-results" class="search-results">
         <div class="empty-state">
-            <p>Type to search...</p>
+            <p>{labels.searchEmpty}</p>
         </div>
     </div>
   </div>
@@ -53,7 +63,7 @@ import '@material/web/iconbutton/icon-button.js';
     
     try {
         // 1. 获取我们清洗过的纯文本 JSON
-        const res = await fetch('/search.json');
+        const res = await fetch(dialog?.dataset.searchPath || '');
         posts = await res.json();
         
         // 2. 配置 Fuse.js (核心智能算法)
@@ -90,7 +100,7 @@ import '@material/web/iconbutton/icon-button.js';
       dialog?.close();
       // @ts-ignore
       input.value = ''; // 清空
-      showEmptyState('Type to search...');
+      showEmptyState(dialog?.dataset.emptyMessage || '');
   });
 
   dialog?.addEventListener('click', (e) => {
@@ -104,7 +114,7 @@ import '@material/web/iconbutton/icon-button.js';
     const query = e.target.value;
     
     if (!query || query.length < 1) {
-        showEmptyState('Type to search...');
+        showEmptyState(dialog?.dataset.emptyMessage || '');
         return;
     }
 
@@ -113,7 +123,7 @@ import '@material/web/iconbutton/icon-button.js';
     const results = fuse.search(query);
     
     if (results.length === 0) {
-        showEmptyState('No results found.');
+        showEmptyState(dialog?.dataset.noResultsMessage || '');
         return;
     }
 
@@ -139,7 +149,7 @@ import '@material/web/iconbutton/icon-button.js';
 
         const title = document.createElement('div');
         title.className = 'item-title';
-        title.textContent = item.title || 'Untitled';
+        title.textContent = item.title || dialog?.dataset.untitled || '';
 
         const desc = document.createElement('div');
         desc.className = 'item-desc';

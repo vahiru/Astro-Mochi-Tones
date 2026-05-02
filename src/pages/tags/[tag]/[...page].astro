@@ -6,6 +6,7 @@ import type { CollectionEntry } from "astro:content";
 import Layout from "../../../layouts/Layout.astro";
 import PostCard from "../../../components/PostCard.astro";
 import Pagination from "../../../components/Pagination.astro";
+import themeConfig from "astro-mochi-tones:config";
 import "@material/web/icon/icon.js";
 
 export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
@@ -40,13 +41,14 @@ interface Props {
 
 const { page } = Astro.props;
 const { tag } = Astro.params;
+const countText = themeConfig.labels.postsCountTemplate.replaceAll("{count}", String(page.total));
 ---
 
-<Layout title={`标签: ${tag}`}>
+<Layout title={`${themeConfig.labels.tagTitlePrefix}${tag}`}>
     <div class="container">
         <header class="header">
             <h1><md-icon>label</md-icon> {tag}</h1>
-            <p>共 {page.total} 篇文章</p>
+            <p>{countText}</p>
         </header>
         <div class="grid">
             {page.data.map((post) => <PostCard post={post} />)}

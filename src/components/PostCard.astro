@@ -1,6 +1,7 @@
 ---
 // src/components/PostCard.astro
 import type { CollectionEntry } from 'astro:content';
+import themeConfig from 'astro-mochi-tones:config';
 
 interface Props {
   post: CollectionEntry<'blog'>;
@@ -28,7 +29,7 @@ if (isNaN(dateObj.getTime())) {
 }
 
 // 3. 格式化日期
-const dateStr = dateObj.toLocaleDateString('zh-CN', {
+const dateStr = dateObj.toLocaleDateString(themeConfig.lang, {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -42,7 +43,7 @@ const themes = [
   { bg: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)' },
   { bg: 'var(--md-sys-color-error-container)', color: 'var(--md-sys-color-on-error-container)' },
 ];
-const titleStr = post.data.title || "Untitled"; // 防止标题为空
+const titleStr = post.data.title || themeConfig.labels.untitled; // 防止标题为空
 const index = titleStr.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % themes.length;
 const theme = themes[index];
 ---
@@ -63,7 +64,7 @@ const theme = themes[index];
   </div>
 
   <div class="content">
-    <h3 class="headline">{post.data.title}</h3>
+    <h3 class="headline">{post.data.title || themeConfig.labels.untitled}</h3>
     
     <div class="meta-row">
         <span class="date">{dateStr}</span>

@@ -6,7 +6,12 @@ import themeConfig from 'astro-mochi-tones:config';
 const year = new Date().getFullYear();
 const siteTitle = themeConfig.title;
 const author = themeConfig.author || siteTitle;
-const slogan = themeConfig.footerSlogan || themeConfig.description || '';
+const { footer } = themeConfig;
+const slogan = footer.slogan || themeConfig.description || '';
+const copyright = footer.copyrightTemplate
+  .replaceAll('{year}', String(year))
+  .replaceAll('{author}', author)
+  .replaceAll('{title}', siteTitle);
 ---
 
 <div class="footer-wave-wrapper">
@@ -25,29 +30,38 @@ const slogan = themeConfig.footerSlogan || themeConfig.description || '';
         {slogan && <p class="brand-slogan">{slogan}</p>}
       </div>
 
-      <nav class="footer-nav">
-        
-        <div class="nav-column">
-          <h3 class="nav-title">Social</h3>
-          <ul class="nav-list">
-            <li><a href="https://github.com/vahiru" target="_blank">GitHub</a></li>
-            <li><a href="http://x.com/vahiru" target="_blank">X (Twitter)</a></li>
-            <li><a href="https://t.me/vahiru" target="_blank">Telegram</a></li>
-            <li><a href="/rss.xml">Blog RSS</a></li>
-          </ul>
-        </div>
-
-      </nav>
+      {footer.links.length > 0 && (
+        <nav class="footer-nav">
+          <div class="nav-column">
+            <h3 class="nav-title">{footer.socialTitle}</h3>
+            <ul class="nav-list">
+              {footer.links.map((link) => (
+                <li>
+                  <a
+                    href={link.href}
+                    target={link.external ? "_blank" : undefined}
+                    rel={link.external ? "noreferrer" : undefined}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </nav>
+      )}
     </div>
 
     <div class="footer-bottom">
       <div class="copyright">
-        &copy; {year} {author}. All rights reserved.
+        {copyright}
       </div>
       
-      <div class="theme-credit">
-        Theme <a href="https://github.com/vahiru/Astro-Mochi-Tones" target="_blank">Mochi Tones</a>
-      </div>
+      {footer.showThemeCredit && (
+        <div class="theme-credit">
+          {footer.themeCreditLabel} <a href={footer.themeCreditHref} target="_blank" rel="noreferrer">{footer.themeCreditText}</a>
+        </div>
+      )}
     </div>
 
   </div>

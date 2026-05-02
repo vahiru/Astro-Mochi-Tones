@@ -6,6 +6,7 @@ import type { CollectionEntry } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import PostCard from "../../components/PostCard.astro";
 import Pagination from "../../components/Pagination.astro";
+import themeConfig from "astro-mochi-tones:config";
 
 export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
     const allPosts = await getCollection("blog");
@@ -52,13 +53,17 @@ const postsByYear: Record<string, CollectionEntry<"blog">[]> = page.data.reduce(
 const sortedYears = Object.keys(postsByYear).sort(
     (a, b) => parseInt(b) - parseInt(a),
 );
+const archiveTitle = themeConfig.labels.archiveTitleTemplate.replaceAll(
+    "{page}",
+    String(page.currentPage),
+);
 ---
 
-<Layout title={`归档 - 第 ${page.currentPage} 页`}>
+<Layout title={archiveTitle}>
     <div class="archive-container">
         <section class="tags-section">
             <div class="section-header">
-                <span class="section-label">CATEGORIES</span>
+                <span class="section-label">{themeConfig.labels.categoriesTitle}</span>
             </div>
 
             <div class="tags-scroller">
@@ -73,7 +78,7 @@ const sortedYears = Object.keys(postsByYear).sort(
                         ))
                     ) : (
                         <div style="opacity: 0.5; padding-left: 4px;">
-                            暂无分类
+                            {themeConfig.labels.noCategories}
                         </div>
                     )
                 }

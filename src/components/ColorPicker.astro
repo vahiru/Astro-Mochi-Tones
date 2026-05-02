@@ -1,31 +1,32 @@
 ---
+import themeConfig from 'astro-mochi-tones:config';
+
+const { labels, colorPicker } = themeConfig;
 ---
 
 <dialog id="theme-dialog" class="theme-dialog">
   <div class="dialog-content">
-    <h3 class="dialog-title">Customize Theme</h3>
+    <h3 class="dialog-title">{labels.customizeTheme}</h3>
     
     <div class="color-section">
-      <p class="section-label">Preset Colors</p>
+      <p class="section-label">{labels.presetColors}</p>
       <div class="preset-colors">
-        <button class="color-btn" style="background-color: #6750a4;" data-color="#6750a4"></button>
-        <button class="color-btn" style="background-color: #9c4146;" data-color="#9c4146"></button>
-        <button class="color-btn" style="background-color: #006a6a;" data-color="#006a6a"></button>
-        <button class="color-btn" style="background-color: #5d5f00;" data-color="#5d5f00"></button>
-        <button class="color-btn" style="background-color: #006e1c;" data-color="#006e1c"></button>
+        {colorPicker.presetColors.map((color) => (
+          <button class="color-btn" style={`background-color: ${color};`} data-color={color}></button>
+        ))}
       </div>
     </div>
 
     <div class="color-section">
-      <p class="section-label">Custom Color</p>
+      <p class="section-label">{labels.customColor}</p>
       <div class="custom-picker">
-        <input type="color" id="color-input" value="#6750a4" />
-        <label for="color-input">Pick a color</label>
+        <input type="color" id="color-input" value={colorPicker.defaultColor} data-default-color={colorPicker.defaultColor} />
+        <label for="color-input">{labels.pickColor}</label>
       </div>
     </div>
 
     <div class="dialog-actions">
-      <button id="close-dialog" class="close-btn">Close</button>
+      <button id="close-dialog" class="close-btn">{labels.close}</button>
     </div>
   </div>
 </dialog>
@@ -143,8 +144,8 @@
   
   // Observer
   const observer = new MutationObserver(() => {
-     const currentColor = localStorage.getItem('source-color') || '#6750a4';
-     applyTheme(currentColor);
+     const currentColor = localStorage.getItem('source-color') || colorInput?.dataset.defaultColor;
+     if (currentColor) applyTheme(currentColor);
   });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 </script>
