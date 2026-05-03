@@ -81,7 +81,7 @@ const navItems = nav.items.map((item) => {
       width: 88px; min-width: 88px; padding: 12px 0 24px 0;
       align-items: center; border-right: 1px solid transparent;
       position: sticky; top: 0; height: 100vh;
-      background-color: var(--md-sys-color-surface);
+      background-color: var(--md-sys-color-surface-container);
       display: flex; flex-direction: column; box-sizing: border-box; z-index: 100;
     }
     .drawer-header { display: none; }
@@ -123,7 +123,7 @@ const navItems = nav.items.map((item) => {
     .nav-rail {
       position: fixed; top: 64px; left: 0; bottom: 0;
       width: 300px; max-width: 80vw;
-      background-color: var(--md-sys-color-surface-container-low) !important;
+      background-color: var(--md-sys-color-surface-container) !important;
       border-top-right-radius: 28px; border-bottom-right-radius: 28px;
       z-index: 1300;
       transform: translateX(-100%);
