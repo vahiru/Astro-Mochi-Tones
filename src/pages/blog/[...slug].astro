@@ -185,21 +185,34 @@ const description = post.data.description || post.body.substring(0, 100);
 </script>
 
 <style is:global>
-  /* === Shiki 代码高亮适配 === */
+  /* === Shiki dual-theme code highlighting === */
   .astro-code, .astro-code span {
     color: var(--shiki-light) !important;
-    background-color: var(--shiki-light-bg) !important;
+  }
+  .astro-code {
+    background-color: var(--md-sys-color-surface-container) !important;
+  }
+  .astro-code span {
+    background-color: transparent !important;
   }
   :root.dark .astro-code, :root.dark .astro-code span {
     color: var(--shiki-dark) !important;
-    background-color: var(--shiki-dark-bg) !important;
   }
 
   .code-wrapper {
       position: relative; margin: 1.5rem 0; border-radius: 16px;
       overflow: hidden; border: 1px solid var(--md-sys-color-outline-variant);
   }
-  .astro-code { padding: 1.5rem; overflow-x: auto; font-family: 'Fira Code', monospace; font-size: 0.9rem; line-height: 1.5; }
+  .astro-code { margin: 0; padding: 1.5rem; overflow-x: auto; font-family: 'Fira Code', monospace; font-size: 0.9rem; line-height: 1.5; }
+  .astro-code code { counter-reset: code-line; }
+  .astro-code .line { display: inline-block; min-width: 100%; }
+  .astro-code .line::before {
+      counter-increment: code-line; content: counter(code-line);
+      display: inline-block; width: 2.5rem; margin-right: 1rem; padding-right: 0.75rem;
+      border-right: 1px solid var(--md-sys-color-outline-variant);
+      color: var(--md-sys-color-on-surface-variant); opacity: 0.6;
+      text-align: right; user-select: none;
+  }
   .copy-btn {
       position: absolute; top: 8px; right: 8px; width: 32px; height: 32px;
       background: var(--md-sys-color-surface-container-high);
