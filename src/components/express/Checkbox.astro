@@ -1,82 +1,142 @@
 ---
+import "@material/web/icon/icon.js";
+
 interface Props {
     checked?: boolean;
     color?:
         | "default"
-        | "red"
-        | "orange"
-        | "yellow"
-        | "green"
-        | "cyan"
-        | "blue"
-        | "purple";
-    symbol?: "plus" | "minus" | "times";
+        | "primary"
+        | "secondary"
+        | "tertiary"
+        | "error"
+        | "success"
+        | "info"
+        | "warning";
+    symbol?: "plus" | "minus" | "times" | "check";
     label?: string;
 }
 
-const { checked = false, color = "default", symbol, label } = Astro.props;
+const { checked = false, color = "default", symbol = "check", label } = Astro.props;
 
-// Determine symbol icon
-let icon = "check"; // default checkmark
-if (symbol === "plus") icon = "add";
-if (symbol === "minus") icon = "remove";
-if (symbol === "times") icon = "close";
-
-// Styles for checked state
-const colors = {
-    default: "var(--md-sys-color-primary)",
-    red: "#d32f2f",
-    orange: "#f57c00",
-    yellow: "#fbc02d",
-    green: "#388e3c",
-    cyan: "#0097a7",
-    blue: "#1976d2",
-    purple: "#7b1fa2",
+// 图标映射
+const iconMap = {
+    check: "check",
+    plus: "add",
+    minus: "remove",
+    times: "close",
 };
 
-const activeColor = colors[color] || colors.default;
+const finalIcon = iconMap[symbol] || "check";
+
+// 颜色类映射
+const colorClass = `color-${color}`;
 ---
 
-<div
-    class={`checkbox ${checked ? "checked" : ""}`}
-    style={checked ? `--active-color: ${activeColor}` : ""}
->
-    <div class="box">
-        {checked && <span class="material-symbols-rounded icon">{icon}</span>}
+<div class={`md3-checkbox ${checked ? "is-checked" : ""} ${colorClass}`}>
+    <div class="checkbox-container">
+        <div class="checkbox-outline"></div>
+        <div class="checkbox-fill">
+            {checked && <md-icon class="checkbox-icon">{finalIcon}</md-icon>}
+        </div>
+        <md-ripple></md-ripple>
     </div>
-    <div class="label">
-        <slot>{label}</slot>
-    </div>
+    { (label || Astro.slots.has('default')) && (
+        <div class="checkbox-label body-medium">
+            <slot>{label}</slot>
+        </div>
+    )}
 </div>
 
+<script>
+    import "@material/web/ripple/ripple.js";
+</script>
+
 <style>
-    .checkbox {
-        display: flex;
+    .md3-checkbox {
+        display: inline-flex;
         align-items: center;
+        gap: 12px;
         margin: 0.5rem 0;
-        cursor: default;
+        cursor: pointer;
+        user-select: none;
+        vertical-align: middle;
     }
-    .box {
-        width: 20px;
-        height: 20px;
-        border: 2px solid var(--md-sys-color-outline);
-        border-radius: 4px;
-        margin-right: 8px;
+
+    .checkbox-container {
+        position: relative;
+        width: 18px;
+        height: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s;
+        flex-shrink: 0;
     }
-    .checkbox.checked .box {
-        background-color: var(--active-color, var(--md-sys-color-primary));
-        border-color: var(--active-color, var(--md-sys-color-primary));
+
+    .checkbox-outline {
+        position: absolute;
+        inset: 0;
+        border: 2px solid var(--md-sys-color-on-surface-variant);
+        border-radius: 2px;
+        transition: border-color 0.2s, background-color 0.2s;
     }
-    .icon {
-        font-size: 16px;
-        color: white;
-        font-weight: bold;
+
+    .checkbox-fill {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 2px;
+        transform: scale(0);
+        transition: transform 0.2s cubic-bezier(0.05, 0.7, 0.1, 1);
+        background-color: var(--checkbox-active-color, var(--md-sys-color-primary));
     }
-    .label {
-        line-height: 1.4;
+
+    .is-checked .checkbox-outline {
+        border-color: var(--checkbox-active-color, var(--md-sys-color-primary));
+    }
+
+    .is-checked .checkbox-fill {
+        transform: scale(1);
+    }
+
+    .checkbox-icon {
+        --md-icon-size: 14px;
+        color: var(--md-sys-color-on-primary);
+        font-weight: 900;
+    }
+
+    .checkbox-label {
+        color: var(--md-sys-color-on-surface);
+        line-height: 1;
+    }
+
+    /* === 语义化颜色定义 === */
+    .color-default { --checkbox-active-color: var(--md-sys-color-primary); }
+    .color-primary { --checkbox-active-color: var(--md-sys-color-primary); }
+    .color-secondary { --checkbox-active-color: var(--md-sys-color-secondary); }
+    .color-tertiary { --checkbox-active-color: var(--md-sys-color-tertiary); }
+    .color-error { --checkbox-active-color: var(--md-sys-color-error); }
+    
+    .color-success { --checkbox-active-color: #2e7d32; }
+    :global(.dark) .color-success { --checkbox-active-color: #a5d6a7; }
+    
+    .color-info { --checkbox-active-color: #0288d1; }
+    :global(.dark) .color-info { --checkbox-active-color: #81d4fa; }
+    
+    .color-warning { --checkbox-active-color: #ed6c02; }
+    :global(.dark) .color-warning { --checkbox-active-color: #ffb74d; }
+
+    /* Ripple 修正 */
+    md-ripple {
+        --md-ripple-hover-color: var(--md-sys-color-on-surface);
+        --md-ripple-pressed-color: var(--checkbox-active-color);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
 </style>

@@ -1,15 +1,17 @@
 ---
-
 ---
 
-<span class="emp"><slot /></span>
+<span class="md3-emp"><slot /></span>
+
 <style>
-    .emp {
+    .md3-emp {
         text-emphasis: dot;
         text-emphasis-position: under right;
         text-emphasis-color: var(--md-sys-color-primary);
-        -webkit-text-emphasis: dot; /* Safari */
+        -webkit-text-emphasis: dot;
         -webkit-text-emphasis-position: under right;
         -webkit-text-emphasis-color: var(--md-sys-color-primary);
+        color: var(--md-sys-color-on-surface);
+        font-weight: 500;
     }
 </style>

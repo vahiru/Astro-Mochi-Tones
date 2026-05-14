@@ -2,59 +2,75 @@
 interface Props {
     color?:
         | "default"
-        | "red"
-        | "orange"
-        | "yellow"
-        | "green"
-        | "cyan"
-        | "blue"
-        | "purple"
-        | "light"
-        | "dark"
-        | "warning"
-        | "error";
-    label?: string; // Optional label if passed as prop instead of slot
+        | "primary"
+        | "secondary"
+        | "tertiary"
+        | "error"
+        | "success"
+        | "info"
+        | "warning";
+    label?: string;
 }
 
 const { color = "default", label } = Astro.props;
-
-const colors = {
-    default: {
-        bg: "var(--md-sys-color-surface-variant)",
-        text: "var(--md-sys-color-on-surface-variant)",
-    },
-    red: { bg: "#ffebee", text: "#c62828" },
-    orange: { bg: "#fff3e0", text: "#ef6c00" },
-    yellow: { bg: "#fffde7", text: "#f9a825" },
-    green: { bg: "#e8f5e9", text: "#2e7d32" },
-    cyan: { bg: "#e0f7fa", text: "#00838f" },
-    blue: { bg: "#e3f2fd", text: "#1565c0" },
-    purple: { bg: "#f3e5f5", text: "#6a1b9a" },
-    light: { bg: "#f5f5f5", text: "#616161" },
-    dark: { bg: "#212121", text: "#ffffff" },
-    warning: { bg: "#fff8e1", text: "#ff8f00" }, // Similar to amber/orange
-    error: { bg: "#ffebee", text: "#c62828" }, // Same as red
-};
-
-const style = colors[color] || colors.default;
+const colorClass = `color-${color}`;
 ---
 
-<span
-    class="mark"
-    style={`background-color: ${style.bg}; color: ${style.text};`}
->
+<mark class={`md3-mark ${colorClass}`}>
     <slot>{label}</slot>
-</span>
+</mark>
 
 <style>
-    .mark {
-        display: inline-block;
-        padding: 0.125rem 0.25rem;
-        border-radius: 4px;
-        font-size: 0.875em;
-        line-height: 1.2;
+    .md3-mark {
+        display: inline;
+        padding: 0.1em 0.3em;
+        border-radius: 6px;
+        background-color: var(--mark-bg, var(--md-sys-color-secondary-container));
+        color: var(--mark-text, var(--md-sys-color-on-secondary-container));
         font-weight: 500;
-        margin: 0 0.125rem;
-        vertical-align: middle;
+        transition: background-color 0.3s;
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+    }
+
+    /* === 颜色映射 === */
+    .color-primary {
+        --mark-bg: var(--md-sys-color-primary-container);
+        --mark-text: var(--md-sys-color-on-primary-container);
+    }
+    .color-tertiary {
+        --mark-bg: var(--md-sys-color-tertiary-container);
+        --mark-text: var(--md-sys-color-on-tertiary-container);
+    }
+    .color-error {
+        --mark-bg: var(--md-sys-color-error-container);
+        --mark-text: var(--md-sys-color-on-error-container);
+    }
+    
+    .color-success {
+        --mark-bg: #e8f5e9;
+        --mark-text: #1b5e20;
+    }
+    :global(.dark) .color-success {
+        --mark-bg: rgba(27, 94, 32, 0.4);
+        --mark-text: #e8f5e9;
+    }
+
+    .color-info {
+        --mark-bg: #e3f2fd;
+        --mark-text: #0d47a1;
+    }
+    :global(.dark) .color-info {
+        --mark-bg: rgba(13, 71, 161, 0.4);
+        --mark-text: #e3f2fd;
+    }
+
+    .color-warning {
+        --mark-bg: #fff8e1;
+        --mark-text: #795548;
+    }
+    :global(.dark) .color-warning {
+        --mark-bg: rgba(245, 127, 23, 0.3);
+        --mark-text: #ffe082;
     }
 </style>

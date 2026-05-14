@@ -1,13 +1,17 @@
 ---
-
 ---
 
-<span class="u"><slot /></span>
+<u class="md3-u"><slot /></u>
+
 <style>
-    .u {
+    .md3-u {
         text-decoration: underline;
         text-decoration-thickness: 2px;
+        text-decoration-color: var(--md-sys-color-tertiary);
+        text-underline-offset: 3px;
+        transition: text-decoration-color 0.3s;
+    }
+    .md3-u:hover {
         text-decoration-color: var(--md-sys-color-primary);
-        text-underline-offset: 2px;
     }
 </style>

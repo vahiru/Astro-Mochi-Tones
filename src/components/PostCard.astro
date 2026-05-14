@@ -5,9 +5,10 @@ import themeConfig from 'astro-mochi-tones:config';
 
 interface Props {
   post: CollectionEntry<'blog'>;
+  featured?: boolean;
 }
 
-const { post } = Astro.props;
+const { post, featured = false } = Astro.props;
 
 // ============================================================
 // 🛑 核心修复逻辑：手动强制转换日期
@@ -48,7 +49,7 @@ const index = titleStr.split("").reduce((acc, char) => acc + char.charCodeAt(0),
 const theme = themes[index];
 ---
 
-<a href={`/blog/${post.slug}`} class="blog-card">
+<a href={`/blog/${post.slug}`} class={`blog-card ${featured ? 'featured' : ''}`}>
   <div class="card-image-container">
     {post.data.cover ? (
       <img src={post.data.cover} alt={post.data.title} class="card-image" />
@@ -64,13 +65,18 @@ const theme = themes[index];
   </div>
 
   <div class="content">
-    <h3 class="headline">{post.data.title || themeConfig.labels.untitled}</h3>
+    {featured && <span class="label-medium featured-badge">Featured Post</span>}
+    <h3 class="title-large headline">{post.data.title || themeConfig.labels.untitled}</h3>
     
+    {featured && post.data.description && (
+        <p class="body-medium description">{post.data.description}</p>
+    )}
+
     <div class="meta-row">
-        <span class="date">{dateStr}</span>
+        <span class="label-medium date">{dateStr}</span>
         
         {post.data.categories && post.data.categories.length > 0 && (
-            <span class="category-badge">{post.data.categories[0]}</span>
+            <span class="label-small category-badge">{post.data.categories[0]}</span>
         )}
     </div>
   </div>
@@ -97,6 +103,12 @@ const theme = themes[index];
     background-color: var(--md-sys-color-surface-container-high);
   }
 
+  .featured-badge {
+    color: var(--md-sys-color-primary);
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
   .card-image-container {
     height: 220px; width: 100%; position: relative; overflow: hidden;
     background-color: var(--md-sys-color-surface-variant);
@@ -107,18 +119,47 @@ const theme = themes[index];
   }
 
   .content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
-  .headline { margin: 0 0 1rem 0; font-size: 1.25rem; font-weight: 500; line-height: 1.3; }
+  .headline { margin: 0 0 1rem 0; color: var(--md-sys-color-on-surface); }
   
+  .description {
+      color: var(--md-sys-color-on-surface-variant);
+      margin-bottom: 1.5rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+  }
+
   .meta-row {
       margin-top: auto;
       display: flex; align-items: center;
       justify-content: space-between;
-      font-size: 0.875rem;
       color: var(--md-sys-color-on-surface-variant);
   }
   
   .category-badge {
-      background-color: var(--md-sys-color-surface-container-high);
-      padding: 2px 8px; border-radius: 8px; font-size: 0.75rem;
+      background-color: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
+      padding: 4px 12px; border-radius: 8px;
+  }
+
+  /* Featured Post Layout (Desktop) */
+  @media (min-width: 840px) {
+    .blog-card.featured {
+        flex-direction: row;
+        min-height: 320px;
+    }
+    .blog-card.featured .card-image-container {
+        width: 45%;
+        height: auto;
+    }
+    .blog-card.featured .content {
+        width: 55%;
+        padding: 2.5rem;
+    }
+    .blog-card.featured .headline {
+        font-size: var(--md-sys-typescale-headline-small-size);
+        line-height: var(--md-sys-typescale-headline-small-line-height);
+    }
   }
 </style>

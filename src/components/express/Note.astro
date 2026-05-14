@@ -1,70 +1,189 @@
 ---
+import "@material/web/icon/icon.js";
+
 interface Props {
     color?:
         | "default"
+        | "primary"
+        | "secondary"
+        | "info"
+        | "success"
+        | "warning"
+        | "error"
         | "red"
         | "orange"
         | "yellow"
         | "green"
         | "cyan"
         | "blue"
-        | "purple"
-        | "light"
-        | "dark"
-        | "warning"
-        | "error";
+        | "purple";
     title?: string;
+    icon?: string;
 }
 
-const { color = "default", title } = Astro.props;
+const { color = "default", title, icon } = Astro.props;
 
-// Map colors to styles
-const colors = {
-    default: {
-        border: "var(--md-sys-color-outline)",
-        bg: "var(--md-sys-color-surface-container-low)",
-        text: "var(--md-sys-color-on-surface)",
-    },
-    red: { border: "#ef5350", bg: "#ffebee", text: "#c62828" },
-    orange: { border: "#ffa726", bg: "#fff3e0", text: "#ef6c00" },
-    yellow: { border: "#fdd835", bg: "#fffde7", text: "#f9a825" },
-    green: { border: "#66bb6a", bg: "#e8f5e9", text: "#2e7d32" },
-    cyan: { border: "#26c6da", bg: "#e0f7fa", text: "#00838f" },
-    blue: { border: "#42a5f5", bg: "#e3f2fd", text: "#1565c0" },
-    purple: { border: "#ab47bc", bg: "#f3e5f5", text: "#6a1b9a" },
-    light: { border: "#bdbdbd", bg: "#f5f5f5", text: "#616161" },
-    dark: { border: "#424242", bg: "#212121", text: "#ffffff" },
-    warning: { border: "#ffa726", bg: "#fff8e1", text: "#ff8f00" },
-    error: { border: "#ef5350", bg: "#ffebee", text: "#c62828" },
+// 将旧版的各类颜色映射到语义化的主题色调
+const colorMap: Record<string, string> = {
+    default: "surface",
+    light: "surface",
+    dark: "surface",
+    primary: "primary",
+    secondary: "secondary",
+    purple: "primary", 
+    info: "info",
+    cyan: "info",
+    blue: "info",
+    success: "success",
+    green: "success",
+    warning: "warning",
+    orange: "warning",
+    yellow: "warning",
+    error: "error",
+    red: "error",
 };
 
-const style = colors[color] || colors.default;
+const mappedColor = colorMap[color] || "surface";
+
+// 默认图标映射
+const iconMap: Record<string, string> = {
+    surface: "notes",
+    primary: "lightbulb",
+    secondary: "bookmark",
+    info: "info",
+    success: "check_circle",
+    warning: "warning",
+    error: "error",
+};
+
+const finalIcon = icon || iconMap[mappedColor];
 ---
 
-<div
-    class="note"
-    style={`border-left-color: ${style.border}; background-color: ${style.bg}; color: ${style.text};`}
->
-    {title && <div class="note-title">{title}</div>}
-    <div class="note-content">
+<div class={`md3-note note-${mappedColor}`}>
+    <div class="note-header">
+        <md-icon class="note-icon">{finalIcon}</md-icon>
+        {title && <span class="note-title label-large">{title}</span>}
+    </div>
+    <div class="note-content body-medium">
         <slot />
     </div>
 </div>
 
 <style>
-    .note {
-        padding: 1rem;
-        border-left-width: 4px;
-        border-left-style: solid;
-        border-radius: 4px;
-        margin: 1rem 0;
+    /* === 基础容器样式 (MD3 Card Style) === */
+    .md3-note {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem 1.25rem;
+        margin: 1.5rem 0;
+        border-radius: 16px;
+        background-color: var(--note-bg);
+        color: var(--note-text);
+        border: 1px solid var(--note-border, transparent);
+        transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
-    .note-title {
-        font-weight: bold;
+
+    .note-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         margin-bottom: 0.5rem;
-        font-size: 1.1em;
+        color: var(--note-title-color);
     }
+
+    .note-icon {
+        --md-icon-size: 20px;
+    }
+
+    .note-title {
+        font-weight: 600;
+        letter-spacing: 0.1px;
+    }
+
     .note-content {
         line-height: 1.6;
+    }
+
+    .note-content :global(p:first-child) {
+        margin-top: 0;
+    }
+    .note-content :global(p:last-child) {
+        margin-bottom: 0;
+    }
+
+    /* === 颜色映射定义 (支持 Light / Dark 模式) === */
+    
+    /* 1. Surface (Default) */
+    .note-surface {
+        --note-bg: var(--md-sys-color-surface-container-low);
+        --note-text: var(--md-sys-color-on-surface-variant);
+        --note-title-color: var(--md-sys-color-on-surface);
+        --note-border: var(--md-sys-color-outline-variant);
+    }
+
+    /* 2. Primary */
+    .note-primary {
+        --note-bg: var(--md-sys-color-primary-container);
+        --note-text: var(--md-sys-color-on-primary-container);
+        --note-title-color: var(--md-sys-color-on-primary-container);
+    }
+
+    /* 3. Secondary */
+    .note-secondary {
+        --note-bg: var(--md-sys-color-secondary-container);
+        --note-text: var(--md-sys-color-on-secondary-container);
+        --note-title-color: var(--md-sys-color-on-secondary-container);
+    }
+
+    /* 4. Info (Blue/Cyan) */
+    .note-info {
+        --note-bg: #e3f2fd;
+        --note-text: #0d47a1;
+        --note-title-color: #1565c0;
+    }
+    :global(.dark) .note-info {
+        --note-bg: rgba(13, 71, 161, 0.3);
+        --note-text: #e3f2fd;
+        --note-title-color: #90caf9;
+        --note-border: rgba(144, 202, 249, 0.2);
+    }
+
+    /* 5. Success (Green) */
+    .note-success {
+        --note-bg: #e8f5e9;
+        --note-text: #1b5e20;
+        --note-title-color: #2e7d32;
+    }
+    :global(.dark) .note-success {
+        --note-bg: rgba(27, 94, 32, 0.3);
+        --note-text: #e8f5e9;
+        --note-title-color: #a5d6a7;
+        --note-border: rgba(165, 214, 167, 0.2);
+    }
+
+    /* 6. Warning (Orange/Yellow) */
+    .note-warning {
+        --note-bg: #fff8e1;
+        --note-text: #795548;
+        --note-title-color: #f57f17;
+    }
+    :global(.dark) .note-warning {
+        --note-bg: rgba(245, 127, 23, 0.2);
+        --note-text: #ffe082;
+        --note-title-color: #ffe082;
+        --note-border: rgba(255, 224, 130, 0.2);
+    }
+
+    /* 7. Error (Red) */
+    .note-error {
+        --note-bg: #ffebee;
+        --note-text: #b71c1c;
+        --note-title-color: #c62828;
+    }
+    :global(.dark) .note-error {
+        --note-bg: rgba(183, 28, 28, 0.3);
+        --note-text: #ffebee;
+        --note-title-color: #ef9a9a;
+        --note-border: rgba(239, 154, 154, 0.2);
     }
 </style>

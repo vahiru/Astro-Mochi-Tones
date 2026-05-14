@@ -1,36 +1,71 @@
 ---
 interface Props {
     icon?: string;
+    style?: "modern" | "classic";
 }
 
-const { icon = "format_quote" } = Astro.props;
+const { icon = "format_quote", style = "modern" } = Astro.props;
 ---
 
-<div class="express-quot">
-    <span class="material-symbols-rounded quot-icon">{icon}</span>
-    <div class="quot-content">
+<div class={`md3-quot style-${style}`}>
+    <md-icon class="quot-icon">{icon}</md-icon>
+    <div class="quot-content title-medium">
         <slot />
     </div>
 </div>
 
+<script>
+    import "@material/web/icon/icon.js";
+</script>
+
 <style>
-    .express-quot {
+    .md3-quot {
         position: relative;
-        padding: 2rem;
+        padding: 2.5rem;
+        margin: 2.5rem 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         text-align: center;
-        margin: 2rem 0;
+        gap: 12px;
     }
+
+    /* 现代风格：带柔和背景 */
+    .style-modern {
+        background-color: var(--md-sys-color-surface-container-low);
+        border-radius: 32px;
+        border: 1px solid var(--md-sys-color-outline-variant);
+    }
+
+    /* 经典风格：纯引用标记 */
+    .style-classic {
+        background: transparent;
+    }
+
     .quot-icon {
-        font-size: 48px;
+        --md-icon-size: 40px;
         color: var(--md-sys-color-primary);
-        opacity: 0.2;
-        display: block;
-        margin: 0 auto 1rem;
+        opacity: 0.3;
     }
+
     .quot-content {
-        font-size: 1.25rem;
-        font-weight: 500;
-        line-height: 1.6;
         color: var(--md-sys-color-on-surface);
+        line-height: 1.6;
+        font-style: italic;
+        font-family: "Georgia", "Noto Serif SC", serif;
+        max-width: 80%;
+    }
+
+    /* 装饰性引号线 */
+    .style-classic::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 2px;
+        background-color: var(--md-sys-color-outline-variant);
+        opacity: 0.5;
     }
 </style>

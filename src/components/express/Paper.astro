@@ -10,73 +10,111 @@ interface Props {
 const { title, author, date, footer, style = "simple" } = Astro.props;
 ---
 
-<div class={`express-paper ${style}`}>
-    {
-        (title || author || date) && (
-            <div class="paper-header">
-                {title && <div class="paper-title">{title}</div>}
-                <div class="paper-meta">
-                    {author && <span class="paper-author">{author}</span>}
-                    {date && <span class="paper-date">{date}</span>}
+<div class={`md3-paper ${style}`}>
+    <div class="paper-inner">
+        {
+            (title || author || date) && (
+                <div class="paper-header">
+                    {title && <div class="paper-title headline-small">{title}</div>}
+                    <div class="paper-meta label-medium">
+                        {author && <span class="paper-author">{author}</span>}
+                        {date && <span class="paper-date">{date}</span>}
+                    </div>
                 </div>
-            </div>
-        )
-    }
+            )
+        }
 
-    <div class="paper-content">
-        <slot />
+        <div class="paper-content body-large">
+            <slot />
+        </div>
+
+        {footer && <div class="paper-footer label-small">{footer}</div>}
     </div>
-
-    {footer && <div class="paper-footer">{footer}</div>}
 </div>
 
 <style>
-    .express-paper {
+    .md3-paper {
         background-color: var(--md-sys-color-surface-container-low);
-        padding: 2rem;
-        margin: 2rem 0;
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        font-family: "Times New Roman", serif; /* Classic paper font feel */
+        margin: 2.5rem 0;
+        border-radius: 4px; /* Classic paper slight roundness */
         position: relative;
+        box-shadow: var(--md-sys-elevation-level1);
+        transition: box-shadow 0.3s ease;
     }
 
-    .express-paper.underline {
+    .paper-inner {
+        padding: 3rem 2.5rem;
+        border: 1px solid var(--md-sys-color-outline-variant);
+        border-radius: inherit;
+    }
+
+    /* 纸张装饰线 */
+    .md3-paper::before, .md3-paper::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+        border-radius: inherit;
+        z-index: -1;
+        background-color: var(--md-sys-color-surface-container-low);
+        border: 1px solid var(--md-sys-color-outline-variant);
+    }
+    .md3-paper::before { transform: rotate(1deg); }
+    .md3-paper::after { transform: rotate(-0.5deg); }
+
+    .md3-paper.underline .paper-content {
         background-image: linear-gradient(
-            transparent 1.9rem,
+            transparent 1.95rem,
             var(--md-sys-color-outline-variant) 2rem
         );
         background-size: 100% 2rem;
         line-height: 2rem;
-        background-color: var(--md-sys-color-surface);
     }
 
     .paper-header {
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 2.5rem;
+        border-bottom: 1px double var(--md-sys-color-outline-variant);
+        padding-bottom: 1.5rem;
     }
+    
     .paper-title {
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
+        color: var(--md-sys-color-on-surface);
+        font-family: serif;
+        font-weight: 700;
+        margin-bottom: 8px;
     }
+    
     .paper-meta {
-        font-size: 0.875rem;
         color: var(--md-sys-color-on-surface-variant);
         display: flex;
-        gap: 1rem;
+        gap: 1.5rem;
         justify-content: center;
+        opacity: 0.8;
     }
 
     .paper-content {
-        font-size: 1.1rem;
+        color: var(--md-sys-color-on-surface);
         text-align: justify;
+        font-family: "Georgia", "Noto Serif SC", serif;
+        line-height: 1.8;
     }
 
     .paper-footer {
-        margin-top: 2rem;
+        margin-top: 3rem;
         text-align: right;
-        font-size: 0.875rem;
         color: var(--md-sys-color-on-surface-variant);
+        font-style: italic;
+        border-top: 1px solid var(--md-sys-color-outline-variant);
+        padding-top: 1rem;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 600px) {
+        .paper-inner {
+            padding: 2rem 1.25rem;
+        }
     }
 </style>

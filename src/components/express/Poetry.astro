@@ -7,48 +7,108 @@ interface Props {
 const { title, author } = Astro.props;
 ---
 
-<div class="express-poetry">
-    {
-        (title || author) && (
-            <div class="poetry-header">
-                {title && <div class="poetry-title">{title}</div>}
-                {author && <div class="poetry-author">{author}</div>}
-            </div>
-        )
-    }
-    <div class="poetry-content">
-        <slot />
+<div class="md3-poetry">
+    <div class="poetry-container">
+        <md-icon class="poetry-decoration top">format_quote</md-icon>
+        
+        {
+            (title || author) && (
+                <div class="poetry-header">
+                    {title && <div class="poetry-title headline-small">{title}</div>}
+                    {author && <div class="poetry-author label-medium">{author}</div>}
+                </div>
+            )
+        }
+        
+        <div class="poetry-content body-large">
+            <slot />
+        </div>
+
+        <md-icon class="poetry-decoration bottom">format_quote</md-icon>
     </div>
 </div>
 
+<script>
+    import "@material/web/icon/icon.js";
+</script>
+
 <style>
-    .express-poetry {
-        padding: 2rem;
-        margin: 2rem 0;
-        background-color: var(--md-sys-color-surface-container);
-        border-radius: 12px;
+    .md3-poetry {
+        display: flex;
+        justify-content: center;
+        margin: 3rem 0;
+        padding: 0 1rem;
+    }
+
+    .poetry-container {
+        position: relative;
+        padding: 3rem 4rem;
+        background-color: var(--md-sys-color-surface-container-lowest);
+        border-radius: 32px;
         text-align: center;
+        max-width: 600px;
+        width: 100%;
+        border: 1px solid var(--md-sys-color-outline-variant);
+        box-shadow: var(--md-sys-elevation-level1);
     }
+
+    .poetry-decoration {
+        position: absolute;
+        --md-icon-size: 48px;
+        color: var(--md-sys-color-primary);
+        opacity: 0.1;
+    }
+
+    .poetry-decoration.top { top: 1.5rem; left: 1.5rem; }
+    .poetry-decoration.bottom { 
+        bottom: 1.5rem; 
+        right: 1.5rem; 
+        transform: rotate(180deg);
+    }
+
     .poetry-header {
-        margin-bottom: 1.5rem;
-        border-bottom: 1px solid var(--md-sys-color-outline-variant);
-        padding-bottom: 1rem;
-        display: inline-block;
-        min-width: 50%;
+        margin-bottom: 2rem;
+        position: relative;
     }
+
+    .poetry-header::after {
+        content: "";
+        display: block;
+        width: 40px;
+        height: 2px;
+        background-color: var(--md-sys-color-primary);
+        margin: 1rem auto 0;
+        border-radius: 2px;
+        opacity: 0.3;
+    }
+
     .poetry-title {
-        font-size: 1.25rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
+        color: var(--md-sys-color-on-surface);
+        font-family: "Georgia", "Noto Serif SC", serif;
+        font-weight: 700;
+        margin-bottom: 4px;
     }
+
     .poetry-author {
-        font-size: 0.875rem;
         color: var(--md-sys-color-on-surface-variant);
+        font-style: italic;
     }
+
     .poetry-content {
         white-space: pre-wrap;
-        line-height: 2;
-        font-family: serif;
-        font-size: 1.1rem;
+        line-height: 2.2;
+        font-family: "Georgia", "Noto Serif SC", serif;
+        color: var(--md-sys-color-on-surface);
+        font-style: italic;
+    }
+
+    /* 手机端适配 */
+    @media (max-width: 600px) {
+        .poetry-container {
+            padding: 2.5rem 1.5rem;
+        }
+        .poetry-decoration {
+            --md-icon-size: 32px;
+        }
     }
 </style>

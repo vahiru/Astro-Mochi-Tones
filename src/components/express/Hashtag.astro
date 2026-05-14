@@ -1,60 +1,93 @@
 ---
+import "@material/web/icon/icon.js";
+
 interface Props {
     tag: string;
     url?: string;
     color?:
         | "default"
-        | "red"
-        | "orange"
-        | "yellow"
-        | "green"
-        | "cyan"
-        | "blue"
-        | "purple";
+        | "primary"
+        | "secondary"
+        | "tertiary"
+        | "error";
+    icon?: string;
 }
 
-const { tag, url = "#", color = "default" } = Astro.props;
+const { tag, url = "#", color = "default", icon = "tag" } = Astro.props;
 
-const colors = {
-    default: {
-        bg: "var(--md-sys-color-surface-variant)",
-        text: "var(--md-sys-color-on-surface-variant)",
-    },
-    red: { bg: "#ffebee", text: "#c62828" },
-    orange: { bg: "#fff3e0", text: "#ef6c00" },
-    yellow: { bg: "#fffde7", text: "#f9a825" },
-    green: { bg: "#e8f5e9", text: "#2e7d32" },
-    cyan: { bg: "#e0f7fa", text: "#00838f" },
-    blue: { bg: "#e3f2fd", text: "#1565c0" },
-    purple: { bg: "#f3e5f5", text: "#6a1b9a" },
-};
-
-const style = colors[color] || colors.default;
+const colorClass = `color-${color}`;
 ---
 
-<a
-    href={url}
-    class="express-hashtag"
-    style={`background-color: ${style.bg}; color: ${style.text};`}
->
-    <span class="hash">#</span>{tag}
+<a href={url} class={`md3-hashtag ${colorClass}`}>
+    <div class="hashtag-container">
+        <md-icon class="hashtag-icon">{icon}</md-icon>
+        <span class="hashtag-label label-medium">{tag}</span>
+        <md-ripple></md-ripple>
+    </div>
 </a>
 
+<script>
+    import "@material/web/ripple/ripple.js";
+</script>
+
 <style>
-    .express-hashtag {
+    .md3-hashtag {
         display: inline-block;
-        padding: 2px 8px;
-        border-radius: 4px;
         text-decoration: none;
-        font-size: 0.875rem;
-        margin: 0 4px;
-        transition: opacity 0.2s;
+        margin: 4px 2px;
+        vertical-align: middle;
     }
-    .express-hashtag:hover {
+
+    .hashtag-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 12px;
+        height: 32px;
+        border-radius: 8px; /* MD3 Assist/Filter chip style */
+        background-color: var(--hashtag-bg, var(--md-sys-color-surface-container-high));
+        color: var(--hashtag-text, var(--md-sys-color-on-surface-variant));
+        border: 1px solid var(--md-sys-color-outline-variant);
+        transition: background-color 0.2s, box-shadow 0.2s;
+        overflow: hidden;
+    }
+
+    .md3-hashtag:hover .hashtag-container {
+        background-color: var(--md-sys-color-surface-variant);
+        box-shadow: var(--md-sys-elevation-level1);
+    }
+
+    .hashtag-icon {
+        --md-icon-size: 18px;
         opacity: 0.8;
     }
-    .hash {
-        opacity: 0.6;
-        margin-right: 2px;
+
+    .hashtag-label {
+        font-weight: 500;
+        line-height: 1;
+    }
+
+    /* === 颜色变体 === */
+    .color-primary {
+        --hashtag-bg: var(--md-sys-color-primary-container);
+        --hashtag-text: var(--md-sys-color-on-primary-container);
+    }
+    .color-secondary {
+        --hashtag-bg: var(--md-sys-color-secondary-container);
+        --hashtag-text: var(--md-sys-color-on-secondary-container);
+    }
+    .color-tertiary {
+        --hashtag-bg: var(--md-sys-color-tertiary-container);
+        --hashtag-text: var(--md-sys-color-on-tertiary-container);
+    }
+    .color-error {
+        --hashtag-bg: var(--md-sys-color-error-container);
+        --hashtag-text: var(--md-sys-color-on-error-container);
+    }
+
+    md-ripple {
+        --md-ripple-hover-color: var(--md-sys-color-on-surface);
+        --md-ripple-pressed-color: var(--md-sys-color-primary);
     }
 </style>

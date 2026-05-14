@@ -1,21 +1,54 @@
 ---
-
+interface Props {
+    title?: string;
+}
+const { title = "点击显示内容" } = Astro.props;
 ---
 
-<span class="psw" title="Hover to view"><slot /></span>
+<span class="md3-psw" title={title}>
+    <span class="psw-content">
+        <slot />
+    </span>
+    <md-ripple></md-ripple>
+</span>
+
+<script>
+    import "@material/web/ripple/ripple.js";
+</script>
+
 <style>
-    .psw {
+    .md3-psw {
+        position: relative;
+        display: inline;
         background-color: var(--md-sys-color-on-surface);
-        color: transparent;
-        border-radius: 2px;
-        padding: 0 2px;
-        transition:
-            color 0.2s,
-            background-color 0.2s;
-        cursor: default;
+        border-radius: 4px;
+        padding: 0 4px;
+        cursor: pointer;
+        transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        overflow: hidden;
+        vertical-align: baseline;
+        margin: 0 2px;
     }
-    .psw:hover {
-        background-color: var(--md-sys-color-surface-variant);
+
+    .psw-content {
+        color: transparent;
+        transition: color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: inherit;
+    }
+
+    /* 悬停或激活时显示 */
+    .md3-psw:hover, .md3-psw:active {
+        background-color: var(--md-sys-color-surface-container-highest);
+    }
+
+    .md3-psw:hover .psw-content, .md3-psw:active .psw-content {
         color: var(--md-sys-color-on-surface);
+    }
+
+    md-ripple {
+        --md-ripple-pressed-color: var(--md-sys-color-primary);
+        --md-ripple-pressed-opacity: 0.12;
     }
 </style>
