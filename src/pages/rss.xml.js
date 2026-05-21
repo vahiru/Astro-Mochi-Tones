@@ -7,6 +7,10 @@ import themeConfig from 'astro-mochi-tones:config';
 
 const parser = new MarkdownIt();
 
+const getPostSlug = (post) => ("slug" in post && typeof post.slug === "string")
+  ? post.slug
+  : post.id.replace(/\.(md|mdx)$/i, "");
+
 export async function GET(context) {
   const blog = await getCollection('blog');
   
@@ -24,7 +28,7 @@ export async function GET(context) {
       title: post.data.title,
       pubDate: post.data.date,
       description: post.data.description,
-      link: `/blog/${post.slug}/`,
+      link: `/blog/${getPostSlug(post)}/`,
       
       // 🔥 核心改动：渲染全文内容
       content: sanitizeHtml(parser.render(post.body), {

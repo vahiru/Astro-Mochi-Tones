@@ -2,6 +2,10 @@
 import { getCollection } from 'astro:content';
 import striptags from 'striptags'; // 引入去标签库
 
+const getPostSlug = (post) => ("slug" in post && typeof post.slug === "string")
+  ? post.slug
+  : post.id.replace(/\.(md|mdx)$/i, "");
+
 export async function GET({}) {
   const posts = await getCollection('blog');
   
@@ -19,7 +23,7 @@ export async function GET({}) {
         // 专门加一个 content 字段给搜索引擎用
         content: cleanContent, 
         description: post.data.description,
-        slug: `/blog/${post.slug}`,
+        slug: `/blog/${getPostSlug(post)}`,
         date: post.data.date
       };
     });

@@ -47,9 +47,12 @@ const themes = [
 const titleStr = post.data.title || themeConfig.labels.untitled; // 防止标题为空
 const index = titleStr.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % themes.length;
 const theme = themes[index];
+const postSlug = ("slug" in post && typeof post.slug === "string")
+  ? post.slug
+  : post.id.replace(/\.(md|mdx)$/i, "");
 ---
 
-<a href={`/blog/${post.slug}`} class={`blog-card ${featured ? 'featured' : ''}`}>
+<a href={`/blog/${postSlug}`} class={`blog-card ${featured ? 'featured' : ''}`}>
   <div class="card-image-container">
     {post.data.cover ? (
       <img src={post.data.cover} alt={post.data.title} class="card-image" />
