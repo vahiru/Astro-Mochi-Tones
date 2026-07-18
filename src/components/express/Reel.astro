@@ -1,105 +1,128 @@
 ---
 interface Props {
-    title?: string;
-    author?: string;
-    date?: string;
-    footer?: string;
+  title?: string;
+  author?: string;
+  date?: string;
+  footer?: string;
 }
 
 const { title, author, date, footer } = Astro.props;
 ---
 
-<div class="express-reel">
-    <div class="reel-rod rod-top"></div>
-
-    <div class="reel-body">
-        {
-            (title || author || date) && (
-                <div class="reel-header">
-                    {title && <div class="reel-title">{title}</div>}
-                    <div class="reel-meta">
-                        {author && <span class="reel-author">{author}</span>}
-                        {date && <span class="reel-date">{date}</span>}
-                    </div>
-                </div>
-            )
-        }
-
-        <div class="reel-content">
-            <slot />
-        </div>
-
-        {footer && <div class="reel-footer">{footer}</div>}
-    </div>
-
-    <div class="reel-rod rod-bottom"></div>
-</div>
+<article class="express-reel" aria-label={title}>
+  <div class="reel-rod rod-top" aria-hidden="true"></div>
+  <div class="reel-body">
+    {
+      (title || author || date) && (
+        <header class="reel-header">
+          {title && <div class="reel-title">{title}</div>}
+          <div class="reel-meta">
+            {author && <span>{author}</span>}
+            {date && <span>{date}</span>}
+          </div>
+        </header>
+      )
+    }
+    <div class="reel-content"><slot /></div>
+    {footer && <footer class="reel-footer">{footer}</footer>}
+  </div>
+  <div class="reel-rod rod-bottom" aria-hidden="true"></div>
+</article>
 
 <style>
-    .express-reel {
-        margin: 2rem 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-    }
+  .express-reel {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    margin: 36px 0;
+    overflow-x: clip;
+  }
 
-    .reel-rod {
-        width: 110%; /* Rods are wider than paper */
-        height: 12px;
-        background: linear-gradient(to right, #8d6e63, #d7ccc8, #8d6e63);
-        border-radius: 6px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        position: relative;
-        z-index: 10;
-    }
-    .rod-top {
-        margin-bottom: -4px;
-    }
-    .rod-bottom {
-        margin-top: -4px;
-    }
+  .reel-rod {
+    position: relative;
+    z-index: 1;
+    width: min(calc(100% - 24px), 760px);
+    height: 20px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-tertiary-container);
+    box-shadow: var(--md-sys-elevation-level1);
+  }
 
+  .reel-rod::after {
+    position: absolute;
+    inset: 6px 24px;
+    border-radius: inherit;
+    background: var(--md-sys-color-tertiary);
+    content: "";
+    opacity: 0.7;
+  }
+
+  .rod-top { margin-bottom: -5px; }
+  .rod-bottom { margin-top: -5px; }
+
+  .reel-body {
+    display: flex;
+    width: min(calc(100% - 48px), 720px);
+    min-height: 320px;
+    align-items: center;
+    padding: 40px 32px;
+    overflow-x: auto;
+    border-inline: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container-low);
+    color: var(--md-sys-color-on-surface);
+    box-shadow: var(--md-sys-elevation-level1);
+    font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+    writing-mode: vertical-rl;
+    scrollbar-width: thin;
+  }
+
+  .reel-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-left: 32px;
+    padding-left: 20px;
+    border-left: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .reel-title {
+    color: var(--md-sys-color-primary);
+    font-size: var(--md-sys-typescale-headline-small-size);
+    font-weight: 650;
+    line-height: var(--md-sys-typescale-headline-small-line-height);
+  }
+
+  .reel-meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: var(--md-sys-typescale-label-medium-size);
+  }
+
+  .reel-content {
+    flex: 1;
+    color: var(--md-sys-color-on-surface);
+    font-size: var(--md-sys-typescale-title-large-size);
+    line-height: 2;
+  }
+
+  .reel-footer {
+    align-self: flex-end;
+    margin-right: 28px;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: var(--md-sys-typescale-label-small-size);
+  }
+
+  @media (max-width: 599px) {
     .reel-body {
-        background-color: #fcf8e3; /* Light yellowish paper */
-        color: #5d4037;
-        width: 90%;
-        padding: 3rem 2rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        writing-mode: vertical-rl; /* Traditional vertical text */
-        min-height: 300px;
-        font-family: "SimSun", "Songti SC", serif;
-        display: flex;
-        align-items: center; /* Center horizontally in vertical mode */
-        overflow-x: auto;
+      width: calc(100% - 32px);
+      min-height: 280px;
+      padding: 32px 22px;
     }
 
-    .reel-header {
-        margin-left: 2rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    } /* Remember vertical-rl: margin-left is top spacing visual */
-    .reel-title {
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin-bottom: 1rem;
-    }
-    .reel-meta {
-        font-size: 0.875rem;
-        display: flex;
-        gap: 1rem;
-    }
-
-    .reel-content {
-        font-size: 1.25rem;
-        line-height: 2;
-        flex-grow: 1;
-    }
-
-    .reel-footer {
-        margin-right: 2rem;
-        font-size: 0.8rem;
-        align-self: flex-end;
-    }
+    .reel-rod { width: calc(100% - 8px); }
+  }
 </style>

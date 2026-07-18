@@ -1,38 +1,53 @@
 ---
 interface Props {
-    bv: string;
+  bv: string;
 }
 
 const { bv } = Astro.props;
+const safeBvid = /^[A-Za-z0-9]+$/.test(bv) ? bv : "";
 ---
 
-<div class="express-bilibili">
-    <iframe
-        src={`//player.bilibili.com/player.html?bvid=${bv}&page=1&high_quality=1`}
-        scrolling="no"
-        border="0"
-        frameborder="no"
-        framespacing="0"
-        allowfullscreen="true"
-        loading="lazy"></iframe>
-</div>
+{
+  safeBvid && (
+    <div class="express-bilibili">
+      <iframe
+        src={`https://player.bilibili.com/player.html?bvid=${safeBvid}&page=1&high_quality=1`}
+        title="哔哩哔哩视频播放器"
+        allow="autoplay; fullscreen; picture-in-picture"
+        sandbox="allow-scripts allow-same-origin allow-presentation"
+        referrerpolicy="no-referrer"
+        allowfullscreen
+        loading="lazy"
+      />
+    </div>
+  )
+}
 
 <style>
-    .express-bilibili {
-        position: relative;
-        width: 100%;
-        padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-        height: 0;
-        margin: 2rem 0;
-        border-radius: 12px;
-        overflow: hidden;
-        background: #000;
-    }
-    .express-bilibili iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-    }
+  .express-bilibili {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    margin: 28px 0;
+    overflow: hidden;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    background: var(--md-sys-color-scrim);
+    box-shadow: var(--md-sys-elevation-level1);
+  }
+
+  .express-bilibili iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .express-bilibili iframe:focus-visible {
+    outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color);
+    outline-offset: calc(-1 * var(--md-sys-focus-ring-width));
+  }
+
+  @media (max-width: 599px) {
+    .express-bilibili { border-radius: var(--md-sys-shape-corner-large); }
+  }
 </style>

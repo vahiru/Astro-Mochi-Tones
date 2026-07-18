@@ -1,95 +1,172 @@
 ---
 interface Props {
-    text: string;
+  text: string;
+  copyLabel?: string;
+  copiedLabel?: string;
+  errorLabel?: string;
 }
 
-const { text } = Astro.props;
+const {
+  text,
+  copyLabel = "Copy",
+  copiedLabel = "Copied",
+  errorLabel = "Copy failed",
+} = Astro.props;
 ---
 
-<div class="express-copy">
-    <span class="copy-text">{text}</span>
-    <button class="copy-btn" data-text={text} title="Copy to clipboard">
-        <span class="material-symbols-rounded icon">content_copy</span>
-        <span class="copy-feedback">Copied!</span>
-    </button>
+<div class="express-copy" role="group" aria-label={copyLabel}>
+  <code class="copy-text">{text}</code>
+  <button
+    class="copy-btn"
+    type="button"
+    data-copy-text={text}
+    data-copy-label={copyLabel}
+    data-copied-label={copiedLabel}
+    data-error-label={errorLabel}
+    aria-label={copyLabel}
+    title={copyLabel}
+  >
+    <md-icon class="copy-icon" aria-hidden="true">content_copy</md-icon>
+    <span class="copy-feedback label-small" aria-live="polite"></span>
+    <md-ripple></md-ripple>
+  </button>
 </div>
 
 <script>
-    function setupCopy() {
-        const btns = document.querySelectorAll(".copy-btn");
-        btns.forEach((btn) => {
-            btn.addEventListener("click", async () => {
-                const text = btn.getAttribute("data-text");
-                if (text) {
-                    try {
-                        await navigator.clipboard.writeText(text);
-                        btn.classList.add("copied");
-                        setTimeout(() => {
-                            btn.classList.remove("copied");
-                        }, 2000);
-                    } catch (err) {
-                        console.error("Failed to copy", err);
-                    }
-                }
-            });
-        });
-    }
-    setupCopy();
-    // If viewing transition is used, might need to re-run on swap
-    document.addEventListener("astro:after-swap", setupCopy);
+  import "@material/web/icon/icon.js";
+  import "@material/web/ripple/ripple.js";
+
+  const bindCopyButtons = () => {
+    document.querySelectorAll<HTMLButtonElement>(".express-copy .copy-btn").forEach((button) => {
+      if (button.dataset.copyBound === "true") return;
+      button.dataset.copyBound = "true";
+
+      button.addEventListener("click", async () => {
+        const feedback = button.querySelector<HTMLElement>(".copy-feedback");
+        const icon = button.querySelector<HTMLElement>(".copy-icon");
+        const text = button.dataset.copyText ?? "";
+        const copyLabel = button.dataset.copyLabel ?? "Copy";
+        let message = button.dataset.copiedLabel ?? "Copied";
+
+        try {
+          if (!navigator.clipboard) throw new Error("Clipboard API unavailable");
+          await navigator.clipboard.writeText(text);
+          button.classList.add("is-copied");
+          if (icon) icon.textContent = "check";
+        } catch {
+          message = button.dataset.errorLabel ?? "Copy failed";
+          button.classList.add("has-error");
+          if (icon) icon.textContent = "error";
+        }
+
+        if (feedback) feedback.textContent = message;
+        button.setAttribute("aria-label", message);
+        window.setTimeout(() => {
+          button.classList.remove("is-copied", "has-error");
+          button.setAttribute("aria-label", copyLabel);
+          if (feedback) feedback.textContent = "";
+          if (icon) icon.textContent = "content_copy";
+        }, 1800);
+      });
+    });
+  };
+
+  bindCopyButtons();
+  document.addEventListener("astro:after-swap", bindCopyButtons);
 </script>
 
 <style>
-    .express-copy {
-        display: flex;
-        align-items: center;
-        background-color: var(--md-sys-color-surface-container);
-        border: 1px solid var(--md-sys-color-outline-variant);
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        margin: 1rem 0;
-        font-family: monospace;
-    }
-    .copy-text {
-        flex-grow: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        margin-right: 1rem;
-    }
-    .copy-btn {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 4px;
-        background: transparent;
-        color: var(--md-sys-color-primary);
-        transition: background 0.2s;
-    }
-    .copy-btn:hover {
-        background-color: var(--md-sys-color-surface-variant);
-    }
-    .copy-btn .icon {
-        font-size: 20px;
-    }
-    .copy-feedback {
-        position: absolute;
-        top: -30px;
-        right: 0;
-        background: var(--md-sys-color-inverse-surface);
-        color: var(--md-sys-color-inverse-on-surface);
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s;
-        white-space: nowrap;
-    }
-    .copy-btn.copied .copy-feedback {
-        opacity: 1;
-    }
+  .express-copy {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    padding: 8px 8px 8px 16px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-large);
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .copy-text {
+    min-width: 0;
+    overflow-x: auto;
+    padding-block: 8px;
+    color: var(--md-sys-color-on-surface);
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    font-size: var(--md-sys-typescale-body-medium-size);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+    white-space: nowrap;
+    scrollbar-width: thin;
+  }
+
+  .copy-btn {
+    position: relative;
+    display: grid;
+    width: var(--md-sys-touch-target-size);
+    height: var(--md-sys-touch-target-size);
+    place-items: center;
+    overflow: visible;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    cursor: pointer;
+    transition:
+      background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+  }
+
+  .copy-btn:focus-visible {
+    outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color);
+    outline-offset: var(--md-sys-focus-ring-offset);
+  }
+
+  .copy-btn.is-copied {
+    background: var(--md-extended-color-success-container);
+    color: var(--md-extended-color-on-success-container);
+  }
+
+  .copy-btn.has-error {
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+  }
+
+  .copy-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+
+  .copy-feedback {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    width: max-content;
+    max-width: 180px;
+    padding: 5px 9px;
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: var(--md-sys-color-inverse-surface);
+    color: var(--md-sys-color-inverse-on-surface);
+    opacity: 0;
+    pointer-events: none;
+    translate: 0 4px;
+    transition:
+      opacity var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      translate var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+  }
+
+  .copy-btn.is-copied .copy-feedback,
+  .copy-btn.has-error .copy-feedback {
+    opacity: 1;
+    translate: 0;
+  }
+
+  md-ripple { border-radius: inherit; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .copy-btn,
+    .copy-feedback { transition: none; }
+  }
 </style>

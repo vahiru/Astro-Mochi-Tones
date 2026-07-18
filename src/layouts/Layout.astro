@@ -1,258 +1,279 @@
 ---
-// src/layouts/Layout.astro
 import BaseHead from "../components/BaseHead.astro";
-import NavRail from "../components/NavRail.astro";
 import Footer from "../components/Footer.astro";
+import NavRail from "../components/NavRail.astro";
 import SearchWidget from "../components/SearchWidget.astro";
 import themeConfig from "astro-mochi-tones:config";
 import "../styles/global.css";
 
 interface Props {
-    title?: string;
-    description?: string;
-    image?: string;
-    articleDate?: Date;
+  title?: string;
+  description?: string;
+  image?: string;
+  articleDate?: Date;
 }
 
 const {
-    title = themeConfig.title,
-    description = themeConfig.description || "",
-    image: _image,
-    articleDate,
+  title = themeConfig.title,
+  description = themeConfig.description ?? "",
+  image = themeConfig.defaultImage,
+  articleDate,
 } = Astro.props;
 
-// 如果没传图片，就用默认的
-const image = _image || themeConfig.defaultImage;
-
-// 1. 获取站点域名
-const siteBase = Astro.site ? Astro.site.href : "http://localhost:4321";
-
-// 2. 智能链接拼接函数
-const resolveImage = (imgSrc: string) => {
-    // 情况 A: 已经是网络链接 (https://...) -> 直接用
-    if (imgSrc.startsWith("http")) return imgSrc;
-
-    // 情况 B: 已经是绝对路径 (/images/cover.jpg) -> 拼上域名
-    if (imgSrc.startsWith("/")) {
-        return new URL(imgSrc.slice(1), siteBase).href;
-    }
-    // 情况 C: 用户只写了文件名 (cover.jpg) -> 自动补全 /images/ 前缀
-    // 这是一个容错优化，假设你的图片都在 images 文件夹
-    return new URL(`images/${imgSrc}`, siteBase).href;
-};
-
-const canonicalURL = new URL(Astro.url.pathname, siteBase);
-const socialImageURL = resolveImage(image);
 const siteTitle = themeConfig.title;
 const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
 ---
 
 <!doctype html>
 <html lang={themeConfig.lang}>
-    <head>
-        <BaseHead title={pageTitle} description={description} image={image} />
+  <head>
+    <BaseHead
+      title={pageTitle}
+      description={description}
+      image={image}
+      articleDate={articleDate}
+    />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`${siteTitle} RSS Feed`}
+      href={themeConfig.rssPath}
+    />
 
-        <link
-            rel="alternate"
-            type="application/rss+xml"
-            title={`${siteTitle} RSS Feed`}
-            href={themeConfig.rssPath}
-        />
-
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={description} />
-        <meta property="og:url" content={canonicalURL} />
-        <meta property="og:site_name" content={siteTitle} />
-        <meta property="og:locale" content={themeConfig.locale} />
-        <meta property="og:image" content={socialImageURL} />
-
-        {
-            articleDate ? (
-                <>
-                    <meta property="og:type" content="article" />
-                    <meta
-                        property="article:published_time"
-                        content={articleDate.toISOString()}
-                    />
-                </>
-            ) : (
-                <meta property="og:type" content="website" />
-            )
+    <script is:inline>
+      (() => {
+        let preference = null;
+        try {
+          preference = localStorage.getItem("theme");
+        } catch {
+          preference = null;
         }
 
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={description} />
-        <meta name="twitter:image" content={socialImageURL} />
+        const useDark = preference === "dark" || (
+          preference !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches
+        );
+        document.documentElement.classList.toggle("dark", useDark);
+      })();
+    </script>
+  </head>
 
-        <script is:inline>
-            const theme = (() => {
-                if (
-                    typeof localStorage !== "undefined" &&
-                    localStorage.getItem("theme")
-                ) {
-                    return localStorage.getItem("theme");
-                }
-                if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-                    return "dark";
-                }
-                return "light";
-            })();
-            if (theme === "dark") {
-                document.documentElement.classList.add("dark");
-            }
-        </script>
-    </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
 
-    <body>
-        <div id="scrim" class="scrim"></div>
+    <header class="compact-top-app-bar">
+      <a class="compact-brand" href="/" aria-label={`${siteTitle} 首页`}>
+        <span class="brand-mark" aria-hidden="true">V</span>
+        <span class="header-title">{title}</span>
+      </a>
+      <div class="top-app-bar-actions">
+        <button
+          class="icon-button"
+          type="button"
+          data-open-theme-picker
+          aria-label={themeConfig.nav.colorLabel}
+          title={themeConfig.nav.colorLabel}
+        >
+          <md-icon>{themeConfig.nav.colorIcon}</md-icon>
+        </button>
+        <button
+          class="icon-button"
+          type="button"
+          data-theme-toggle
+          data-dark-icon={themeConfig.nav.darkIcon}
+          data-light-icon={themeConfig.nav.lightIcon}
+          aria-label={themeConfig.nav.themeLabel}
+          title={themeConfig.nav.themeLabel}
+        >
+          <md-icon class="theme-icon">{themeConfig.nav.darkIcon}</md-icon>
+        </button>
+        <button
+          class="icon-button search-trigger"
+          type="button"
+          aria-label={themeConfig.labels.search}
+          title={themeConfig.labels.search}
+        >
+          <md-icon>search</md-icon>
+        </button>
+      </div>
+    </header>
 
-        <header class="mobile-top-bar">
-            <button id="menu-btn" class="icon-btn" aria-label={themeConfig.labels.menu}>
-                <md-icon>menu</md-icon>
-            </button>
-            <div class="header-title">{title}</div>
-            <button class="icon-btn search-trigger" aria-label={themeConfig.labels.search}>
-                <md-icon>search</md-icon>
-            </button>
-        </header>
-
-        <div class="app-layout">
-            <NavRail />
-            <main class="main-content">
-                <div class="content-inner">
-                    <slot />
-                </div>
-                <Footer />
-            </main>
+    <div class="app-layout">
+      <NavRail />
+      <main id="main-content" class="main-content" tabindex="-1">
+        <div class="content-inner">
+          <slot />
         </div>
+        <Footer />
+      </main>
+    </div>
 
-        <SearchWidget />
+    <SearchWidget />
 
-        <script>
-            import "@material/web/icon/icon.js";
-            import "@material/web/button/elevated-button.js";
-            import "@material/web/button/filled-tonal-button.js";
-            import "@material/web/ripple/ripple.js";
+    <script>
+      import "@material/web/button/elevated-button.js";
+      import "@material/web/button/filled-tonal-button.js";
+      import "@material/web/button/text-button.js";
+      import "@material/web/divider/divider.js";
+      import "@material/web/icon/icon.js";
+      import "@material/web/ripple/ripple.js";
 
-            const menuBtn = document.getElementById("menu-btn");
-            const scrim = document.getElementById("scrim");
-            const body = document.body;
+      const bindSearchTriggers = () => {
+        document.querySelectorAll<HTMLButtonElement>(".search-trigger, .search-fab").forEach((button) => {
+          if (button.dataset.searchBound === "true") return;
+          button.dataset.searchBound = "true";
+          button.addEventListener("click", () => {
+            window.dispatchEvent(new Event("open-search"));
+          });
+        });
+      };
 
-            menuBtn?.addEventListener("click", () =>
-                body.classList.add("drawer-open"),
-            );
-            scrim?.addEventListener("click", () =>
-                body.classList.remove("drawer-open"),
-            );
-            document.addEventListener("astro:after-swap", () =>
-                body.classList.remove("drawer-open"),
-            );
-
-            const searchBtns = document.querySelectorAll(
-                "button.search-trigger, button.search-fab",
-            );
-            searchBtns.forEach((btn) => {
-                btn.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    window.dispatchEvent(new Event("open-search"));
-                });
-            });
-        </script>
-    </body>
+      bindSearchTriggers();
+      document.addEventListener("astro:after-swap", bindSearchTriggers);
+    </script>
+  </body>
 </html>
 
 <style>
-    .app-layout {
-        display: contents;
-    }
-    .main-content {
-        background-color: var(--md-sys-color-surface);
-        transition: background-color 0.3s ease;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-    }
-    .content-inner {
-        flex: 1;
-        width: 100%;
-        box-sizing: border-box;
-    }
-    .scrim {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 1100;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s;
-    }
-    body.drawer-open .scrim {
-        opacity: 1;
-        pointer-events: auto;
-    }
-    .icon-btn {
-        width: 48px;
-        height: 48px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--md-sys-color-on-surface);
-        border-radius: 50%;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-    }
-    .icon-btn:hover {
-        background-color: rgba(0, 0, 0, 0.05);
+  .app-layout {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    width: 100%;
+    height: 100dvh;
+    padding: 8px 8px 8px 0;
+    background: var(--md-sys-color-surface-container);
+  }
+
+  .main-content {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .content-inner {
+    width: 100%;
+    min-width: 0;
+    flex: 1;
+    padding: clamp(24px, 3vw, 48px);
+  }
+
+  .compact-top-app-bar {
+    display: none;
+  }
+
+  .icon-button {
+    position: relative;
+    display: inline-flex;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    transition:
+      background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+  }
+
+  .icon-button:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+    color: var(--md-sys-color-on-surface);
+  }
+
+  @media (max-width: 599px) {
+    .compact-top-app-bar {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 900;
+      display: flex;
+      height: var(--top-app-bar-height);
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      padding: 8px max(8px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+      background: color-mix(in srgb, var(--md-sys-color-surface) 92%, transparent);
+      backdrop-filter: blur(18px);
     }
 
-    @media (min-width: 993px) {
-        .mobile-top-bar {
-            display: none;
-        }
-        .main-content {
-            border-top-left-radius: 28px;
-            border-bottom-left-radius: 28px;
-            grid-column: 2 / 3;
-            height: 100vh;
-            overflow-y: auto;
-        }
-        .content-inner {
-            padding: 2rem 3rem;
-        }
+    .compact-brand {
+      display: flex;
+      min-width: 0;
+      flex: 1;
+      align-items: center;
+      gap: 10px;
+      border-radius: var(--md-sys-shape-corner-full);
     }
-    @media (max-width: 992px) {
-        .mobile-top-bar {
-            display: flex;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 64px;
-            z-index: 100;
-            background: var(--md-sys-color-surface);
-            padding: 0 8px;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        }
-        .header-title {
-            font-size: 1.25rem;
-            font-weight: 500;
-            color: var(--md-sys-color-on-surface);
-        }
-        .main-content {
-            grid-column: 1 / -1;
-            border-radius: 0;
-            padding-top: 64px;
-            height: auto;
-            min-height: 100vh;
-            overflow-y: visible;
-            background-color: var(--md-sys-color-surface);
-        }
-        .content-inner {
-            padding: 1rem;
-        }
+
+    .brand-mark {
+      display: grid;
+      width: 40px;
+      height: 40px;
+      flex: 0 0 40px;
+      place-items: center;
+      border-radius: var(--md-sys-shape-corner-medium);
+      background: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+      font-family: var(--md-ref-typeface-brand);
+      font-size: 20px;
+      font-weight: 700;
     }
+
+    .header-title {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--md-sys-color-on-surface);
+      font-size: var(--md-sys-typescale-title-medium-size);
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .top-app-bar-actions {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+    }
+
+    .app-layout {
+      display: block;
+      height: auto;
+      min-height: 100dvh;
+      padding: 0;
+      background: var(--md-sys-color-surface);
+    }
+
+    .main-content {
+      min-height: 100dvh;
+      overflow: visible;
+      border-radius: 0;
+      padding-block: var(--top-app-bar-height) calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+    }
+
+    .content-inner {
+      padding: 16px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .brand-mark {
+      display: none;
+    }
+  }
+
+  @media (min-width: 600px) and (max-width: 839px) {
+    .content-inner {
+      padding: 24px;
+    }
+  }
 </style>

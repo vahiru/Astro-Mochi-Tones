@@ -1,7 +1,5 @@
 ---
-import '@material/web/icon/icon.js';
-import '@material/web/iconbutton/icon-button.js';
-import themeConfig from 'astro-mochi-tones:config';
+import themeConfig from "astro-mochi-tones:config";
 
 const { labels } = themeConfig;
 ---
@@ -9,207 +7,424 @@ const { labels } = themeConfig;
 <dialog
   id="search-dialog"
   class="search-dialog"
+  aria-labelledby="search-dialog-title"
   data-search-path={themeConfig.searchPath}
   data-empty-message={labels.searchEmpty}
   data-no-results-message={labels.searchNoResults}
   data-untitled={labels.untitled}
 >
   <div class="search-container">
+    <h2 id="search-dialog-title" class="visually-hidden">{labels.search}</h2>
     <div class="search-header">
-      <md-icon class="search-icon">search</md-icon>
-      <input 
-        type="text" 
-        id="search-input" 
+      <md-icon class="search-icon" aria-hidden="true">search</md-icon>
+      <label class="visually-hidden" for="search-input">{labels.search}</label>
+      <input
+        type="search"
+        id="search-input"
         placeholder={labels.searchPlaceholder}
-        autocomplete="off" 
+        autocomplete="off"
+        enterkeyhint="search"
+        spellcheck="false"
       />
-      <button id="close-search" class="icon-btn">
+      <button id="close-search" class="icon-button" type="button" aria-label={labels.close} title={labels.close}>
         <md-icon>close</md-icon>
       </button>
     </div>
 
-    <div id="search-results" class="search-results">
-        <div class="empty-state">
-            <p>{labels.searchEmpty}</p>
-        </div>
+    <div id="search-results" class="search-results" aria-live="polite" aria-busy="false">
+      <div class="empty-state">
+        <md-icon aria-hidden="true">manage_search</md-icon>
+        <p>{labels.searchEmpty}</p>
+      </div>
     </div>
   </div>
 </dialog>
 
 <script>
-  import Fuse from 'fuse.js';
+  import Fuse from "fuse.js";
 
-  const dialog = document.getElementById('search-dialog');
-  const closeBtn = document.getElementById('close-search');
-  const input = document.getElementById('search-input');
-  const resultsContainer = document.getElementById('search-results');
+  interface SearchPost {
+    title: string;
+    description?: string;
+    content?: string;
+    slug: string;
+    tags?: string[];
+    categories?: string[];
+  }
 
-  let fuse;
-  let posts = [];
+  const dialog = document.querySelector<HTMLDialogElement>("#search-dialog");
+  const closeButton = document.querySelector<HTMLButtonElement>("#close-search");
+  const input = document.querySelector<HTMLInputElement>("#search-input");
+  const resultsContainer = document.querySelector<HTMLElement>("#search-results");
 
-  function showEmptyState(message) {
+  let fuse: Fuse<SearchPost> | null = null;
+  let posts: SearchPost[] = [];
+  let loadingPromise: Promise<void> | null = null;
+
+  const showState = (message: string, icon = "manage_search") => {
     if (!resultsContainer) return;
     resultsContainer.replaceChildren();
-    const empty = document.createElement('div');
-    empty.className = 'empty-state';
-    const text = document.createElement('p');
+
+    const state = document.createElement("div");
+    state.className = "empty-state";
+    const stateIcon = document.createElement("span");
+    stateIcon.className = "material-symbols-rounded";
+    stateIcon.setAttribute("aria-hidden", "true");
+    stateIcon.textContent = icon;
+    const text = document.createElement("p");
     text.textContent = message;
-    empty.appendChild(text);
-    resultsContainer.appendChild(empty);
-  }
+    state.append(stateIcon, text);
+    resultsContainer.appendChild(state);
+  };
 
-  async function initSearch() {
-    if (posts.length > 0) return;
-    
+  const isSearchPost = (value: unknown): value is SearchPost => {
+    if (!value || typeof value !== "object") return false;
+    const item = value as Record<string, unknown>;
+    const isOptionalString = (field: unknown, maxLength: number) =>
+      field === undefined || (typeof field === "string" && field.length <= maxLength);
+    const isOptionalStringArray = (field: unknown, maxItems: number) =>
+      field === undefined ||
+      (Array.isArray(field) &&
+        field.length <= maxItems &&
+        field.every((entry) => typeof entry === "string" && entry.length <= 64));
+
+    if (
+      typeof item.title !== "string" ||
+      item.title.length === 0 ||
+      item.title.length > 160 ||
+      typeof item.slug !== "string" ||
+      item.slug.length > 2048 ||
+      !isOptionalString(item.description, 500) ||
+      !isOptionalString(item.content, 5000) ||
+      !isOptionalStringArray(item.tags, 30) ||
+      !isOptionalStringArray(item.categories, 20)
+    ) {
+      return false;
+    }
+
     try {
-        // 1. 获取我们清洗过的纯文本 JSON
-        const res = await fetch(dialog?.dataset.searchPath || '');
-        posts = await res.json();
-        
-        // 2. 配置 Fuse.js (核心智能算法)
-        fuse = new Fuse(posts, {
-            // 搜索哪些字段
-            keys: [
-                { name: 'title', weight: 1.0 },       // 标题权重最高
-                { name: 'description', weight: 0.7 }, // 描述次之
-                { name: 'content', weight: 0.3 }      // 正文权重最低
-            ],
-            includeScore: true,
-            includeMatches: true, // 如果你想做高亮，需要开启这个
-            threshold: 0.3,       // 模糊阈值：0.0 是完全匹配，1.0 是完全不匹配。0.3 比较自然
-            ignoreLocation: true, // 搜索全文，不限制关键词出现的位置
-            minMatchCharLength: 2 // 至少输入2个字才开始搜
-        });
-    } catch (e) {
-        console.error('Failed to load search index', e);
+      const target = new URL(item.slug, window.location.origin);
+      return target.origin === window.location.origin && target.pathname.startsWith("/blog/");
+    } catch {
+      return false;
     }
-  }
+  };
 
-  // 打开搜索
-  window.addEventListener('open-search', async () => {
-    // @ts-ignore
-    dialog?.showModal();
-    await initSearch();
-    // @ts-ignore
-    input?.focus();
-  });
+  const initSearch = () => {
+    if (fuse) return Promise.resolve();
+    if (loadingPromise) return loadingPromise;
 
-  // 关闭逻辑
-  closeBtn?.addEventListener('click', () => {
-      // @ts-ignore
-      dialog?.close();
-      // @ts-ignore
-      input.value = ''; // 清空
-      showEmptyState(dialog?.dataset.emptyMessage || '');
-  });
+    loadingPromise = (async () => {
+      if (!dialog) return;
+      const searchPath = dialog.dataset.searchPath;
+      if (!searchPath) throw new Error("Search index path is missing");
 
-  dialog?.addEventListener('click', (e) => {
-    // @ts-ignore
-    if (e.target === dialog) dialog.close();
-  });
+      const searchURL = new URL(searchPath, window.location.href);
+      if (searchURL.origin !== window.location.origin) {
+        throw new Error("Cross-origin search indexes are not allowed");
+      }
 
-  // 搜索逻辑
-  input?.addEventListener('input', (e) => {
-    // @ts-ignore
-    const query = e.target.value;
-    
-    if (!query || query.length < 1) {
-        showEmptyState(dialog?.dataset.emptyMessage || '');
-        return;
-    }
+      resultsContainer?.setAttribute("aria-busy", "true");
+      const response = await fetch(searchURL, {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      });
+      if (!response.ok) throw new Error(`Search index request failed: ${response.status}`);
 
-    // 执行搜索
-    // @ts-ignore
-    const results = fuse.search(query);
-    
-    if (results.length === 0) {
-        showEmptyState(dialog?.dataset.noResultsMessage || '');
-        return;
-    }
+      const payload: unknown = await response.json();
+      if (!Array.isArray(payload)) throw new Error("Search index is not an array");
+      posts = payload.filter(isSearchPost);
 
-    if (!resultsContainer) return;
-    resultsContainer.replaceChildren();
-
-    results.slice(0, 20).forEach(result => {
-        const item = result.item;
-        
-        // 生成一个简单的预览文本
-        let snippet = item.description;
-        if (!snippet && item.content) {
-            // 如果没有描述，从正文里截取前 60 个字
-            snippet = item.content.substring(0, 60) + '...';
-        }
-
-        const link = document.createElement('a');
-        link.href = item.slug;
-        link.className = 'result-item';
-
-        const textArea = document.createElement('div');
-        textArea.className = 'text-area';
-
-        const title = document.createElement('div');
-        title.className = 'item-title';
-        title.textContent = item.title || dialog?.dataset.untitled || '';
-
-        const desc = document.createElement('div');
-        desc.className = 'item-desc';
-        desc.textContent = snippet || '';
-
-        const icon = document.createElement('span');
-        icon.className = 'arrow-icon material-symbols-rounded';
-        icon.textContent = 'arrow_forward';
-
-        textArea.append(title, desc);
-        link.append(textArea, icon);
-        resultsContainer.appendChild(link);
+      fuse = new Fuse(posts, {
+        keys: [
+          { name: "title", weight: 1 },
+          { name: "description", weight: 0.7 },
+          { name: "categories", weight: 0.55 },
+          { name: "tags", weight: 0.5 },
+          { name: "content", weight: 0.3 },
+        ],
+        includeScore: true,
+        threshold: 0.3,
+        ignoreLocation: true,
+        minMatchCharLength: 2,
+      });
+    })().finally(() => {
+      resultsContainer?.setAttribute("aria-busy", "false");
+      loadingPromise = null;
     });
+
+    return loadingPromise;
+  };
+
+  const renderResults = (query: string) => {
+    if (!resultsContainer || !fuse || !dialog) return;
+    const results = fuse.search(query).slice(0, 12);
+
+    if (results.length === 0) {
+      showState(dialog.dataset.noResultsMessage ?? "", "search_off");
+      return;
+    }
+
+    resultsContainer.replaceChildren();
+    const list = document.createElement("div");
+    list.className = "result-list";
+
+    results.forEach(({ item }) => {
+      const snippet = item.description || (item.content ? `${item.content.slice(0, 96)}…` : "");
+      const link = document.createElement("a");
+      const target = new URL(item.slug, window.location.origin);
+      link.href = `${target.pathname}${target.search}${target.hash}`;
+      link.className = "result-item";
+
+      const icon = document.createElement("span");
+      icon.className = "result-leading material-symbols-rounded";
+      icon.setAttribute("aria-hidden", "true");
+      icon.textContent = "article";
+
+      const textArea = document.createElement("span");
+      textArea.className = "result-text";
+      const title = document.createElement("span");
+      title.className = "item-title";
+      title.textContent = item.title || dialog.dataset.untitled || "";
+      const description = document.createElement("span");
+      description.className = "item-description";
+      description.textContent = snippet;
+      textArea.append(title, description);
+
+      const arrow = document.createElement("span");
+      arrow.className = "result-arrow material-symbols-rounded";
+      arrow.setAttribute("aria-hidden", "true");
+      arrow.textContent = "arrow_forward";
+
+      link.append(icon, textArea, arrow);
+      list.appendChild(link);
+    });
+
+    resultsContainer.appendChild(list);
+  };
+
+  window.addEventListener("open-search", async () => {
+    if (!dialog) return;
+    if (!dialog.open) dialog.showModal();
+    showState("正在加载搜索索引…", "progress_activity");
+
+    try {
+      await initSearch();
+      showState(dialog.dataset.emptyMessage ?? "");
+      input?.focus();
+    } catch (error) {
+      console.error("Failed to load search index", error);
+      showState("搜索暂时不可用，请稍后重试。", "error");
+    }
+  });
+
+  closeButton?.addEventListener("click", () => dialog?.close());
+  dialog?.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+  dialog?.addEventListener("close", () => {
+    if (input) input.value = "";
+    showState(dialog.dataset.emptyMessage ?? "");
+  });
+
+  input?.addEventListener("input", () => {
+    const query = input.value.trim();
+    if (query.length < 2) {
+      showState(dialog?.dataset.emptyMessage ?? "");
+      return;
+    }
+    renderResults(query);
   });
 </script>
 
 <style>
-  /* ... 样式部分保持你之前觉得好看的那一版 ... */
   .search-dialog {
-    border: none; border-radius: 28px; padding: 0;
-    background-color: var(--md-sys-color-surface);
+    width: min(92vw, 720px);
+    max-height: min(82dvh, 760px);
+    margin: auto;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    background: var(--md-sys-color-surface-container-high);
     color: var(--md-sys-color-on-surface);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    width: 90vw; max-width: 600px; max-height: 80vh;
-    margin: auto; overflow: hidden;
+    box-shadow: var(--md-sys-elevation-level3);
   }
-  .search-dialog::backdrop { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
-  .search-container { display: flex; flex-direction: column; height: 100%; }
-  
-  .search-header {
-    display: flex; align-items: center; gap: 16px; padding: 16px 24px;
-    background-color: var(--md-sys-color-surface-container-high);
-    border-bottom: 1px solid transparent;
-  }
-  .search-icon { color: var(--md-sys-color-on-surface-variant); font-size: 24px; }
-  
-  #search-input {
-    flex: 1; background: transparent; border: none; outline: none;
-    font-size: 1.1rem; color: var(--md-sys-color-on-surface); font-family: inherit; height: 40px;
-  }
-  
-  .icon-btn {
-      background: none; border: none; padding: 8px; cursor: pointer; border-radius: 50%;
-      color: var(--md-sys-color-on-surface); display: flex; align-items: center; justify-content: center;
-  }
-  .icon-btn:hover { background-color: rgba(0,0,0,0.05); }
 
-  .search-results { flex: 1; overflow-y: auto; padding: 12px; }
+  .search-dialog::backdrop {
+    background: color-mix(in srgb, var(--md-sys-color-scrim) 56%, transparent);
+    backdrop-filter: blur(3px);
+  }
+
+  .search-container {
+    display: flex;
+    max-height: min(82dvh, 760px);
+    flex-direction: column;
+  }
+
+  .search-header {
+    display: flex;
+    min-height: 72px;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px 12px 24px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container-high);
+  }
+
+  .search-icon {
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  #search-input {
+    min-width: 0;
+    height: 48px;
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font-size: var(--md-sys-typescale-title-large-size);
+    line-height: var(--md-sys-typescale-title-large-line-height);
+  }
+
+  #search-input::placeholder {
+    color: var(--md-sys-color-on-surface-variant);
+    opacity: 0.8;
+  }
+
+  .icon-button {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    place-items: center;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+  }
+
+  .icon-button:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+  }
+
+  .search-results {
+    min-height: 180px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background: var(--md-sys-color-surface-container-low);
+  }
+
+  :global(.empty-state) {
+    display: grid;
+    min-height: 180px;
+    place-content: center;
+    justify-items: center;
+    gap: 10px;
+    padding: 32px;
+    color: var(--md-sys-color-on-surface-variant);
+    text-align: center;
+  }
+
+  :global(.empty-state .material-symbols-rounded),
+  :global(.empty-state md-icon) {
+    font-size: 32px;
+  }
+
+  :global(.empty-state p) {
+    margin: 0;
+  }
+
+  :global(.result-list) {
+    display: grid;
+    gap: 4px;
+  }
 
   :global(.result-item) {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 20px; margin-bottom: 4px; border-radius: 16px;
-    text-decoration: none; color: inherit; transition: background-color 0.2s;
+    display: grid;
+    min-height: 72px;
+    grid-template-columns: 40px minmax(0, 1fr) 24px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: var(--md-sys-shape-corner-large);
+    color: var(--md-sys-color-on-surface);
+    transition: background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
   }
-  :global(.result-item:hover) { background-color: var(--md-sys-color-surface-container-highest); }
-  
-  :global(.text-area) { flex: 1; padding-right: 16px; overflow: hidden; }
-  :global(.item-title) { font-size: 1rem; font-weight: 500; margin-bottom: 4px; color: var(--md-sys-color-on-surface); }
-  :global(.item-desc) { font-size: 0.85rem; color: var(--md-sys-color-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  :global(.arrow-icon) { font-size: 20px; color: var(--md-sys-color-on-surface-variant); opacity: 0.5; }
 
-  .empty-state { display: flex; align-items: center; justify-content: center; height: 100px; color: var(--md-sys-color-on-surface-variant); opacity: 0.6; }
+  :global(.result-item:hover),
+  :global(.result-item:focus-visible) {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+  }
+
+  :global(.result-leading) {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border-radius: var(--md-sys-shape-corner-medium);
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  :global(.result-text),
+  :global(.item-title),
+  :global(.item-description) {
+    display: block;
+    min-width: 0;
+  }
+
+  :global(.item-title) {
+    overflow: hidden;
+    font-size: var(--md-sys-typescale-title-medium-size);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :global(.item-description) {
+    margin-top: 2px;
+    overflow: hidden;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: var(--md-sys-typescale-body-small-size);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :global(.result-item:hover .item-description),
+  :global(.result-item:focus-visible .item-description) {
+    color: currentColor;
+    opacity: 0.78;
+  }
+
+  :global(.result-arrow) {
+    color: var(--md-sys-color-primary);
+    transition: translate var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+  }
+
+  :global(.result-item:hover .result-arrow) {
+    translate: 3px 0;
+  }
+
+  @media (max-width: 599px) {
+    .search-dialog {
+      width: calc(100vw - 16px);
+      max-height: calc(100dvh - 24px);
+    }
+
+    .search-container {
+      max-height: calc(100dvh - 24px);
+    }
+
+    .search-header {
+      padding-inline: 16px 8px;
+    }
+
+    #search-input {
+      font-size: var(--md-sys-typescale-title-medium-size);
+    }
+  }
 </style>

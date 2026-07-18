@@ -1,6 +1,6 @@
 ---
 // src/pages/blog/[...slug].astro
-import { getCollection, type CollectionEntry } from 'astro:content';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Waline from '../../components/Waline.astro';
 import themeConfig from 'astro-mochi-tones:config';
@@ -15,7 +15,16 @@ interface Props {
     nextPost: CollectionEntry<'blog'> | null;
 }
 
+const getPostSlug = (entry: CollectionEntry<'blog'>) =>
+    'slug' in entry && typeof entry.slug === 'string'
+        ? entry.slug
+        : entry.id.replace(/\.(md|mdx)$/i, '');
+
 export async function getStaticPaths() {
+    const getSlug = (entry: CollectionEntry<'blog'>) =>
+        'slug' in entry && typeof entry.slug === 'string'
+            ? entry.slug
+            : entry.id.replace(/\.(md|mdx)$/i, '');
     const allPosts = await getCollection('blog');
     const sortedPosts = allPosts
         .filter(p => !p.data.draft)
@@ -30,14 +39,14 @@ export async function getStaticPaths() {
         const nextPost = index > 0 ? sortedPosts[index - 1] : null;
         const prevPost = index < sortedPosts.length - 1 ? sortedPosts[index + 1] : null;
         return { 
-            params: { slug: post.slug }, 
+            params: { slug: getSlug(post) },
             props: { post, prevPost, nextPost } 
         };
     });
 }
 
 const { post, prevPost, nextPost } = Astro.props;
-const { Content, headings } = await post.render();
+const { Content, headings } = await render(post);
 const { labels } = themeConfig;
 
 // 日期格式化
@@ -58,7 +67,7 @@ const themeColorVar = `var(--md-sys-color-${themes[post.data.title.length % them
 const onThemeColorVar = `var(--md-sys-color-on-${themes[post.data.title.length % themes.length]}-container)`;
 
 // SEO 描述
-const description = post.data.description || post.body.substring(0, 100);
+const description = post.data.description || post.body?.substring(0, 100) || post.data.title;
 ---
 
 <Layout 
@@ -82,7 +91,17 @@ const description = post.data.description || post.body.substring(0, 100);
 
             {post.data.cover ? (
                 <div class="cover-wrapper">
-                    <img src={post.data.cover} alt={post.data.title} class="post-cover" onerror="this.style.display='none'"/>
+                    <div class="cover-fallback" aria-hidden="true">
+                        <md-icon class="banner-icon">article</md-icon>
+                    </div>
+                    <img
+                        src={post.data.cover}
+                        alt={`《${post.data.title}》封面`}
+                        class="post-cover"
+                        data-post-cover
+                        decoding="async"
+                        referrerpolicy="no-referrer"
+                    />
                 </div>
             ) : (
                 <div class="title-banner" style={`background-color: ${themeColorVar}; color: ${onThemeColorVar}`}>
@@ -115,7 +134,7 @@ const description = post.data.description || post.body.substring(0, 100);
                     <md-icon style="font-size: 20px; opacity: 0.7;">label</md-icon>
                     <div class="tags-list">
                         {post.data.tags.map(tag => (
-                            <a href={`/tags/${tag}`} class="tag-chip">#{tag}</a>
+                            <a href={`/tags/${encodeURIComponent(tag)}`} class="tag-chip">#{tag}</a>
                         ))}
                     </div>
                 </div>
@@ -128,14 +147,14 @@ const description = post.data.description || post.body.substring(0, 100);
 
       <nav class="post-nav">
         {prevPost ? (
-            <a href={`/blog/${prevPost.slug}`} class="nav-link prev">
+            <a href={`/blog/${getPostSlug(prevPost)}`} class="nav-link prev">
                 <div class="nav-label"><md-icon>arrow_back</md-icon> {labels.previousPost}</div>
                 <div class="nav-title">{prevPost.data.title}</div>
             </a>
         ) : <div></div>}
         
         {nextPost && (
-            <a href={`/blog/${nextPost.slug}`} class="nav-link next">
+            <a href={`/blog/${getPostSlug(nextPost)}`} class="nav-link next">
                 <div class="nav-label">{labels.nextPost} <md-icon>arrow_forward</md-icon></div>
                 <div class="nav-title">{nextPost.data.title}</div>
             </a>
@@ -165,21 +184,48 @@ const description = post.data.description || post.body.substring(0, 100);
 </Layout>
 
 <script>
-    const preBlocks = document.querySelectorAll('pre');
+    const createIcon = (name: string) => {
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-rounded';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = name;
+        return icon;
+    };
+
+    const setCopyState = (button: HTMLButtonElement, icon: string, label: string) => {
+        button.replaceChildren(createIcon(icon));
+        button.setAttribute('aria-label', label);
+        button.title = label;
+    };
+
+    document.querySelectorAll<HTMLImageElement>('[data-post-cover]').forEach((image) => {
+        const showFallback = () => { image.hidden = true; };
+        image.addEventListener('error', showFallback, { once: true });
+        if (image.complete && image.naturalWidth === 0) showFallback();
+    });
+
+    const preBlocks = document.querySelectorAll<HTMLPreElement>('pre');
     preBlocks.forEach(pre => {
+        if (pre.parentElement?.classList.contains('code-wrapper')) return;
         const wrapper = document.createElement('div');
         wrapper.className = 'code-wrapper';
         pre.parentNode?.insertBefore(wrapper, pre);
         wrapper.appendChild(pre);
 
         const btn = document.createElement('button');
+        btn.type = 'button';
         btn.className = 'copy-btn';
-        btn.innerHTML = '<span class="material-symbols-rounded">content_copy</span>';
-        btn.onclick = async () => {
-            await navigator.clipboard.writeText(pre.innerText);
-            btn.innerHTML = '<span class="material-symbols-rounded">check</span>';
-            setTimeout(() => btn.innerHTML = '<span class="material-symbols-rounded">content_copy</span>', 2000);
-        };
+        setCopyState(btn, 'content_copy', '复制代码');
+        btn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(pre.innerText);
+                setCopyState(btn, 'check', '已复制');
+            } catch (error) {
+                console.error('Failed to copy code', error);
+                setCopyState(btn, 'error', '复制失败');
+            }
+            window.setTimeout(() => setCopyState(btn, 'content_copy', '复制代码'), 2000);
+        });
         wrapper.appendChild(btn);
     });
 </script>
@@ -266,8 +312,10 @@ const description = post.data.description || post.body.substring(0, 100);
 
     .post-header { margin-bottom: 2rem; }
     .back-nav { margin-bottom: 1.5rem; margin-left: -12px; }
-    .cover-wrapper { width: 100%; height: 360px; border-radius: 24px; overflow: hidden; margin-bottom: 2rem; background-color: var(--md-sys-color-surface-variant); }
-    .post-cover { width: 100%; height: 100%; object-fit: cover; }
+    .cover-wrapper { position: relative; width: 100%; height: 360px; border-radius: 24px; overflow: hidden; margin-bottom: 2rem; background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+    .cover-fallback { position: absolute; inset: 0; display: grid; place-items: center; }
+    .post-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .post-cover[hidden] { display: none; }
     .title-banner { width: 100%; height: 200px; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; }
     .banner-icon { font-size: 64px; opacity: 0.5; }
     .post-title { font-size: 2.5rem; line-height: 1.2; margin-bottom: 1rem; color: var(--md-sys-color-on-surface); }

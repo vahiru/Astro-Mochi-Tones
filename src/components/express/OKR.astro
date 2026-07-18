@@ -1,54 +1,79 @@
 ---
 interface Props {
-    o1: string; // The objective text
+  o1: string;
 }
 
 const { o1 } = Astro.props;
 ---
 
-<div class="express-okr">
-    <div class="okr-objective">
-        <div class="o-badge">O</div>
-        <div class="o-content">{o1}</div>
+<section class="express-okr" aria-label={o1}>
+  <header class="okr-objective">
+    <span class="o-badge" aria-hidden="true">O</span>
+    <div>
+      <span class="objective-label label-medium">OBJECTIVE</span>
+      <div class="o-content title-large">{o1}</div>
     </div>
-    <div class="okr-results">
-        <slot />
-    </div>
-</div>
+  </header>
+  <div class="okr-results"><slot /></div>
+</section>
 
 <style>
-    .express-okr {
-        margin: 2rem 0;
-        border: 1px solid var(--md-sys-color-outline-variant);
-        border-radius: 12px;
-        overflow: hidden;
-        background-color: var(--md-sys-color-surface);
-    }
-    .okr-objective {
-        padding: 1.5rem;
-        background-color: var(--md-sys-color-surface-container);
-        display: flex;
-        align-items: flex-start;
-    }
-    .o-badge {
-        background-color: var(--md-sys-color-primary);
-        color: var(--md-sys-color-on-primary);
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        margin-right: 1rem;
-        flex-shrink: 0;
-    }
-    .o-content {
-        font-size: 1.1rem;
-        font-weight: 500;
-        line-height: 1.5;
-    }
-    .okr-results {
-        padding: 0 1.5rem;
-    }
+  .express-okr {
+    margin: 32px 0;
+    overflow: hidden;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .okr-objective {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .o-badge {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border-radius: var(--md-sys-shape-corner-large);
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    font-size: var(--md-sys-typescale-title-large-size);
+    font-weight: 750;
+  }
+
+  .objective-label {
+    display: block;
+    margin-bottom: 2px;
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    opacity: 0.72;
+  }
+
+  .o-content {
+    color: inherit;
+    font-family: var(--md-ref-typeface-brand);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .okr-results {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  @media (max-width: 599px) {
+    .express-okr { border-radius: var(--md-sys-shape-corner-large); }
+    .okr-objective { grid-template-columns: 40px minmax(0, 1fr); gap: 12px; padding: 20px 16px; }
+    .o-badge { width: 40px; height: 40px; border-radius: var(--md-sys-shape-corner-medium); }
+    .okr-results { padding: 12px; }
+  }
 </style>

@@ -2,141 +2,170 @@
 import "@material/web/icon/icon.js";
 
 interface Props {
-    checked?: boolean;
-    color?:
-        | "default"
-        | "primary"
-        | "secondary"
-        | "tertiary"
-        | "error"
-        | "success"
-        | "info"
-        | "warning";
-    symbol?: "plus" | "minus" | "times" | "check";
-    label?: string;
+  checked?: boolean;
+  disabled?: boolean;
+  color?: "default" | "primary" | "secondary" | "tertiary" | "error" | "success" | "info" | "warning";
+  symbol?: "plus" | "minus" | "times" | "check";
+  label?: string;
 }
 
-const { checked = false, color = "default", symbol = "check", label } = Astro.props;
-
-// 图标映射
-const iconMap = {
-    check: "check",
-    plus: "add",
-    minus: "remove",
-    times: "close",
-};
-
-const finalIcon = iconMap[symbol] || "check";
-
-// 颜色类映射
-const colorClass = `color-${color}`;
+const {
+  checked = false,
+  disabled = false,
+  color = "default",
+  symbol = "check",
+  label,
+} = Astro.props;
+const iconMap = { check: "check", plus: "add", minus: "remove", times: "close" } as const;
+const finalIcon = iconMap[symbol] ?? "check";
 ---
 
-<div class={`md3-checkbox ${checked ? "is-checked" : ""} ${colorClass}`}>
-    <div class="checkbox-container">
-        <div class="checkbox-outline"></div>
-        <div class="checkbox-fill">
-            {checked && <md-icon class="checkbox-icon">{finalIcon}</md-icon>}
-        </div>
-        <md-ripple></md-ripple>
-    </div>
-    { (label || Astro.slots.has('default')) && (
-        <div class="checkbox-label body-medium">
-            <slot>{label}</slot>
-        </div>
-    )}
-</div>
-
-<script>
-    import "@material/web/ripple/ripple.js";
-</script>
+<label class:list={["md3-checkbox", `tone-${color}`, { "is-disabled": disabled }]}>
+  <input class="native-control" type="checkbox" checked={checked} disabled={disabled} aria-label={label} />
+  <span class="selection-control" aria-hidden="true">
+    <span class="selection-indicator"><md-icon>{finalIcon}</md-icon></span>
+  </span>
+  <span class="selection-label body-medium"><slot>{label}</slot></span>
+</label>
 
 <style>
-    .md3-checkbox {
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        margin: 0.5rem 0;
-        cursor: pointer;
-        user-select: none;
-        vertical-align: middle;
-    }
+  .md3-checkbox {
+    --selection-color: var(--md-sys-color-primary);
+    --selection-on-color: var(--md-sys-color-on-primary);
+    position: relative;
+    display: inline-flex;
+    min-height: var(--md-sys-touch-target-size);
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0;
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+    vertical-align: middle;
+  }
 
-    .checkbox-container {
-        position: relative;
-        width: 18px;
-        height: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
+  .native-control {
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    width: var(--md-sys-touch-target-size);
+    height: var(--md-sys-touch-target-size);
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
 
-    .checkbox-outline {
-        position: absolute;
-        inset: 0;
-        border: 2px solid var(--md-sys-color-on-surface-variant);
-        border-radius: 2px;
-        transition: border-color 0.2s, background-color 0.2s;
-    }
+  .selection-control {
+    position: relative;
+    display: grid;
+    width: var(--md-sys-touch-target-size);
+    height: var(--md-sys-touch-target-size);
+    flex: 0 0 var(--md-sys-touch-target-size);
+    place-items: center;
+    border-radius: var(--md-sys-shape-corner-full);
+    overflow: hidden;
+  }
 
-    .checkbox-fill {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 2px;
-        transform: scale(0);
-        transition: transform 0.2s cubic-bezier(0.05, 0.7, 0.1, 1);
-        background-color: var(--checkbox-active-color, var(--md-sys-color-primary));
-    }
+  .selection-control::before {
+    position: absolute;
+    inset: 4px;
+    border-radius: inherit;
+    background: var(--selection-color);
+    content: "";
+    opacity: 0;
+    transition: opacity var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+  }
 
-    .is-checked .checkbox-outline {
-        border-color: var(--checkbox-active-color, var(--md-sys-color-primary));
-    }
+  .selection-indicator {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    border: 2px solid var(--md-sys-color-on-surface-variant);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: transparent;
+    color: transparent;
+    transition:
+      background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      border-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      scale var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+  }
 
-    .is-checked .checkbox-fill {
-        transform: scale(1);
-    }
+  .selection-indicator md-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    font-weight: 700;
+  }
 
-    .checkbox-icon {
-        --md-icon-size: 14px;
-        color: var(--md-sys-color-on-primary);
-        font-weight: 900;
-    }
+  .native-control:checked + .selection-control .selection-indicator {
+    border-color: var(--selection-color);
+    background: var(--selection-color);
+    color: var(--selection-on-color);
+  }
 
-    .checkbox-label {
-        color: var(--md-sys-color-on-surface);
-        line-height: 1;
-    }
+  .native-control:active + .selection-control .selection-indicator {
+    scale: 0.9;
+  }
 
-    /* === 语义化颜色定义 === */
-    .color-default { --checkbox-active-color: var(--md-sys-color-primary); }
-    .color-primary { --checkbox-active-color: var(--md-sys-color-primary); }
-    .color-secondary { --checkbox-active-color: var(--md-sys-color-secondary); }
-    .color-tertiary { --checkbox-active-color: var(--md-sys-color-tertiary); }
-    .color-error { --checkbox-active-color: var(--md-sys-color-error); }
-    
-    .color-success { --checkbox-active-color: #2e7d32; }
-    :global(.dark) .color-success { --checkbox-active-color: #a5d6a7; }
-    
-    .color-info { --checkbox-active-color: #0288d1; }
-    :global(.dark) .color-info { --checkbox-active-color: #81d4fa; }
-    
-    .color-warning { --checkbox-active-color: #ed6c02; }
-    :global(.dark) .color-warning { --checkbox-active-color: #ffb74d; }
+  .native-control:focus-visible + .selection-control {
+    outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color);
+    outline-offset: var(--md-sys-focus-ring-offset);
+  }
 
-    /* Ripple 修正 */
-    md-ripple {
-        --md-ripple-hover-color: var(--md-sys-color-on-surface);
-        --md-ripple-pressed-color: var(--checkbox-active-color);
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+  .selection-label {
+    min-width: 0;
+    padding-right: 4px;
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+  }
+
+  .tone-secondary {
+    --selection-color: var(--md-sys-color-secondary);
+    --selection-on-color: var(--md-sys-color-on-secondary);
+  }
+
+  .tone-tertiary {
+    --selection-color: var(--md-sys-color-tertiary);
+    --selection-on-color: var(--md-sys-color-on-tertiary);
+  }
+
+  .tone-error {
+    --selection-color: var(--md-sys-color-error);
+    --selection-on-color: var(--md-sys-color-on-error);
+  }
+
+  .tone-success {
+    --selection-color: var(--md-extended-color-success);
+    --selection-on-color: var(--md-extended-color-on-success);
+  }
+
+  .tone-info {
+    --selection-color: var(--md-extended-color-info);
+    --selection-on-color: var(--md-extended-color-on-info);
+  }
+
+  .tone-warning {
+    --selection-color: var(--md-extended-color-warning);
+    --selection-on-color: var(--md-extended-color-on-warning);
+  }
+
+  .is-disabled {
+    cursor: not-allowed;
+    opacity: var(--md-sys-state-disabled-opacity);
+  }
+
+  @media (hover: hover) {
+    .md3-checkbox:not(.is-disabled):hover .selection-control::before {
+      opacity: var(--md-sys-state-hover-opacity);
     }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .selection-control::before,
+    .selection-indicator {
+      transition: none;
+    }
+  }
 </style>

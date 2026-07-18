@@ -1,0 +1,504 @@
+---
+import type { Page } from "astro";
+import type { CollectionEntry } from "astro:content";
+import "@material/web/icon/icon.js";
+import Layout from "../layouts/Layout.astro";
+import Pagination from "./Pagination.astro";
+import PostCard from "./PostCard.astro";
+import themeConfig from "astro-mochi-tones:config";
+
+interface Props {
+  page: Page<CollectionEntry<"blog">>;
+  categories: Array<[string, number]>;
+  totalPosts: number;
+  totalYears: number;
+}
+
+const { page, categories, totalPosts, totalYears } = Astro.props;
+const { labels } = themeConfig;
+const archiveTitle = labels.archiveTitleTemplate.replaceAll("{page}", String(page.currentPage));
+const countText = (count: number) => labels.postsCountTemplate.replaceAll("{count}", String(count));
+
+const postsByYear = new Map<string, CollectionEntry<"blog">[]>();
+for (const post of page.data) {
+  const date = post.data.date instanceof Date ? post.data.date : new Date(post.data.date);
+  const year = Number.isNaN(date.valueOf()) ? labels.noDate : String(date.getFullYear());
+  const group = postsByYear.get(year) ?? [];
+  group.push(post);
+  postsByYear.set(year, group);
+}
+
+const yearGroups = [...postsByYear.entries()].sort(([left], [right]) => {
+  const leftYear = Number.parseInt(left, 10);
+  const rightYear = Number.parseInt(right, 10);
+  if (Number.isNaN(leftYear)) return 1;
+  if (Number.isNaN(rightYear)) return -1;
+  return rightYear - leftYear;
+});
+---
+
+<Layout title={archiveTitle} description={labels.archiveDescription}>
+  <main class="archive-page">
+    <header class="archive-hero" aria-labelledby="archive-title">
+      <div class="hero-copy">
+        <p class="hero-eyebrow label-large">
+          <md-icon aria-hidden="true">history</md-icon>
+          {labels.archiveEyebrow}
+        </p>
+        <h1 id="archive-title">{labels.archiveHeading}</h1>
+        <p class="hero-description body-large">{labels.archiveDescription}</p>
+      </div>
+
+      <dl class="hero-stats" aria-label={labels.archiveHeading}>
+        <div>
+          <dd>{totalPosts}</dd>
+          <dt>{labels.postsLabel}</dt>
+        </div>
+        <div>
+          <dd>{categories.length}</dd>
+          <dt>{labels.categoriesTitle}</dt>
+        </div>
+        <div>
+          <dd>{totalYears}</dd>
+          <dt>{labels.yearsLabel}</dt>
+        </div>
+      </dl>
+    </header>
+
+    <section class="category-section" aria-labelledby="category-section-title">
+      <div class="section-heading">
+        <span class="section-icon" aria-hidden="true"><md-icon>category</md-icon></span>
+        <div>
+          <p class="section-eyebrow label-medium">DISCOVER</p>
+          <h2 id="category-section-title">{labels.categoriesTitle}</h2>
+          <p class="section-description body-medium">{labels.archiveBrowseDescription}</p>
+        </div>
+      </div>
+
+      {
+        categories.length > 0 ? (
+          <div class="category-grid">
+            {categories.map(([category, count]) => (
+              <a
+                class="category-card"
+                href={`/categories/${encodeURIComponent(category)}`}
+                aria-label={`${category}，${countText(count)}`}
+              >
+                <span class="category-name title-medium">{category}</span>
+                <span class="category-count label-medium">{countText(count)}</span>
+                <md-icon class="category-arrow" aria-hidden="true">arrow_outward</md-icon>
+                <md-ripple />
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div class="empty-state compact">
+            <md-icon aria-hidden="true">folder_off</md-icon>
+            <p>{labels.noCategories}</p>
+          </div>
+        )
+      }
+    </section>
+
+    <section class="timeline-section" aria-labelledby="timeline-title">
+      <div class="section-heading timeline-heading">
+        <span class="section-icon secondary" aria-hidden="true"><md-icon>timeline</md-icon></span>
+        <div>
+          <p class="section-eyebrow label-medium">CHRONOLOGICAL</p>
+          <h2 id="timeline-title">{labels.archiveTimelineTitle}</h2>
+          <p class="section-description body-medium">{labels.archiveTimelineDescription}</p>
+        </div>
+      </div>
+
+      {
+        yearGroups.length > 0 ? (
+          <div class="year-list">
+            {yearGroups.map(([year, posts]) => (
+              <section class="year-section" aria-labelledby={`year-${year}`}>
+                <header class="year-marker">
+                  <h3 id={`year-${year}`}>{year}</h3>
+                  <span class="label-medium">{countText(posts.length)}</span>
+                </header>
+                <div class="posts-grid">
+                  {posts.map((post) => <PostCard post={post} />)}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <div class="empty-state">
+            <md-icon aria-hidden="true">edit_note</md-icon>
+            <p>{labels.postsCountTemplate.replaceAll("{count}", "0")}</p>
+          </div>
+        )
+      }
+    </section>
+
+    <Pagination page={page} />
+  </main>
+</Layout>
+
+<script>
+  import "@material/web/ripple/ripple.js";
+</script>
+
+<style>
+  .archive-page {
+    width: min(100%, 1200px);
+    margin-inline: auto;
+  }
+
+  .archive-hero {
+    position: relative;
+    display: grid;
+    min-height: 300px;
+    grid-template-columns: minmax(0, 7fr) minmax(280px, 5fr);
+    align-items: center;
+    gap: clamp(32px, 6vw, 80px);
+    overflow: hidden;
+    padding: clamp(32px, 6vw, 72px);
+    border-radius: var(--md-sys-shape-corner-extra-extra-large);
+    background:
+      radial-gradient(circle at 94% 6%, color-mix(in srgb, var(--md-sys-color-tertiary-container) 76%, transparent) 0, transparent 38%),
+      var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .archive-hero::after {
+    position: absolute;
+    right: -88px;
+    bottom: -132px;
+    width: 300px;
+    height: 300px;
+    border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+    border-radius: var(--md-sys-shape-corner-full);
+    content: "";
+  }
+
+  .hero-copy,
+  .hero-stats {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+  }
+
+  .hero-eyebrow,
+  .section-eyebrow {
+    margin: 0;
+    color: var(--md-sys-color-primary);
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 72%, transparent);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .hero-eyebrow md-icon {
+    width: 19px;
+    height: 19px;
+    flex: 0 0 19px;
+    font-size: 19px;
+  }
+
+  .archive-hero h1 {
+    margin: 20px 0 14px;
+    font-family: var(--md-ref-typeface-brand);
+    font-size: clamp(40px, 6vw, 64px);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+  }
+
+  .hero-description {
+    max-width: 640px;
+    margin: 0;
+    opacity: 0.8;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+  }
+
+  .hero-stats div {
+    display: flex;
+    min-width: 0;
+    min-height: 100px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 8px;
+    border-radius: var(--md-sys-shape-corner-large);
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 74%, transparent);
+    box-shadow: var(--md-sys-elevation-level1);
+    text-align: center;
+  }
+
+  .hero-stats dd {
+    margin: 0;
+    font-family: var(--md-ref-typeface-brand);
+    font-size: var(--md-sys-typescale-headline-medium-size);
+    font-weight: 650;
+    line-height: var(--md-sys-typescale-headline-medium-line-height);
+  }
+
+  .hero-stats dt {
+    margin-top: 2px;
+    overflow: hidden;
+    font-size: var(--md-sys-typescale-label-medium-size);
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .category-section,
+  .timeline-section {
+    margin-top: clamp(48px, 8vw, 80px);
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .section-icon {
+    display: grid;
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    place-items: center;
+    border-radius: var(--md-sys-shape-corner-large);
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .section-icon.secondary {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+  }
+
+  .section-heading h2 {
+    margin: 2px 0 0;
+    font-family: var(--md-ref-typeface-brand);
+    font-size: var(--md-sys-typescale-headline-small-size);
+    font-weight: 500;
+    line-height: var(--md-sys-typescale-headline-small-line-height);
+  }
+
+  .section-description {
+    margin: 3px 0 0;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 12px;
+  }
+
+  .category-card {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    min-height: 112px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-content: center;
+    gap: 8px 12px;
+    overflow: hidden;
+    padding: 20px;
+    border: 1px solid transparent;
+    border-radius: var(--md-sys-shape-corner-large-increased);
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+    transition:
+      background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      border-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      translate var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+  }
+
+  .category-name {
+    overflow: hidden;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .category-count {
+    grid-column: 1;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .category-arrow {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    align-self: center;
+    color: var(--md-sys-color-primary);
+  }
+
+  .category-card:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary);
+    outline-offset: 3px;
+  }
+
+  .timeline-heading {
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .year-list {
+    display: grid;
+    gap: 48px;
+  }
+
+  .year-section {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 104px minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
+  }
+
+  .year-marker {
+    position: sticky;
+    top: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 16px 10px;
+    border-radius: var(--md-sys-shape-corner-large);
+    background: var(--md-sys-color-tertiary-container);
+    color: var(--md-sys-color-on-tertiary-container);
+    text-align: center;
+  }
+
+  .year-marker h3 {
+    margin: 0;
+    font-family: var(--md-ref-typeface-brand);
+    font-size: var(--md-sys-typescale-title-large-size);
+    font-weight: 650;
+    line-height: var(--md-sys-typescale-title-large-line-height);
+  }
+
+  .year-marker span {
+    opacity: 0.78;
+  }
+
+  .posts-grid {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 20px;
+  }
+
+  .empty-state {
+    display: grid;
+    min-height: 220px;
+    place-content: center;
+    justify-items: center;
+    gap: 10px;
+    padding: 32px;
+    border: 1px dashed var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    color: var(--md-sys-color-on-surface-variant);
+    text-align: center;
+  }
+
+  .empty-state.compact {
+    min-height: 136px;
+  }
+
+  .empty-state md-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 40px;
+  }
+
+  .empty-state p {
+    margin: 0;
+  }
+
+  @media (hover: hover) {
+    .category-card:hover {
+      border-color: var(--md-sys-color-outline-variant);
+      background: var(--md-sys-color-surface-container-high);
+      box-shadow: var(--md-sys-elevation-level1);
+      translate: 0 -3px;
+    }
+  }
+
+  @media (max-width: 839px) {
+    .archive-hero {
+      min-height: 0;
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+
+    .hero-stats {
+      max-width: 520px;
+    }
+  }
+
+  @media (max-width: 599px) {
+    .archive-hero {
+      padding: 28px 24px 32px;
+      border-radius: var(--md-sys-shape-corner-extra-large-increased) var(--md-sys-shape-corner-extra-large-increased) var(--md-sys-shape-corner-large) var(--md-sys-shape-corner-extra-large-increased);
+    }
+
+    .archive-hero h1 {
+      margin-top: 18px;
+      font-size: clamp(36px, 12vw, 48px);
+    }
+
+    .hero-stats div {
+      min-height: 82px;
+      padding-inline: 4px;
+    }
+
+    .hero-stats dd {
+      font-size: var(--md-sys-typescale-title-large-size);
+      line-height: var(--md-sys-typescale-title-large-line-height);
+    }
+
+    .section-heading {
+      align-items: flex-start;
+    }
+
+    .year-list {
+      gap: 40px;
+    }
+
+    .year-section {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .year-marker {
+      position: static;
+      flex-direction: row;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-radius: var(--md-sys-shape-corner-medium);
+      text-align: start;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .category-card {
+      transition: none;
+    }
+  }
+</style>

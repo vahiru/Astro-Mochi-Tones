@@ -2,188 +2,178 @@
 import "@material/web/icon/icon.js";
 
 interface Props {
-    color?:
-        | "default"
-        | "primary"
-        | "secondary"
-        | "info"
-        | "success"
-        | "warning"
-        | "error"
-        | "red"
-        | "orange"
-        | "yellow"
-        | "green"
-        | "cyan"
-        | "blue"
-        | "purple";
-    title?: string;
-    icon?: string;
+  color?:
+    | "default"
+    | "primary"
+    | "secondary"
+    | "info"
+    | "success"
+    | "warning"
+    | "error"
+    | "red"
+    | "orange"
+    | "yellow"
+    | "green"
+    | "cyan"
+    | "blue"
+    | "purple";
+  title?: string;
+  icon?: string;
 }
 
 const { color = "default", title, icon } = Astro.props;
-
-// 将旧版的各类颜色映射到语义化的主题色调
-const colorMap: Record<string, string> = {
-    default: "surface",
-    light: "surface",
-    dark: "surface",
-    primary: "primary",
-    secondary: "secondary",
-    purple: "primary", 
-    info: "info",
-    cyan: "info",
-    blue: "info",
-    success: "success",
-    green: "success",
-    warning: "warning",
-    orange: "warning",
-    yellow: "warning",
-    error: "error",
-    red: "error",
+const toneMap: Record<string, string> = {
+  default: "surface",
+  primary: "primary",
+  purple: "primary",
+  secondary: "secondary",
+  info: "info",
+  cyan: "info",
+  blue: "info",
+  success: "success",
+  green: "success",
+  warning: "warning",
+  orange: "warning",
+  yellow: "warning",
+  error: "error",
+  red: "error",
 };
-
-const mappedColor = colorMap[color] || "surface";
-
-// 默认图标映射
 const iconMap: Record<string, string> = {
-    surface: "notes",
-    primary: "lightbulb",
-    secondary: "bookmark",
-    info: "info",
-    success: "check_circle",
-    warning: "warning",
-    error: "error",
+  surface: "notes",
+  primary: "lightbulb",
+  secondary: "bookmark",
+  info: "info",
+  success: "check_circle",
+  warning: "warning",
+  error: "error",
 };
-
-const finalIcon = icon || iconMap[mappedColor];
+const tone = toneMap[color] ?? "surface";
+const finalIcon = icon ?? iconMap[tone];
 ---
 
-<div class={`md3-note note-${mappedColor}`}>
-    <div class="note-header">
-        <md-icon class="note-icon">{finalIcon}</md-icon>
-        {title && <span class="note-title label-large">{title}</span>}
-    </div>
-    <div class="note-content body-medium">
-        <slot />
-    </div>
-</div>
+<aside class={`md3-note tone-${tone}`} role="note" aria-label={title}>
+  <span class="note-icon-surface" aria-hidden="true">
+    <md-icon>{finalIcon}</md-icon>
+  </span>
+  <div class="note-body">
+    {title && <div class="note-title title-small">{title}</div>}
+    <div class="note-content body-medium"><slot /></div>
+  </div>
+</aside>
 
 <style>
-    /* === 基础容器样式 (MD3 Card Style) === */
+  .md3-note {
+    --note-container: var(--md-sys-color-surface-container);
+    --note-on-container: var(--md-sys-color-on-surface);
+    --note-accent: var(--md-sys-color-primary-container);
+    --note-on-accent: var(--md-sys-color-on-primary-container);
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
+    margin: 24px 0;
+    padding: 20px;
+    border: 1px solid color-mix(in srgb, var(--note-on-container) 16%, transparent);
+    border-radius: var(--md-sys-shape-corner-large-increased);
+    background: var(--note-container);
+    color: var(--note-on-container);
+  }
+
+  .note-icon-surface {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border-radius: var(--md-sys-shape-corner-medium);
+    background: var(--note-accent);
+    color: var(--note-on-accent);
+  }
+
+  .note-icon-surface md-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
+    font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24;
+  }
+
+  .note-body {
+    min-width: 0;
+    padding-top: 1px;
+  }
+
+  .note-title {
+    margin-bottom: 4px;
+    color: var(--note-on-container);
+    font-weight: 700;
+  }
+
+  .note-content {
+    color: var(--note-on-container);
+    overflow-wrap: anywhere;
+    opacity: 0.88;
+  }
+
+  .note-content :global(p:first-child) {
+    margin-top: 0;
+  }
+
+  .note-content :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .tone-primary {
+    --note-container: var(--md-sys-color-primary-container);
+    --note-on-container: var(--md-sys-color-on-primary-container);
+    --note-accent: var(--md-sys-color-primary);
+    --note-on-accent: var(--md-sys-color-on-primary);
+  }
+
+  .tone-secondary {
+    --note-container: var(--md-sys-color-secondary-container);
+    --note-on-container: var(--md-sys-color-on-secondary-container);
+    --note-accent: var(--md-sys-color-secondary);
+    --note-on-accent: var(--md-sys-color-on-secondary);
+  }
+
+  .tone-info {
+    --note-container: var(--md-extended-color-info-container);
+    --note-on-container: var(--md-extended-color-on-info-container);
+    --note-accent: var(--md-extended-color-info);
+    --note-on-accent: var(--md-extended-color-on-info);
+  }
+
+  .tone-success {
+    --note-container: var(--md-extended-color-success-container);
+    --note-on-container: var(--md-extended-color-on-success-container);
+    --note-accent: var(--md-extended-color-success);
+    --note-on-accent: var(--md-extended-color-on-success);
+  }
+
+  .tone-warning {
+    --note-container: var(--md-extended-color-warning-container);
+    --note-on-container: var(--md-extended-color-on-warning-container);
+    --note-accent: var(--md-extended-color-warning);
+    --note-on-accent: var(--md-extended-color-on-warning);
+  }
+
+  .tone-error {
+    --note-container: var(--md-sys-color-error-container);
+    --note-on-container: var(--md-sys-color-on-error-container);
+    --note-accent: var(--md-sys-color-error);
+    --note-on-accent: var(--md-sys-color-on-error);
+  }
+
+  @media (max-width: 479px) {
     .md3-note {
-        display: flex;
-        flex-direction: column;
-        padding: 1rem 1.25rem;
-        margin: 1.5rem 0;
-        border-radius: 16px;
-        background-color: var(--note-bg);
-        color: var(--note-text);
-        border: 1px solid var(--note-border, transparent);
-        transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+      grid-template-columns: 36px minmax(0, 1fr);
+      gap: 12px;
+      padding: 16px;
+      border-radius: var(--md-sys-shape-corner-large);
     }
 
-    .note-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 0.5rem;
-        color: var(--note-title-color);
+    .note-icon-surface {
+      width: 36px;
+      height: 36px;
     }
-
-    .note-icon {
-        --md-icon-size: 20px;
-    }
-
-    .note-title {
-        font-weight: 600;
-        letter-spacing: 0.1px;
-    }
-
-    .note-content {
-        line-height: 1.6;
-    }
-
-    .note-content :global(p:first-child) {
-        margin-top: 0;
-    }
-    .note-content :global(p:last-child) {
-        margin-bottom: 0;
-    }
-
-    /* === 颜色映射定义 (支持 Light / Dark 模式) === */
-    
-    /* 1. Surface (Default) */
-    .note-surface {
-        --note-bg: var(--md-sys-color-surface-container-low);
-        --note-text: var(--md-sys-color-on-surface-variant);
-        --note-title-color: var(--md-sys-color-on-surface);
-        --note-border: var(--md-sys-color-outline-variant);
-    }
-
-    /* 2. Primary */
-    .note-primary {
-        --note-bg: var(--md-sys-color-primary-container);
-        --note-text: var(--md-sys-color-on-primary-container);
-        --note-title-color: var(--md-sys-color-on-primary-container);
-    }
-
-    /* 3. Secondary */
-    .note-secondary {
-        --note-bg: var(--md-sys-color-secondary-container);
-        --note-text: var(--md-sys-color-on-secondary-container);
-        --note-title-color: var(--md-sys-color-on-secondary-container);
-    }
-
-    /* 4. Info (Blue/Cyan) */
-    .note-info {
-        --note-bg: #e3f2fd;
-        --note-text: #0d47a1;
-        --note-title-color: #1565c0;
-    }
-    :global(.dark) .note-info {
-        --note-bg: rgba(13, 71, 161, 0.3);
-        --note-text: #e3f2fd;
-        --note-title-color: #90caf9;
-        --note-border: rgba(144, 202, 249, 0.2);
-    }
-
-    /* 5. Success (Green) */
-    .note-success {
-        --note-bg: #e8f5e9;
-        --note-text: #1b5e20;
-        --note-title-color: #2e7d32;
-    }
-    :global(.dark) .note-success {
-        --note-bg: rgba(27, 94, 32, 0.3);
-        --note-text: #e8f5e9;
-        --note-title-color: #a5d6a7;
-        --note-border: rgba(165, 214, 167, 0.2);
-    }
-
-    /* 6. Warning (Orange/Yellow) */
-    .note-warning {
-        --note-bg: #fff8e1;
-        --note-text: #795548;
-        --note-title-color: #f57f17;
-    }
-    :global(.dark) .note-warning {
-        --note-bg: rgba(245, 127, 23, 0.2);
-        --note-text: #ffe082;
-        --note-title-color: #ffe082;
-        --note-border: rgba(255, 224, 130, 0.2);
-    }
-
-    /* 7. Error (Red) */
-    .note-error {
-        --note-bg: #ffebee;
-        --note-text: #b71c1c;
-        --note-title-color: #c62828;
-    }
-    :global(.dark) .note-error {
-        --note-bg: rgba(183, 28, 28, 0.3);
-        --note-text: #ffebee;
-        --note-title-color: #ef9a9a;
-        --note-border: rgba(239, 154, 154, 0.2);
-    }
+  }
 </style>

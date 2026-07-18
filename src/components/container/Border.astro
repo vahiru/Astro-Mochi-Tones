@@ -1,70 +1,119 @@
 ---
 interface Props {
-    title?: string;
-    color?:
-        | "default"
-        | "red"
-        | "orange"
-        | "yellow"
-        | "green"
-        | "cyan"
-        | "blue"
-        | "purple";
+  title?: string;
+  color?: "default" | "red" | "orange" | "yellow" | "green" | "cyan" | "blue" | "purple";
 }
 
 const { title, color = "default" } = Astro.props;
-
-const colors = {
-    default: {
-        border: "var(--md-sys-color-outline)",
-        bg: "var(--md-sys-color-surface)",
-    },
-    red: { border: "#ef5350", bg: "#ffebee" },
-    orange: { border: "#ffa726", bg: "#fff3e0" },
-    yellow: { border: "#fdd835", bg: "#fffde7" },
-    green: { border: "#66bb6a", bg: "#e8f5e9" },
-    cyan: { border: "#26c6da", bg: "#e0f7fa" },
-    blue: { border: "#42a5f5", bg: "#e3f2fd" },
-    purple: { border: "#ab47bc", bg: "#f3e5f5" },
+const toneMap: Record<string, string> = {
+  default: "surface",
+  red: "error",
+  orange: "warning",
+  yellow: "warning",
+  green: "success",
+  cyan: "info",
+  blue: "info",
+  purple: "primary",
 };
-
-const style = colors[color] || colors.default;
+const tone = toneMap[color] ?? "surface";
 ---
 
-<div class="border-box" style={`border-color: ${style.border};`}>
-    {
-        title && (
-            <div
-                class="border-title"
-                style={`background-color: ${style.bg}; color: ${style.border}`}
-            >
-                {title}
-            </div>
-        )
-    }
-    <div class="border-content">
-        <slot />
-    </div>
-</div>
+<section class={`outlined-card tone-${tone}`} aria-label={title}>
+  {
+    title && (
+      <div class="card-heading label-large">
+        <span class="heading-indicator" aria-hidden="true"></span>
+        {title}
+      </div>
+    )
+  }
+  <div class="card-content"><slot /></div>
+</section>
 
 <style>
-    .border-box {
-        border: 2px solid;
-        border-radius: 12px;
-        margin: 2rem 0;
-        position: relative;
-        padding: 1.5rem;
+  .outlined-card {
+    --card-container: var(--md-sys-color-surface-container-low);
+    --card-on-container: var(--md-sys-color-on-surface);
+    --card-accent: var(--md-sys-color-outline);
+    margin: 28px 0;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--card-accent) 72%, transparent);
+    border-radius: var(--md-sys-shape-corner-large-increased);
+    background: var(--card-container);
+    color: var(--card-on-container);
+  }
+
+  .card-heading {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-bottom: 1px solid color-mix(in srgb, var(--card-accent) 26%, transparent);
+    color: var(--card-on-container);
+    font-weight: 700;
+  }
+
+  .heading-indicator {
+    width: 4px;
+    height: 22px;
+    flex: 0 0 4px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--card-accent);
+  }
+
+  .card-content {
+    min-width: 0;
+    padding: 20px;
+    overflow-wrap: anywhere;
+  }
+
+  .card-content :global(> :first-child) {
+    margin-top: 0;
+  }
+
+  .card-content :global(> :last-child) {
+    margin-bottom: 0;
+  }
+
+  .tone-primary {
+    --card-container: var(--md-sys-color-primary-container);
+    --card-on-container: var(--md-sys-color-on-primary-container);
+    --card-accent: var(--md-sys-color-primary);
+  }
+
+  .tone-info {
+    --card-container: var(--md-extended-color-info-container);
+    --card-on-container: var(--md-extended-color-on-info-container);
+    --card-accent: var(--md-extended-color-info);
+  }
+
+  .tone-success {
+    --card-container: var(--md-extended-color-success-container);
+    --card-on-container: var(--md-extended-color-on-success-container);
+    --card-accent: var(--md-extended-color-success);
+  }
+
+  .tone-warning {
+    --card-container: var(--md-extended-color-warning-container);
+    --card-on-container: var(--md-extended-color-on-warning-container);
+    --card-accent: var(--md-extended-color-warning);
+  }
+
+  .tone-error {
+    --card-container: var(--md-sys-color-error-container);
+    --card-on-container: var(--md-sys-color-on-error-container);
+    --card-accent: var(--md-sys-color-error);
+  }
+
+  @media (max-width: 479px) {
+    .outlined-card {
+      border-radius: var(--md-sys-shape-corner-large);
     }
-    .border-title {
-        position: absolute;
-        top: -0.75rem; /* half height approx */
-        left: 1rem;
-        padding: 0 0.5rem;
-        font-weight: bold;
-        font-size: 0.9rem;
-        line-height: 1.5rem;
+
+    .card-heading,
+    .card-content {
+      padding-inline: 16px;
     }
-    .border-content {
-        /* Styles for content */
-    }
+  }
 </style>

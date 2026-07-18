@@ -1,132 +1,194 @@
 ---
 import "@material/web/icon/icon.js";
+import { sanitizeAssetUrl, sanitizeLinkUrl } from "../../utils/security";
 
 interface Props {
-    href: string;
-    title?: string;
-    icon?: string;
-    desc?: string;
+  href: string;
+  title?: string;
+  icon?: string;
+  desc?: string;
 }
 
 const { href, title, icon, desc } = Astro.props;
-const displayTitle = title || href;
+const safeHref = sanitizeLinkUrl(href, { allowHttp: false, allowMailto: true });
+const safeIcon = sanitizeAssetUrl(icon);
+const external = safeHref?.startsWith("https://") ?? false;
+const displayTitle = title || safeHref || href;
 ---
 
-<a href={href} class="md3-link-card" target="_blank" rel="noopener noreferrer">
-    <div class="link-visual">
-        {icon ? (
-            <img src={icon} alt="" class="link-favicon" />
+{
+  safeHref && (
+    <a
+      href={safeHref}
+      class="md3-link-card"
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
+      aria-label={`${displayTitle}${external ? "（新窗口打开）" : ""}`}
+    >
+      <span class="link-visual" aria-hidden="true">
+        {safeIcon ? (
+          <img src={safeIcon} alt="" class="link-favicon" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
         ) : (
-            <div class="link-placeholder">
-                <md-icon>link</md-icon>
-            </div>
+          <md-icon>link</md-icon>
         )}
-    </div>
-    
-    <div class="link-info">
-        <div class="link-title title-small">{displayTitle}</div>
-        {desc && <div class="link-desc body-small">{desc}</div>}
-        <div class="link-url label-small">{href}</div>
-    </div>
+      </span>
 
-    <md-icon class="link-arrow">open_in_new</md-icon>
-    <md-ripple></md-ripple>
-</a>
+      <span class="link-info">
+        <span class="link-title title-small">{displayTitle}</span>
+        {desc && <span class="link-desc body-small">{desc}</span>}
+        <span class="link-url label-small">{safeHref}</span>
+      </span>
+
+      <span class="link-trailing" aria-hidden="true">
+        <md-icon>{external ? "open_in_new" : "arrow_forward"}</md-icon>
+      </span>
+      <md-ripple></md-ripple>
+    </a>
+  )
+}
 
 <script>
-    import "@material/web/ripple/ripple.js";
+  import "@material/web/ripple/ripple.js";
 </script>
 
 <style>
-    .md3-link-card {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        padding: 12px 16px;
-        margin: 1.5rem 0;
-        background-color: var(--md-sys-color-surface-container-low);
-        border: 1px solid var(--md-sys-color-outline-variant);
-        border-radius: 16px;
-        text-decoration: none !important;
-        color: var(--md-sys-color-on-surface);
-        position: relative;
-        overflow: hidden;
-        transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), background-color 0.2s, box-shadow 0.2s;
-        box-shadow: var(--md-sys-elevation-level0);
-    }
+  .md3-link-card {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    min-height: 88px;
+    grid-template-columns: 52px minmax(0, 1fr) 40px;
+    align-items: center;
+    gap: 14px;
+    margin: 24px 0;
+    padding: 14px 16px;
+    overflow: hidden;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-large-increased);
+    background: var(--md-sys-color-surface-container-low);
+    color: var(--md-sys-color-on-surface);
+    text-decoration: none !important;
+    transition:
+      background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      border-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      border-radius var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial),
+      box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      translate var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+  }
 
+  .link-visual,
+  .link-info,
+  .link-trailing {
+    position: relative;
+    z-index: 1;
+  }
+
+  .link-visual {
+    display: grid;
+    width: 52px;
+    height: 52px;
+    place-items: center;
+    overflow: hidden;
+    border-radius: var(--md-sys-shape-corner-large);
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .link-visual md-icon {
+    width: 26px;
+    height: 26px;
+    font-size: 26px;
+  }
+
+  .link-favicon {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .link-info {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .link-title,
+  .link-desc,
+  .link-url {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .link-title {
+    color: var(--md-sys-color-on-surface);
+    font-weight: 700;
+  }
+
+  .link-desc {
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .link-url {
+    color: var(--md-sys-color-primary);
+  }
+
+  .link-trailing {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-primary);
+    transition: translate var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+  }
+
+  .link-trailing md-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+
+  .md3-link-card:focus-visible {
+    outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color);
+    outline-offset: var(--md-sys-focus-ring-offset);
+  }
+
+  md-ripple {
+    border-radius: inherit;
+    --md-ripple-hover-color: var(--md-sys-color-on-surface);
+    --md-ripple-pressed-color: var(--md-sys-color-primary);
+  }
+
+  @media (hover: hover) {
     .md3-link-card:hover {
-        transform: translateY(-2px);
-        background-color: var(--md-sys-color-surface-container-high);
-        border-color: var(--md-sys-color-primary);
-        box-shadow: var(--md-sys-elevation-level1);
+      border-color: var(--md-sys-color-outline);
+      border-radius: var(--md-sys-shape-corner-extra-large);
+      background: var(--md-sys-color-surface-container-high);
+      box-shadow: var(--md-sys-elevation-level1);
+      translate: 0 -2px;
     }
 
-    .link-visual {
-        flex-shrink: 0;
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        overflow: hidden;
-        background-color: var(--md-sys-color-surface-variant);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .md3-link-card:hover .link-trailing { translate: 3px 0; }
+  }
+
+  @media (max-width: 479px) {
+    .md3-link-card {
+      grid-template-columns: 48px minmax(0, 1fr) 32px;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--md-sys-shape-corner-large);
     }
 
-    .link-favicon {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
+    .link-visual { width: 48px; height: 48px; }
+    .link-trailing { width: 32px; }
+  }
 
-    .link-placeholder {
-        color: var(--md-sys-color-on-surface-variant);
-        opacity: 0.6;
-    }
-
-    .link-info {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .link-title {
-        color: var(--md-sys-color-on-surface);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-weight: 600;
-    }
-
-    .link-desc {
-        color: var(--md-sys-color-on-surface-variant);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        opacity: 0.8;
-    }
-
-    .link-url {
-        color: var(--md-sys-color-primary);
-        opacity: 0.7;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .link-arrow {
-        --md-icon-size: 18px;
-        color: var(--md-sys-color-on-surface-variant);
-        opacity: 0.5;
-        transition: color 0.2s, transform 0.2s;
-    }
-
-    .md3-link-card:hover .link-arrow {
-        color: var(--md-sys-color-primary);
-        transform: translate(2px, -2px);
-        opacity: 1;
-    }
+  @media (prefers-reduced-motion: reduce) {
+    .md3-link-card,
+    .link-trailing { transition: none; }
+  }
 </style>

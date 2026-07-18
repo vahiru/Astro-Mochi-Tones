@@ -1,6 +1,7 @@
 ---
 // src/components/Waline.astro
 import themeConfig from 'astro-mochi-tones:config';
+import '@waline/client/waline.css';
 
 const serverURL = themeConfig.waline?.serverURL;
 const walineConfig = themeConfig.waline;
@@ -17,20 +18,29 @@ const walineConfig = themeConfig.waline;
   />
 )}
 
-{serverURL && <link rel="stylesheet" href={walineConfig?.cssURL} />}
-
 {serverURL && <script>
-  import { init } from '@waline/client';
+  import { init, type WalineEmojiPresets } from '@waline/client';
 
   const container = document.getElementById('waline');
   const serverURL = container?.dataset.serverUrl;
-  const emojis = JSON.parse(container?.dataset.emojis || '[]');
+  let emojis: WalineEmojiPresets[] = [];
+  try {
+    const parsed: unknown = JSON.parse(container?.dataset.emojis || '[]');
+    if (Array.isArray(parsed)) {
+      emojis = parsed.filter(
+        (value): value is `https://${string}` =>
+          typeof value === 'string' && value.startsWith('https://'),
+      );
+    }
+  } catch {
+    emojis = [];
+  }
 
   if (!container || !serverURL) {
     throw new Error('Waline serverURL is missing.');
   }
 
-  const waline = init({
+  init({
     el: container,
     serverURL,
     pageview: container.dataset.pageview === 'true', 
@@ -41,9 +51,6 @@ const walineConfig = themeConfig.waline;
 </script>}
 
 <style is:global>
-  /* === Material Design 3 深度适配 === */
-  
-  /* 1. 变量映射 (保持主题同步) */
   :root {
     --waline-theme-color: var(--md-sys-color-primary) !important;
     --waline-active-color: var(--md-sys-color-primary) !important;
@@ -51,102 +58,177 @@ const walineConfig = themeConfig.waline;
     --waline-info-color: var(--md-sys-color-on-surface-variant) !important;
     --waline-bgcolor: var(--md-sys-color-surface) !important;
     --waline-bgcolor-light: var(--md-sys-color-surface-container) !important;
-    
-    /* 字体大小微调 */
-    --waline-font-size: 1rem !important;
+    --waline-border-color: var(--md-sys-color-outline-variant) !important;
+    --waline-disable-bgcolor: var(--md-sys-color-surface-container-highest) !important;
+    --waline-disable-color: var(--md-sys-color-on-surface-variant) !important;
+    --waline-code-bgcolor: var(--md-sys-color-surface-container-high) !important;
+    --waline-bq-color: var(--md-sys-color-surface-container) !important;
+    --waline-avatar-radius: var(--md-sys-shape-corner-full) !important;
+    --waline-box-shadow: var(--md-sys-elevation-level1) !important;
+    --waline-font-size: var(--md-sys-typescale-body-large-size) !important;
   }
 
-  /* 2. 容器定位 */
   #waline {
-    margin-top: 3rem;
-    /* 限制宽度，防止太宽难看 */
-    max-width: 100%; 
+    max-width: 100%;
+    margin-block-start: 48px;
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--md-ref-typeface-plain);
   }
 
-  /* 3. 核心输入区域 (.wl-panel) - 统一外观 */
-  .wl-panel {
+  #waline .wl-panel {
+    margin: 0 !important;
     border: 1px solid var(--md-sys-color-outline-variant) !important;
-    border-radius: 16px !important;
-    background-color: var(--md-sys-color-surface-container-low) !important;
-    overflow: hidden; /* 关键：防止子元素圆角溢出 */
-    margin: 0 !important; /* 去掉默认外边距 */
+    border-radius: var(--md-sys-shape-corner-extra-large) !important;
+    background: var(--md-sys-color-surface-container-low) !important;
+    overflow: hidden;
+    transition:
+      border-radius var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial),
+      box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
   }
 
-  /* 头部信息栏 (昵称/邮箱) */
-  .wl-header {
-    border-bottom: 1px solid var(--md-sys-color-outline-variant) !important;
+  #waline .wl-header {
     display: flex;
+    flex-wrap: wrap;
     padding: 8px 16px !important;
-    background-color: var(--md-sys-color-surface-container) !important; /* 稍微深一点区分 */
+    border-bottom: 1px solid var(--md-sys-color-outline-variant) !important;
+    background: var(--md-sys-color-surface-container) !important;
   }
 
-  /* 输入框item */
-  .wl-header .wl-item {
-    border-bottom: none !important; /* 去掉默认的虚线 */
+  #waline .wl-header .wl-item {
+    min-width: min(100%, 160px);
+    flex: 1 1 160px;
+    border-bottom: 0 !important;
   }
-  
-  .wl-header label {
+
+  #waline .wl-header label {
     color: var(--md-sys-color-primary) !important;
-    font-weight: 500;
+    font-size: var(--md-sys-typescale-label-medium-size);
+    font-weight: 650;
+    letter-spacing: var(--md-sys-typescale-label-medium-tracking);
   }
 
-  .wl-header input {
+  #waline input,
+  #waline textarea,
+  #waline button {
+    font-family: inherit;
+  }
+
+  #waline .wl-header input {
+    min-height: var(--md-sys-touch-target-size);
     background: transparent !important;
     color: var(--md-sys-color-on-surface) !important;
   }
 
-  /* 文本域 (Textarea) */
-  .wl-editor {
-    padding: 16px !important;
-    min-height: 120px !important;
+  #waline .wl-editor {
     width: 100% !important;
-    background-color: transparent !important; /* 透明背景，透出 panel 的色 */
+    min-height: 136px !important;
+    padding: 20px !important;
+    background: transparent !important;
     color: var(--md-sys-color-on-surface) !important;
+    font-size: var(--md-sys-typescale-body-large-size) !important;
+    line-height: var(--md-sys-typescale-body-large-line-height) !important;
     resize: vertical;
   }
-  
-  /* 底部工具栏 */
-  .wl-footer {
+
+  #waline .wl-header input:focus-visible,
+  #waline .wl-editor:focus-visible,
+  #waline .wl-btn:focus-visible {
+    border-radius: var(--md-sys-shape-corner-small);
+    outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color) !important;
+    outline-offset: calc(-1 * var(--md-sys-focus-ring-width)) !important;
+  }
+
+  #waline .wl-footer {
     margin-top: 0 !important;
     padding: 12px 16px !important;
     border-top: 1px solid var(--md-sys-color-outline-variant) !important;
-    background-color: var(--md-sys-color-surface-container) !important;
+    background: var(--md-sys-color-surface-container) !important;
   }
 
-  /* 提交按钮 */
-  .wl-btn.primary {
-    border-radius: 100px !important; /* 胶囊按钮 */
-    background-color: var(--md-sys-color-primary) !important;
-    color: var(--md-sys-color-on-primary) !important;
-    border: none !important;
+  #waline .wl-btn {
+    min-height: var(--md-sys-touch-target-size) !important;
     padding: 0 24px !important;
-    height: 40px !important;
-    font-weight: 500 !important;
-    line-height: 40px !important;
-    transition: box-shadow 0.2s;
-  }
-  
-  .wl-btn.primary:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    border-radius: var(--md-sys-shape-corner-full) !important;
+    font-size: var(--md-sys-typescale-label-large-size) !important;
+    font-weight: 650 !important;
+    letter-spacing: var(--md-sys-typescale-label-large-tracking) !important;
+    line-height: var(--md-sys-typescale-label-large-line-height) !important;
+    transition:
+      box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      translate var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
   }
 
-  /* 评论列表部分 */
-  .wl-cards .wl-card {
-    border-bottom: 1px solid var(--md-sys-color-outline-variant) !important;
-    padding: 24px 0 !important;
+  #waline .wl-btn.primary {
+    border: 0 !important;
+    background: var(--md-sys-color-primary) !important;
+    color: var(--md-sys-color-on-primary) !important;
+  }
+
+  #waline .wl-btn:active {
+    translate: 0 1px;
+  }
+
+  #waline .wl-cards .wl-card {
     margin-top: 0 !important;
+    padding: 24px 0 !important;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant) !important;
   }
-  
-  .wl-content {
+
+  #waline .wl-avatar {
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-full) !important;
+    background: var(--md-sys-color-surface-container-high);
+  }
+
+  #waline .wl-content {
     color: var(--md-sys-color-on-surface) !important;
-    font-size: 0.95rem !important;
-    line-height: 1.6 !important;
+    font-size: var(--md-sys-typescale-body-large-size) !important;
+    letter-spacing: var(--md-sys-typescale-body-large-tracking) !important;
+    line-height: var(--md-sys-typescale-body-large-line-height) !important;
   }
-  
-  /* 引用部分 */
-  .wl-quote {
-    border-left: 4px solid var(--md-sys-color-outline-variant) !important;
-    background-color: var(--md-sys-color-surface-container-high) !important;
+
+  #waline .wl-quote {
+    border-inline-start: 4px solid var(--md-sys-color-primary) !important;
+    border-radius: var(--md-sys-shape-corner-medium) !important;
+    background: var(--md-sys-color-surface-container-high) !important;
     color: var(--md-sys-color-on-surface-variant) !important;
+  }
+
+  #waline a {
+    color: var(--md-sys-color-primary);
+  }
+
+  @media (hover: hover) {
+    #waline .wl-panel:hover {
+      border-radius: var(--md-sys-shape-corner-extra-large-increased) !important;
+      box-shadow: var(--md-sys-elevation-level1);
+    }
+
+    #waline .wl-btn.primary:hover {
+      box-shadow: var(--md-sys-elevation-level1);
+      translate: 0 -1px;
+    }
+  }
+
+  @media (max-width: 599px) {
+    #waline .wl-panel,
+    #waline .wl-panel:hover {
+      border-radius: var(--md-sys-shape-corner-large) !important;
+    }
+
+    #waline .wl-header .wl-item {
+      flex-basis: 100%;
+    }
+
+    #waline .wl-editor {
+      padding: 16px !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #waline .wl-panel,
+    #waline .wl-btn {
+      transition: none;
+    }
   }
 </style>

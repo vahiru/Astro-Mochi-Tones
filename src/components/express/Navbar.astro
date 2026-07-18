@@ -1,49 +1,100 @@
 ---
+import { sanitizeLinkUrl } from "../../utils/security";
+
 interface Props {
-    links: { text: string; url: string; active?: boolean }[];
+  links: { text: string; url: string; active?: boolean }[];
+  label?: string;
 }
 
-const { links } = Astro.props;
+const { links, label = "Section navigation" } = Astro.props;
+const safeLinks = links.flatMap((link) => {
+  const safeUrl = sanitizeLinkUrl(link.url, { allowHttp: false });
+  return safeUrl ? [{ ...link, url: safeUrl }] : [];
+});
 ---
 
-<nav class="express-navbar">
+<nav class="express-navbar" aria-label={label}>
+  <ul>
     {
-        links.map((link) => (
-            <a
-                href={link.url}
-                class={`nav-link ${link.active ? "active" : ""}`}
-            >
-                {link.text}
-            </a>
-        ))
+      safeLinks.map((link) => (
+        <li>
+          <a href={link.url} class:list={["nav-link", { active: link.active }]} aria-current={link.active ? "page" : undefined}>
+            <span>{link.text}</span>
+            <md-ripple></md-ripple>
+          </a>
+        </li>
+      ))
     }
+  </ul>
 </nav>
 
+<script>
+  import "@material/web/ripple/ripple.js";
+</script>
+
 <style>
+  .express-navbar {
+    margin: 28px 0;
+    padding: 8px;
+    overflow-x: auto;
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    background: var(--md-sys-color-surface-container);
+    scrollbar-width: thin;
+  }
+
+  ul {
+    display: flex;
+    width: max-content;
+    min-width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    min-height: var(--md-sys-touch-target-size);
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 0 18px;
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: var(--md-sys-typescale-label-large-size);
+    font-weight: 650;
+    line-height: var(--md-sys-typescale-label-large-line-height);
+    transition:
+      background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+  }
+
+  .nav-link span {
+    position: relative;
+    z-index: 1;
+  }
+
+  .nav-link.active {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+  }
+
+  .nav-link:focus-visible {
+    outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color);
+    outline-offset: var(--md-sys-focus-ring-offset);
+  }
+
+  .nav-link md-ripple { border-radius: inherit; }
+
+  @media (max-width: 599px) {
     .express-navbar {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        padding: 0.5rem;
-        background-color: var(--md-sys-color-surface-container);
-        border-radius: 8px;
-        margin: 2rem 0;
-        justify-content: center;
+      margin-inline: -4px;
+      border-radius: var(--md-sys-shape-corner-large);
     }
-    .nav-link {
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        text-decoration: none;
-        color: var(--md-sys-color-on-surface-variant);
-        font-weight: 500;
-        transition: all 0.2s;
-    }
-    .nav-link:hover {
-        background-color: var(--md-sys-color-surface-variant);
-        color: var(--md-sys-color-on-surface);
-    }
-    .nav-link.active {
-        background-color: var(--md-sys-color-primary);
-        color: var(--md-sys-color-on-primary);
-    }
+
+    ul { justify-content: flex-start; }
+  }
 </style>

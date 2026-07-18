@@ -1,19 +1,38 @@
 ---
+import { sanitizeAssetUrl } from "../../utils/security";
+
 interface Props {
-    src: string;
+  src: string;
+  alt?: string;
 }
 
-const { src } = Astro.props;
+const { src, alt = "" } = Astro.props;
+const safeSrc = sanitizeAssetUrl(src);
 ---
 
-<img src={src} class="express-icon" />
+{
+  safeSrc && (
+    <img
+      src={safeSrc}
+      alt={alt}
+      class="express-icon"
+      loading="lazy"
+      decoding="async"
+      referrerpolicy="no-referrer"
+    />
+  )
+}
 
 <style>
-    .express-icon {
-        display: inline-block;
-        height: 1.2em;
-        width: auto;
-        vertical-align: text-bottom;
-        margin: 0 0.125rem;
-    }
+  .express-icon {
+    display: inline-block;
+    width: 1.35em;
+    height: 1.35em;
+    margin-inline: 0.12em;
+    padding: 0.08em;
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: var(--md-sys-color-surface-container-high);
+    object-fit: contain;
+    vertical-align: -0.28em;
+  }
 </style>

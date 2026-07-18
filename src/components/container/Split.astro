@@ -1,21 +1,21 @@
 ---
-
 ---
 
-<div class="split-container">
-  <slot />
-</div>
+<div class="split-container"><slot /></div>
 
 <style>
   .split-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin: 2rem 0;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: clamp(20px, 4vw, 32px);
+    margin: 32px 0;
   }
-  @media (max-width: 768px) {
-    .split-container {
-      grid-template-columns: 1fr;
-    }
+
+  .split-container :global(> *) { min-width: 0; }
+
+  @media (max-width: 839px) {
+    .split-container { grid-template-columns: 1fr; }
   }
 </style>

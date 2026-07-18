@@ -1,93 +1,105 @@
 ---
 import "@material/web/icon/icon.js";
+import { sanitizeLinkUrl } from "../../utils/security";
 
 interface Props {
-    tag: string;
-    url?: string;
-    color?:
-        | "default"
-        | "primary"
-        | "secondary"
-        | "tertiary"
-        | "error";
-    icon?: string;
+  tag: string;
+  url?: string;
+  color?: "default" | "primary" | "secondary" | "tertiary" | "error";
+  icon?: string;
 }
 
 const { tag, url = "#", color = "default", icon = "tag" } = Astro.props;
-
-const colorClass = `color-${color}`;
+const safeUrl = sanitizeLinkUrl(url, { allowHttp: false });
 ---
 
-<a href={url} class={`md3-hashtag ${colorClass}`}>
-    <div class="hashtag-container">
-        <md-icon class="hashtag-icon">{icon}</md-icon>
-        <span class="hashtag-label label-medium">{tag}</span>
-        <md-ripple></md-ripple>
-    </div>
-</a>
+{
+  safeUrl && (
+    <a href={safeUrl} class={`md3-hashtag tone-${color}`} aria-label={`#${tag}`}>
+      <md-icon class="hashtag-icon" aria-hidden="true">{icon}</md-icon>
+      <span class="hashtag-label label-medium">{tag}</span>
+      <md-ripple></md-ripple>
+    </a>
+  )
+}
 
 <script>
-    import "@material/web/ripple/ripple.js";
+  import "@material/web/ripple/ripple.js";
 </script>
 
 <style>
-    .md3-hashtag {
-        display: inline-block;
-        text-decoration: none;
-        margin: 4px 2px;
-        vertical-align: middle;
-    }
+  .md3-hashtag {
+    --hashtag-container: var(--md-sys-color-surface-container-high);
+    --hashtag-on-container: var(--md-sys-color-on-surface-variant);
+    position: relative;
+    display: inline-flex;
+    min-height: var(--md-sys-touch-target-size);
+    align-items: center;
+    gap: 7px;
+    margin: 4px 2px;
+    padding: 0 14px;
+    overflow: hidden;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-small);
+    background: var(--hashtag-container);
+    color: var(--hashtag-on-container);
+    vertical-align: middle;
+    transition:
+      border-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+  }
 
-    .hashtag-container {
-        position: relative;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 0 12px;
-        height: 32px;
-        border-radius: 8px; /* MD3 Assist/Filter chip style */
-        background-color: var(--hashtag-bg, var(--md-sys-color-surface-container-high));
-        color: var(--hashtag-text, var(--md-sys-color-on-surface-variant));
-        border: 1px solid var(--md-sys-color-outline-variant);
-        transition: background-color 0.2s, box-shadow 0.2s;
-        overflow: hidden;
-    }
+  .hashtag-icon,
+  .hashtag-label {
+    position: relative;
+    z-index: 1;
+  }
 
-    .md3-hashtag:hover .hashtag-container {
-        background-color: var(--md-sys-color-surface-variant);
-        box-shadow: var(--md-sys-elevation-level1);
-    }
+  .hashtag-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
 
-    .hashtag-icon {
-        --md-icon-size: 18px;
-        opacity: 0.8;
-    }
+  .hashtag-label {
+    font-weight: 650;
+  }
 
-    .hashtag-label {
-        font-weight: 500;
-        line-height: 1;
-    }
+  .md3-hashtag:focus-visible {
+    outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color);
+    outline-offset: var(--md-sys-focus-ring-offset);
+  }
 
-    /* === 颜色变体 === */
-    .color-primary {
-        --hashtag-bg: var(--md-sys-color-primary-container);
-        --hashtag-text: var(--md-sys-color-on-primary-container);
-    }
-    .color-secondary {
-        --hashtag-bg: var(--md-sys-color-secondary-container);
-        --hashtag-text: var(--md-sys-color-on-secondary-container);
-    }
-    .color-tertiary {
-        --hashtag-bg: var(--md-sys-color-tertiary-container);
-        --hashtag-text: var(--md-sys-color-on-tertiary-container);
-    }
-    .color-error {
-        --hashtag-bg: var(--md-sys-color-error-container);
-        --hashtag-text: var(--md-sys-color-on-error-container);
-    }
+  .tone-primary {
+    --hashtag-container: var(--md-sys-color-primary-container);
+    --hashtag-on-container: var(--md-sys-color-on-primary-container);
+  }
 
-    md-ripple {
-        --md-ripple-hover-color: var(--md-sys-color-on-surface);
-        --md-ripple-pressed-color: var(--md-sys-color-primary);
+  .tone-secondary {
+    --hashtag-container: var(--md-sys-color-secondary-container);
+    --hashtag-on-container: var(--md-sys-color-on-secondary-container);
+  }
+
+  .tone-tertiary {
+    --hashtag-container: var(--md-sys-color-tertiary-container);
+    --hashtag-on-container: var(--md-sys-color-on-tertiary-container);
+  }
+
+  .tone-error {
+    --hashtag-container: var(--md-sys-color-error-container);
+    --hashtag-on-container: var(--md-sys-color-on-error-container);
+  }
+
+  md-ripple {
+    border-radius: inherit;
+    --md-ripple-hover-color: var(--hashtag-on-container);
+    --md-ripple-pressed-color: var(--hashtag-on-container);
+  }
+
+  @media (hover: hover) {
+    .md3-hashtag:hover {
+      border-color: color-mix(in srgb, var(--hashtag-on-container) 42%, transparent);
+      box-shadow: var(--md-sys-elevation-level1);
     }
+  }
 </style>

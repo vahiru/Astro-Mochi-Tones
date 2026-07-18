@@ -1,46 +1,117 @@
-// src/pages/rss.xml.js
-import rss from '@astrojs/rss';
-import { getCollection } from 'astro:content';
-import sanitizeHtml from 'sanitize-html';
-import MarkdownIt from 'markdown-it';
-import themeConfig from 'astro-mochi-tones:config';
+import rss from "@astrojs/rss";
+import { getCollection } from "astro:content";
+import sanitizeHtml from "sanitize-html";
+import themeConfig from "astro-mochi-tones:config";
+import { renderPortableMarkdown } from "../utils/content-output";
 
-const parser = new MarkdownIt();
+const SAFE_LINK_PROTOCOLS = new Set(["http:", "https:", "mailto:"]);
+const SAFE_IMAGE_PROTOCOLS = new Set(["https:"]);
 
-const getPostSlug = (post) => ("slug" in post && typeof post.slug === "string")
-  ? post.slug
-  : post.id.replace(/\.(md|mdx)$/i, "");
+const getPostSlug = (post) =>
+  "slug" in post && typeof post.slug === "string"
+    ? post.slug
+    : post.id.replace(/\.(md|mdx)$/i, "");
+
+const getPostUrl = (post, site) => {
+  const segments = getPostSlug(post)
+    .split("/")
+    .filter((segment) => segment && segment !== "." && segment !== "..")
+    .map((segment) => encodeURIComponent(segment));
+  return new URL(`/blog/${segments.join("/")}/`, site);
+};
+
+const toSafeAbsoluteUrl = (value, baseUrl, allowedProtocols) => {
+  if (typeof value !== "string" || /[\u0000-\u001f\u007f]/.test(value)) return undefined;
+
+  try {
+    const url = new URL(value.trim(), baseUrl);
+    return allowedProtocols.has(url.protocol) ? url.href : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const safeDimension = (value) => {
+  if (!/^\d{1,4}$/.test(value ?? "")) return undefined;
+  const dimension = Number(value);
+  return dimension >= 1 && dimension <= 4096 ? String(dimension) : undefined;
+};
+
+const sanitizeFeedContent = (source, postUrl) =>
+  sanitizeHtml(renderPortableMarkdown(source), {
+    allowedTags: [...sanitizeHtml.defaults.allowedTags, "img"],
+    allowedAttributes: {
+      a: ["href", "title"],
+      img: ["src", "alt", "title", "width", "height"],
+    },
+    allowedSchemes: ["http", "https", "mailto"],
+    allowedSchemesByTag: {
+      a: ["http", "https", "mailto"],
+      img: ["https"],
+    },
+    allowProtocolRelative: false,
+    enforceHtmlBoundary: true,
+    transformTags: {
+      a: (_tagName, attributes) => {
+        const href = toSafeAbsoluteUrl(attributes.href, postUrl, SAFE_LINK_PROTOCOLS);
+        return {
+          tagName: "a",
+          attribs: {
+            ...(href ? { href } : {}),
+            ...(attributes.title ? { title: attributes.title } : {}),
+          },
+        };
+      },
+      img: (_tagName, attributes) => {
+        const src = toSafeAbsoluteUrl(attributes.src, postUrl, SAFE_IMAGE_PROTOCOLS);
+        const width = safeDimension(attributes.width);
+        const height = safeDimension(attributes.height);
+        return {
+          tagName: "img",
+          attribs: {
+            ...(src ? { src } : {}),
+            ...(attributes.alt ? { alt: attributes.alt } : { alt: "" }),
+            ...(attributes.title ? { title: attributes.title } : {}),
+            ...(width ? { width } : {}),
+            ...(height ? { height } : {}),
+          },
+        };
+      },
+    },
+    exclusiveFilter: (frame) => frame.tag === "img" && !frame.attribs.src,
+  });
+
+const escapeXml = (value) =>
+  String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
 
 export async function GET(context) {
-  const blog = await getCollection('blog');
-  
-  // 过滤草稿并按日期倒序
-  const posts = blog
+  if (!context.site) {
+    throw new Error("RSS generation requires Astro's site option to be configured");
+  }
+
+  const posts = (await getCollection("blog"))
     .filter((post) => !post.data.draft)
-    .sort((a, b) => new Date(b.data.date).valueOf() - new Date(a.data.date).valueOf());
+    .sort((left, right) => right.data.date.valueOf() - left.data.date.valueOf());
 
   return rss({
     title: themeConfig.title,
-    description: themeConfig.description || '',
+    description: themeConfig.description ?? "",
     site: context.site,
-    // 生成 RSS 项
-    items: posts.map((post) => ({
-      title: post.data.title,
-      pubDate: post.data.date,
-      description: post.data.description,
-      link: `/blog/${getPostSlug(post)}/`,
-      
-      // 🔥 核心改动：渲染全文内容
-      content: sanitizeHtml(parser.render(post.body), {
-        // 允许的标签：在默认基础上增加 img 标签，否则图片会被过滤掉
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-        // 允许的属性：允许 img 标签的 src 和 alt 属性
-        allowedAttributes: {
-          ...sanitizeHtml.defaults.allowedAttributes,
-          img: ['src', 'alt', 'title', 'width', 'height']
-        }
-      }),
-    })),
-    customData: `<language>${themeConfig.lang}</language>`,
+    items: posts.map((post) => {
+      const postUrl = getPostUrl(post, context.site);
+      return {
+        title: post.data.title,
+        pubDate: post.data.date,
+        description: post.data.description,
+        link: postUrl.href,
+        content: sanitizeFeedContent(post.body ?? "", postUrl),
+      };
+    }),
+    customData: `<language>${escapeXml(themeConfig.lang)}</language>`,
   });
 }

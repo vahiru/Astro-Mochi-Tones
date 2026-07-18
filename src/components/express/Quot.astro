@@ -1,71 +1,89 @@
 ---
 interface Props {
-    icon?: string;
-    style?: "modern" | "classic";
+  icon?: string;
+  style?: "modern" | "classic";
 }
 
 const { icon = "format_quote", style = "modern" } = Astro.props;
 ---
 
-<div class={`md3-quot style-${style}`}>
-    <md-icon class="quot-icon">{icon}</md-icon>
-    <div class="quot-content title-medium">
-        <slot />
-    </div>
-</div>
+<blockquote class={`md3-quot style-${style}`}>
+  <span class="quot-icon-surface" aria-hidden="true"><md-icon>{icon}</md-icon></span>
+  <div class="quot-content title-medium"><slot /></div>
+</blockquote>
 
 <script>
-    import "@material/web/icon/icon.js";
+  import "@material/web/icon/icon.js";
 </script>
 
 <style>
+  .md3-quot {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    align-items: start;
+    gap: 18px;
+    margin: 32px 0;
+    padding: 24px;
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .style-modern {
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    background: var(--md-sys-color-tertiary-container);
+    color: var(--md-sys-color-on-tertiary-container);
+  }
+
+  .style-classic {
+    border-left: 4px solid var(--md-sys-color-primary);
+    border-radius: 0 var(--md-sys-shape-corner-large) var(--md-sys-shape-corner-large) 0;
+    background: var(--md-sys-color-surface-container-low);
+  }
+
+  .quot-icon-surface {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border-radius: var(--md-sys-shape-corner-large);
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .style-modern .quot-icon-surface {
+    background: var(--md-sys-color-tertiary);
+    color: var(--md-sys-color-on-tertiary);
+  }
+
+  .quot-icon-surface md-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 28px;
+    font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 32;
+  }
+
+  .quot-content {
+    min-width: 0;
+    padding-top: 7px;
+    color: inherit;
+    font-family: var(--md-ref-typeface-brand);
+    font-style: italic;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+  }
+
+  .quot-content :global(> :first-child) { margin-top: 0; }
+  .quot-content :global(> :last-child) { margin-bottom: 0; }
+
+  @media (max-width: 479px) {
     .md3-quot {
-        position: relative;
-        padding: 2.5rem;
-        margin: 2.5rem 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 12px;
+      grid-template-columns: 40px minmax(0, 1fr);
+      gap: 14px;
+      padding: 20px 16px;
     }
 
-    /* 现代风格：带柔和背景 */
-    .style-modern {
-        background-color: var(--md-sys-color-surface-container-low);
-        border-radius: 32px;
-        border: 1px solid var(--md-sys-color-outline-variant);
-    }
-
-    /* 经典风格：纯引用标记 */
-    .style-classic {
-        background: transparent;
-    }
-
-    .quot-icon {
-        --md-icon-size: 40px;
-        color: var(--md-sys-color-primary);
-        opacity: 0.3;
-    }
-
-    .quot-content {
-        color: var(--md-sys-color-on-surface);
-        line-height: 1.6;
-        font-style: italic;
-        font-family: "Georgia", "Noto Serif SC", serif;
-        max-width: 80%;
-    }
-
-    /* 装饰性引号线 */
-    .style-classic::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 60px;
-        height: 2px;
-        background-color: var(--md-sys-color-outline-variant);
-        opacity: 0.5;
-    }
+    .style-modern { border-radius: var(--md-sys-shape-corner-large); }
+    .quot-icon-surface { width: 40px; height: 40px; border-radius: var(--md-sys-shape-corner-medium); }
+    .quot-content { padding-top: 3px; }
+  }
 </style>

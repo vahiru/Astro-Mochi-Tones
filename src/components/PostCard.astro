@@ -1,168 +1,300 @@
 ---
-// src/components/PostCard.astro
-import type { CollectionEntry } from 'astro:content';
-import themeConfig from 'astro-mochi-tones:config';
+import type { CollectionEntry } from "astro:content";
+import themeConfig from "astro-mochi-tones:config";
 
 interface Props {
-  post: CollectionEntry<'blog'>;
+  post: CollectionEntry<"blog">;
   featured?: boolean;
 }
 
 const { post, featured = false } = Astro.props;
+const date = post.data.date instanceof Date ? post.data.date : new Date(post.data.date);
+const validDate = !Number.isNaN(date.valueOf());
+const dateLabel = validDate
+  ? new Intl.DateTimeFormat(themeConfig.lang, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(date)
+  : themeConfig.labels.noDate;
 
-// ============================================================
-// 🛑 核心修复逻辑：手动强制转换日期
-// ============================================================
-let dateObj;
-
-// 1. 尝试把数据转成 Date 对象
-try {
-    // 如果本来就是 Date，直接用；如果是字符串，new Date() 转一下
-    dateObj = new Date(post.data.date);
-} catch (e) {
-    // 如果转换失败，给个当前时间兜底，防止页面崩溃
-    dateObj = new Date(); 
-}
-
-// 2. 再次检查是否有效 (处理 Invalid Date 情况)
-if (isNaN(dateObj.getTime())) {
-    dateObj = new Date(); // 还是不行？那就给个默认值
-}
-
-// 3. 格式化日期
-const dateStr = dateObj.toLocaleDateString(themeConfig.lang, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-});
-// ============================================================
-
-// 颜色生成逻辑 (保持不变)
 const themes = [
-  { bg: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' },
-  { bg: 'var(--md-sys-color-secondary-container)', color: 'var(--md-sys-color-on-secondary-container)' },
-  { bg: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)' },
-  { bg: 'var(--md-sys-color-error-container)', color: 'var(--md-sys-color-on-error-container)' },
+  { background: "var(--md-sys-color-primary-container)", foreground: "var(--md-sys-color-on-primary-container)" },
+  { background: "var(--md-sys-color-secondary-container)", foreground: "var(--md-sys-color-on-secondary-container)" },
+  { background: "var(--md-sys-color-tertiary-container)", foreground: "var(--md-sys-color-on-tertiary-container)" },
+  { background: "var(--md-sys-color-error-container)", foreground: "var(--md-sys-color-on-error-container)" },
 ];
-const titleStr = post.data.title || themeConfig.labels.untitled; // 防止标题为空
-const index = titleStr.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % themes.length;
-const theme = themes[index];
-const postSlug = ("slug" in post && typeof post.slug === "string")
+const title = post.data.title || themeConfig.labels.untitled;
+const themeIndex = [...title].reduce((sum, character) => sum + (character.codePointAt(0) ?? 0), 0) % themes.length;
+const cardTheme = themes[themeIndex];
+const postSlug = "slug" in post && typeof post.slug === "string"
   ? post.slug
   : post.id.replace(/\.(md|mdx)$/i, "");
+const category = post.data.categories?.[0];
+const placeholderLabel = category?.trim().charAt(0) || "auto_stories";
 ---
 
-<a href={`/blog/${postSlug}`} class={`blog-card ${featured ? 'featured' : ''}`}>
-  <div class="card-image-container">
-    {post.data.cover ? (
-      <img src={post.data.cover} alt={post.data.title} class="card-image" />
-    ) : (
-      <div class="placeholder-bg" style={`background-color: ${theme.bg}; color: ${theme.color};`}>
-        {post.data.categories && post.data.categories.length > 0 ? (
-             <span style="font-size: 4rem; font-weight: bold; opacity: 0.5;">{post.data.categories[0][0]}</span>
-        ) : (
-             <span class="material-symbols-rounded" style="font-size: 64px; font-weight: 300;">auto_stories</span>
-        )}
-      </div>
-    )}
+<a
+  href={`/blog/${postSlug}`}
+  class:list={["blog-card", { featured }]}
+  aria-label={`阅读文章：${title}`}
+>
+  <div class="card-media">
+    {
+      post.data.cover ? (
+        <img
+          src={post.data.cover}
+          alt=""
+          class="card-image"
+          loading={featured ? "eager" : "lazy"}
+          decoding="async"
+          fetchpriority={featured ? "high" : "auto"}
+          referrerpolicy="no-referrer"
+        />
+      ) : (
+        <div
+          class="placeholder"
+          style={`--placeholder-bg: ${cardTheme.background}; --placeholder-fg: ${cardTheme.foreground}`}
+          aria-hidden="true"
+        >
+          {category ? (
+            <span class="placeholder-letter">{placeholderLabel}</span>
+          ) : (
+            <md-icon class="placeholder-icon">{placeholderLabel}</md-icon>
+          )}
+        </div>
+      )
+    }
   </div>
 
-  <div class="content">
-    {featured && <span class="label-medium featured-badge">Featured Post</span>}
-    <h3 class="title-large headline">{post.data.title || themeConfig.labels.untitled}</h3>
-    
+  <div class="card-content">
+    {featured && (
+      <span class="featured-badge label-medium">
+        <md-icon aria-hidden="true">auto_awesome</md-icon>
+        精选文章
+      </span>
+    )}
+
+    <h3 class="card-title">{title}</h3>
+
     {featured && post.data.description && (
-        <p class="body-medium description">{post.data.description}</p>
+      <p class="card-description body-medium">{post.data.description}</p>
     )}
 
     <div class="meta-row">
-        <span class="label-medium date">{dateStr}</span>
-        
-        {post.data.categories && post.data.categories.length > 0 && (
-            <span class="label-small category-badge">{post.data.categories[0]}</span>
-        )}
+      <time class="date label-medium" datetime={validDate ? date.toISOString() : undefined}>{dateLabel}</time>
+      {category && <span class="category-badge label-small">{category}</span>}
     </div>
   </div>
-  
+
   <md-ripple></md-ripple>
 </a>
 
 <script>
-  import '@material/web/ripple/ripple.js';
+  import "@material/web/ripple/ripple.js";
 </script>
 
 <style>
   .blog-card {
-    display: flex; flex-direction: column; position: relative;
-    background-color: var(--md-sys-color-surface-container-low);
-    border-radius: 28px; overflow: hidden; height: 100%;
-    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s;
-    text-decoration: none; color: inherit;
-    box-shadow: var(--md-sys-elevation-level1);
+    position: relative;
+    display: grid;
+    min-width: 0;
+    min-height: 128px;
+    grid-template-columns: 120px minmax(0, 1fr);
+    overflow: hidden;
+    border: 1px solid transparent;
+    border-radius: var(--md-sys-shape-corner-large-increased);
+    background: var(--md-sys-color-surface-container-low);
+    color: var(--md-sys-color-on-surface);
+    transition:
+      background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      border-radius var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial),
+      box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      translate var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
   }
-  .blog-card:hover { 
-    transform: translateY(-4px); 
-    box-shadow: var(--md-sys-elevation-level2);
-    background-color: var(--md-sys-color-surface-container-high);
+
+  .blog-card.featured {
+    grid-template-columns: 1fr;
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    background: var(--md-sys-color-surface-container);
+  }
+
+  .card-media {
+    min-width: 0;
+    min-height: 100%;
+    overflow: hidden;
+    background: var(--md-sys-color-surface-variant);
+  }
+
+  .blog-card.featured .card-media {
+    height: clamp(210px, 58vw, 300px);
+  }
+
+  .card-image,
+  .placeholder {
+    width: 100%;
+    height: 100%;
+  }
+
+  .card-image {
+    display: block;
+    object-fit: cover;
+    transition: scale var(--md-sys-motion-duration-slow) var(--md-sys-motion-easing-spatial);
+  }
+
+  .placeholder {
+    display: grid;
+    place-items: center;
+    background: var(--placeholder-bg);
+    color: var(--placeholder-fg);
+  }
+
+  .placeholder-letter {
+    font-family: var(--md-ref-typeface-brand);
+    font-size: clamp(44px, 9vw, 72px);
+    font-weight: 650;
+    opacity: 0.58;
+  }
+
+  .placeholder-icon {
+    width: 64px;
+    height: 64px;
+    font-size: 64px;
+    opacity: 0.58;
+  }
+
+  .card-content {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .blog-card.featured .card-content {
+    padding: 24px;
   }
 
   .featured-badge {
-    color: var(--md-sys-color-primary);
-    margin-bottom: 0.5rem;
-    display: block;
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    font-weight: 700;
   }
 
-  .card-image-container {
-    height: 220px; width: 100%; position: relative; overflow: hidden;
-    background-color: var(--md-sys-color-surface-variant);
-  }
-  .card-image { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .placeholder-bg {
-    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  .featured-badge md-icon {
+    width: 18px;
+    height: 18px;
+    flex-basis: 18px;
+    font-size: 18px;
   }
 
-  .content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
-  .headline { margin: 0 0 1rem 0; color: var(--md-sys-color-on-surface); }
-  
-  .description {
-      color: var(--md-sys-color-on-surface-variant);
-      margin-bottom: 1.5rem;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+  .card-title {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    color: var(--md-sys-color-on-surface);
+    font-size: var(--md-sys-typescale-title-medium-size);
+    font-weight: 650;
+    line-height: var(--md-sys-typescale-title-medium-line-height);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .blog-card.featured .card-title {
+    font-family: var(--md-ref-typeface-brand);
+    font-size: var(--md-sys-typescale-headline-small-size);
+    font-weight: 500;
+    line-height: var(--md-sys-typescale-headline-small-line-height);
+  }
+
+  .card-description {
+    display: -webkit-box;
+    margin: 14px 0 20px;
+    overflow: hidden;
+    color: var(--md-sys-color-on-surface-variant);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
   }
 
   .meta-row {
-      margin-top: auto;
-      display: flex; align-items: center;
-      justify-content: space-between;
-      color: var(--md-sys-color-on-surface-variant);
-  }
-  
-  .category-badge {
-      background-color: var(--md-sys-color-secondary-container);
-      color: var(--md-sys-color-on-secondary-container);
-      padding: 4px 12px; border-radius: 8px;
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 12px;
+    color: var(--md-sys-color-on-surface-variant);
   }
 
-  /* Featured Post Layout (Desktop) */
+  .date {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .category-badge {
+    flex: 0 0 auto;
+    padding: 4px 10px;
+    border-radius: var(--md-sys-shape-corner-small);
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+  }
+
+  @media (hover: hover) {
+    .blog-card:hover {
+      border-color: var(--md-sys-color-outline-variant);
+      border-radius: var(--md-sys-shape-corner-extra-large);
+      background: var(--md-sys-color-surface-container-high);
+      box-shadow: var(--md-sys-elevation-level1);
+      translate: 0 -3px;
+    }
+
+    .blog-card:hover .card-image {
+      scale: 1.035;
+    }
+  }
+
+  @media (min-width: 600px) {
+    .blog-card:not(.featured) {
+      min-height: 330px;
+      grid-template-columns: 1fr;
+    }
+
+    .blog-card:not(.featured) .card-media {
+      height: 184px;
+    }
+
+    .blog-card:not(.featured) .card-content {
+      min-height: 144px;
+      padding: 20px;
+    }
+  }
+
   @media (min-width: 840px) {
     .blog-card.featured {
-        flex-direction: row;
-        min-height: 320px;
+      min-height: 340px;
+      grid-template-columns: minmax(280px, 44%) minmax(0, 1fr);
     }
-    .blog-card.featured .card-image-container {
-        width: 45%;
-        height: auto;
+
+    .blog-card.featured .card-media {
+      height: auto;
     }
-    .blog-card.featured .content {
-        width: 55%;
-        padding: 2.5rem;
+
+    .blog-card.featured .card-content {
+      justify-content: center;
+      padding: clamp(28px, 4vw, 44px);
     }
-    .blog-card.featured .headline {
-        font-size: var(--md-sys-typescale-headline-small-size);
-        line-height: var(--md-sys-typescale-headline-small-line-height);
+
+    .blog-card.featured .card-title {
+      font-size: var(--md-sys-typescale-headline-medium-size);
+      line-height: var(--md-sys-typescale-headline-medium-line-height);
     }
   }
 </style>

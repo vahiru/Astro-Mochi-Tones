@@ -1,71 +1,173 @@
 ---
-// src/components/Pagination.astro
-import '@material/web/button/filled-tonal-button.js';
-import '@material/web/icon/icon.js';
-import themeConfig from 'astro-mochi-tones:config';
+import type { Page } from "astro";
+import "@material/web/icon/icon.js";
+import themeConfig from "astro-mochi-tones:config";
 
-const { page } = Astro.props; // 接收 Astro 的分页对象
+interface Props {
+  page: Page<unknown>;
+}
 
-const isFirstPage = page.currentPage === 1;
-const isLastPage = page.currentPage === page.lastPage;
+const { page } = Astro.props;
+const previousUrl = page.url.prev;
+const nextUrl = page.url.next;
 const pageInfo = themeConfig.labels.pageInfoTemplate
-  .replaceAll('{current}', String(page.currentPage))
-  .replaceAll('{total}', String(page.lastPage));
+  .replaceAll("{current}", String(page.currentPage))
+  .replaceAll("{total}", String(page.lastPage));
 ---
 
-<nav class="pagination-nav" aria-label="Pagination Navigation">
-    <a href={page.url.prev || "#"} class={`nav-btn ${isFirstPage ? 'disabled' : ''}`} aria-disabled={isFirstPage}>
-        <md-icon>arrow_back</md-icon>
+<nav class="pagination-nav" aria-label={themeConfig.labels.paginationLabel}>
+  {
+    previousUrl ? (
+      <a class="nav-button" href={previousUrl} rel="prev">
+        <md-icon aria-hidden="true">arrow_back</md-icon>
         <span>{themeConfig.labels.paginationPrevious}</span>
-    </a>
+      </a>
+    ) : (
+      <span class="nav-button is-disabled" aria-disabled="true">
+        <md-icon aria-hidden="true">arrow_back</md-icon>
+        <span>{themeConfig.labels.paginationPrevious}</span>
+      </span>
+    )
+  }
 
-    <span class="page-info">
-        {pageInfo}
-    </span>
+  <span class="page-info label-large" aria-current="page">{pageInfo}</span>
 
-    <a href={page.url.next || "#"} class={`nav-btn ${isLastPage ? 'disabled' : ''}`} aria-disabled={isLastPage}>
+  {
+    nextUrl ? (
+      <a class="nav-button" href={nextUrl} rel="next">
         <span>{themeConfig.labels.paginationNext}</span>
-        <md-icon>arrow_forward</md-icon>
-    </a>
+        <md-icon aria-hidden="true">arrow_forward</md-icon>
+      </a>
+    ) : (
+      <span class="nav-button is-disabled" aria-disabled="true">
+        <span>{themeConfig.labels.paginationNext}</span>
+        <md-icon aria-hidden="true">arrow_forward</md-icon>
+      </span>
+    )
+  }
 </nav>
 
 <style>
   .pagination-nav {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    margin-top: 3rem;
-    padding: 1.5rem 0;
+    gap: 12px;
+    margin-top: clamp(40px, 7vw, 64px);
+    padding-top: 24px;
     border-top: 1px solid var(--md-sys-color-outline-variant);
   }
 
-  .nav-btn {
-    display: flex;
+  .nav-button {
+    position: relative;
+    display: inline-flex;
+    min-width: 0;
+    min-height: 48px;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 10px 16px;
-    border-radius: 24px;
-    background-color: var(--md-sys-color-surface-container);
-    color: var(--md-sys-color-on-surface);
-    transition: background-color 0.2s, transform 0.2s;
-    font-size: 0.95rem;
-    font-weight: 500;
-  }
-  
-  .nav-btn:hover:not(.disabled) {
-    background-color: var(--md-sys-color-surface-container-high);
-    transform: translateY(-2px);
+    overflow: hidden;
+    padding: 0 18px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    font-size: var(--md-sys-typescale-label-large-size);
+    font-weight: 650;
+    line-height: var(--md-sys-typescale-label-large-line-height);
+    transition:
+      background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      translate var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
   }
 
-  .nav-btn.disabled {
-    opacity: 0.4;
+  .nav-button:first-child {
+    justify-self: start;
+  }
+
+  .nav-button:last-child {
+    justify-self: end;
+  }
+
+  a.nav-button::before {
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    content: "";
+    opacity: 0;
     pointer-events: none;
-    cursor: default;
+    transition: opacity var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+  }
+
+  a.nav-button:hover::before {
+    opacity: var(--md-sys-state-hover-opacity);
+  }
+
+  a.nav-button:active::before {
+    opacity: var(--md-sys-state-pressed-opacity);
+  }
+
+  a.nav-button:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary);
+    outline-offset: 3px;
+  }
+
+  .nav-button md-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    font-size: 20px;
+  }
+
+  .nav-button span,
+  .nav-button md-icon {
+    position: relative;
+    z-index: 1;
+  }
+
+  .nav-button.is-disabled {
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+    cursor: not-allowed;
+    opacity: 0.38;
   }
 
   .page-info {
+    min-width: max-content;
+    padding: 8px 12px;
+    border-radius: var(--md-sys-shape-corner-small);
     color: var(--md-sys-color-on-surface-variant);
-    font-size: 1rem;
-    font-weight: 500;
+    text-align: center;
+  }
+
+  @media (hover: hover) {
+    a.nav-button:hover {
+      box-shadow: var(--md-sys-elevation-level1);
+      translate: 0 -2px;
+    }
+  }
+
+  @media (max-width: 479px) {
+    .pagination-nav {
+      gap: 6px;
+    }
+
+    .nav-button {
+      width: 48px;
+      padding-inline: 0;
+    }
+
+    .nav-button span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .page-info {
+      padding-inline: 6px;
+    }
   }
 </style>

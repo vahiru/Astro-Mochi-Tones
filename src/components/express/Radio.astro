@@ -1,74 +1,178 @@
 ---
 interface Props {
-    checked?: boolean;
-    color?:
-        | "default"
-        | "red"
-        | "orange"
-        | "yellow"
-        | "green"
-        | "cyan"
-        | "blue"
-        | "purple";
-    label?: string;
+  checked?: boolean;
+  disabled?: boolean;
+  color?:
+    | "default"
+    | "primary"
+    | "secondary"
+    | "tertiary"
+    | "error"
+    | "success"
+    | "info"
+    | "warning"
+    | "red"
+    | "orange"
+    | "yellow"
+    | "green"
+    | "cyan"
+    | "blue"
+    | "purple";
+  label?: string;
+  name?: string;
+  value?: string;
 }
 
-const { checked = false, color = "default", label } = Astro.props;
-
-const colors = {
-    default: "var(--md-sys-color-primary)",
-    red: "#d32f2f",
-    orange: "#f57c00",
-    yellow: "#fbc02d",
-    green: "#388e3c",
-    cyan: "#0097a7",
-    blue: "#1976d2",
-    purple: "#7b1fa2",
+const {
+  checked = false,
+  disabled = false,
+  color = "default",
+  label,
+  name = "mdx-radio",
+  value = label ?? "",
+} = Astro.props;
+const toneMap: Record<string, string> = {
+  default: "primary",
+  primary: "primary",
+  purple: "primary",
+  secondary: "secondary",
+  tertiary: "tertiary",
+  error: "error",
+  red: "error",
+  success: "success",
+  green: "success",
+  info: "info",
+  cyan: "info",
+  blue: "info",
+  warning: "warning",
+  orange: "warning",
+  yellow: "warning",
 };
-
-const activeColor = colors[color] || colors.default;
+const tone = toneMap[color] ?? "primary";
 ---
 
-<div
-    class={`radio ${checked ? "checked" : ""}`}
-    style={checked ? `--active-color: ${activeColor}` : ""}
->
-    <div class="circle">
-        {checked && <div class="dot" />}
-    </div>
-    <div class="label">
-        <slot>{label}</slot>
-    </div>
-</div>
+<label class:list={["md3-radio", `tone-${tone}`, { "is-disabled": disabled }]}>
+  <input
+    class="native-radio"
+    type="radio"
+    name={name}
+    value={value}
+    checked={checked}
+    disabled={disabled}
+    aria-label={label}
+  />
+  <span class="radio-control" aria-hidden="true"><span class="radio-dot"></span></span>
+  <span class="radio-label body-medium"><slot>{label}</slot></span>
+</label>
 
 <style>
-    .radio {
-        display: flex;
-        align-items: center;
-        margin: 0.5rem 0;
-        cursor: default;
+  .md3-radio {
+    --radio-color: var(--md-sys-color-primary);
+    position: relative;
+    display: inline-flex;
+    min-height: var(--md-sys-touch-target-size);
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0;
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+    vertical-align: middle;
+  }
+
+  .native-radio {
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    width: var(--md-sys-touch-target-size);
+    height: var(--md-sys-touch-target-size);
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+
+  .radio-control {
+    position: relative;
+    display: grid;
+    width: var(--md-sys-touch-target-size);
+    height: var(--md-sys-touch-target-size);
+    flex: 0 0 var(--md-sys-touch-target-size);
+    place-items: center;
+    overflow: hidden;
+    border-radius: var(--md-sys-shape-corner-full);
+  }
+
+  .radio-control::before {
+    position: absolute;
+    inset: 4px;
+    border-radius: inherit;
+    background: var(--radio-color);
+    content: "";
+    opacity: 0;
+    transition: opacity var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+  }
+
+  .radio-control::after {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--md-sys-color-on-surface-variant);
+    border-radius: var(--md-sys-shape-corner-full);
+    content: "";
+    transition: border-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+  }
+
+  .radio-dot {
+    position: relative;
+    z-index: 1;
+    width: 10px;
+    height: 10px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--radio-color);
+    scale: 0;
+    transition: scale var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+  }
+
+  .native-radio:checked + .radio-control::after {
+    border-color: var(--radio-color);
+  }
+
+  .native-radio:checked + .radio-control .radio-dot {
+    scale: 1;
+  }
+
+  .native-radio:focus-visible + .radio-control {
+    outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color);
+    outline-offset: var(--md-sys-focus-ring-offset);
+  }
+
+  .radio-label {
+    min-width: 0;
+    padding-right: 4px;
+  }
+
+  .tone-secondary { --radio-color: var(--md-sys-color-secondary); }
+  .tone-tertiary { --radio-color: var(--md-sys-color-tertiary); }
+  .tone-error { --radio-color: var(--md-sys-color-error); }
+  .tone-success { --radio-color: var(--md-extended-color-success); }
+  .tone-info { --radio-color: var(--md-extended-color-info); }
+  .tone-warning { --radio-color: var(--md-extended-color-warning); }
+
+  .is-disabled {
+    cursor: not-allowed;
+    opacity: var(--md-sys-state-disabled-opacity);
+  }
+
+  @media (hover: hover) {
+    .md3-radio:not(.is-disabled):hover .radio-control::before {
+      opacity: var(--md-sys-state-hover-opacity);
     }
-    .circle {
-        width: 20px;
-        height: 20px;
-        border: 2px solid var(--md-sys-color-outline);
-        border-radius: 50%;
-        margin-right: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .radio-control::before,
+    .radio-control::after,
+    .radio-dot {
+      transition: none;
     }
-    .radio.checked .circle {
-        border-color: var(--active-color, var(--md-sys-color-primary));
-    }
-    .dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background-color: var(--active-color, var(--md-sys-color-primary));
-    }
-    .label {
-        line-height: 1.4;
-    }
+  }
 </style>

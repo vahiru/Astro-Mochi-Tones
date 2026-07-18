@@ -1,182 +1,353 @@
 ---
-// src/components/NavRail.astro
-import ColorPicker from './ColorPicker.astro'; 
-import themeConfig from 'astro-mochi-tones:config';
+import ColorPicker from "./ColorPicker.astro";
+import themeConfig from "astro-mochi-tones:config";
 
 const pathname = Astro.url.pathname;
 const { nav } = themeConfig;
 
 const navItems = nav.items.map((item) => {
-  const active = item.activePattern
-    ? new RegExp(item.activePattern).test(pathname)
-    : pathname === item.href;
+  let active = pathname === item.href;
+  if (item.activePattern) {
+    try {
+      active = new RegExp(item.activePattern).test(pathname);
+    } catch {
+      active = false;
+    }
+  }
 
   return { ...item, active };
 });
 ---
 
-<nav class="nav-rail">
-  <div class="rail-fab-wrapper">
-    <button class="search-fab" aria-label={themeConfig.labels.search}><md-icon>search</md-icon><md-ripple></md-ripple></button>
+<nav class="nav-rail" aria-label="主要导航">
+  <div class="rail-action">
+    <button class="search-fab" type="button" aria-label={themeConfig.labels.search} title={themeConfig.labels.search}>
+      <md-icon>search</md-icon>
+      <md-ripple></md-ripple>
+    </button>
   </div>
 
-  <div class="drawer-header">
-    <span class="drawer-title">{nav.drawerTitle}</span>
-  </div>
-
-  <div class="nav-group">
-    {navItems.map(item => (
-      <a href={item.href} class={`nav-item ${item.active ? 'active' : ''}`}>
-        <div class="icon-container"><md-icon>{item.icon}</md-icon><md-ripple></md-ripple></div>
-        <span class="label">{item.label}</span>
-      </a>
-    ))}
+  <div class="nav-group primary-nav">
+    {
+      navItems.map((item) => (
+        <a
+          href={item.href}
+          class:list={["nav-item", { active: item.active }]}
+          aria-current={item.active ? "page" : undefined}
+        >
+          <span class="icon-container">
+            <md-icon>{item.icon}</md-icon>
+            <md-ripple></md-ripple>
+          </span>
+          <span class="label">{item.label}</span>
+        </a>
+      ))
+    }
   </div>
 
   <div class="spacer"></div>
 
-  <div class="nav-group bottom-group">
-    
-    <a href={themeConfig.rssPath} target="_blank" class="nav-item rss-btn">
-       <div class="icon-container"><md-icon>{nav.rssIcon}</md-icon><md-ripple></md-ripple></div>
-       <span class="label">{nav.rssLabel}</span>
+  <div class="nav-group utility-nav">
+    <a
+      href={themeConfig.rssPath}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="nav-item"
+      title={nav.rssLabel}
+    >
+      <span class="icon-container"><md-icon>{nav.rssIcon}</md-icon><md-ripple></md-ripple></span>
+      <span class="label">{nav.rssLabel}</span>
     </a>
 
-    <button id="palette-btn" class="nav-item" type="button">
-      <div class="icon-container"><md-icon>{nav.colorIcon}</md-icon><md-ripple></md-ripple></div>
+    <button class="nav-item" type="button" data-open-theme-picker title={nav.colorLabel}>
+      <span class="icon-container"><md-icon>{nav.colorIcon}</md-icon><md-ripple></md-ripple></span>
       <span class="label">{nav.colorLabel}</span>
     </button>
-    
-    <button id="theme-toggle" class="nav-item" type="button">
-      <div class="icon-container"><md-icon id="theme-icon">{nav.darkIcon}</md-icon><md-ripple></md-ripple></div>
+
+    <button
+      class="nav-item"
+      type="button"
+      data-theme-toggle
+      data-dark-icon={nav.darkIcon}
+      data-light-icon={nav.lightIcon}
+      title={nav.themeLabel}
+    >
+      <span class="icon-container"><md-icon class="theme-icon">{nav.darkIcon}</md-icon><md-ripple></md-ripple></span>
       <span class="label">{nav.themeLabel}</span>
     </button>
   </div>
-
-  <ColorPicker />
 </nav>
 
-<script define:vars={{ darkIcon: nav.darkIcon, lightIcon: nav.lightIcon }}>
-    document.getElementById('palette-btn')?.addEventListener('click', (e) => { e.preventDefault(); window.dispatchEvent(new Event('open-theme-picker')); });
-    
-    const handleToggle = () => {
-        document.documentElement.classList.toggle("dark");
-        const isDark = document.documentElement.classList.contains("dark");
-        localStorage.setItem("theme", isDark ? "dark" : "light");
-        updateIcon();
-    };
-    const updateIcon = () => {
-        const isDark = document.documentElement.classList.contains("dark");
-        const icon = document.getElementById("theme-icon");
-        if (icon) icon.innerText = isDark ? lightIcon : darkIcon;
-    };
-    document.getElementById("theme-toggle")?.addEventListener("click", handleToggle);
-    updateIcon();
+<nav class="bottom-nav" aria-label="主要导航">
+  {
+    navItems.map((item) => (
+      <a
+        href={item.href}
+        class:list={["bottom-nav-item", { active: item.active }]}
+        aria-current={item.active ? "page" : undefined}
+      >
+        <span class="bottom-indicator">
+          <md-icon>{item.icon}</md-icon>
+          <md-ripple></md-ripple>
+        </span>
+        <span class="bottom-label">{item.label}</span>
+      </a>
+    ))
+  }
+</nav>
+
+<ColorPicker />
+
+<script>
+  const readThemePreference = () => {
+    try {
+      return localStorage.getItem("theme");
+    } catch {
+      return null;
+    }
+  };
+
+  const updateThemeControls = () => {
+    const dark = document.documentElement.classList.contains("dark");
+    document.querySelectorAll<HTMLButtonElement>("[data-theme-toggle]").forEach((button) => {
+      const icon = button.querySelector<HTMLElement>(".theme-icon");
+      const nextIcon = dark ? button.dataset.lightIcon : button.dataset.darkIcon;
+      if (icon && nextIcon) icon.textContent = nextIcon;
+      button.setAttribute("aria-pressed", String(dark));
+    });
+  };
+
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    const dark = !root.classList.contains("dark");
+    root.classList.toggle("dark", dark);
+
+    try {
+      localStorage.setItem("theme", dark ? "dark" : "light");
+    } catch {
+      // The visual preference still applies for the current page.
+    }
+
+    updateThemeControls();
+    window.dispatchEvent(new CustomEvent("theme-change", { detail: { dark } }));
+  };
+
+  const bindNavigationActions = () => {
+    document.querySelectorAll<HTMLButtonElement>("[data-theme-toggle]").forEach((button) => {
+      if (button.dataset.themeBound === "true") return;
+      button.dataset.themeBound = "true";
+      button.addEventListener("click", toggleTheme);
+    });
+
+    document.querySelectorAll<HTMLButtonElement>("[data-open-theme-picker]").forEach((button) => {
+      if (button.dataset.paletteBound === "true") return;
+      button.dataset.paletteBound = "true";
+      button.addEventListener("click", () => {
+        window.dispatchEvent(new Event("open-theme-picker"));
+      });
+    });
+
+    updateThemeControls();
+  };
+
+  bindNavigationActions();
+  document.addEventListener("astro:after-swap", bindNavigationActions);
+
+  if (!readThemePreference()) {
+    const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    colorScheme.addEventListener("change", ({ matches }) => {
+      document.documentElement.classList.toggle("dark", matches);
+      updateThemeControls();
+      window.dispatchEvent(new CustomEvent("theme-change", { detail: { dark: matches } }));
+    });
+  }
 </script>
 
 <style>
-  /* === Desktop Styles (>= 993px) === */
-  @media (min-width: 993px) {
-    .nav-rail {
-      width: 88px; min-width: 88px; padding: 12px 0 24px 0;
-      align-items: center; border-right: 1px solid transparent;
-      position: sticky; top: 0; height: 100vh;
-      background-color: var(--md-sys-color-surface-container);
-      display: flex; flex-direction: column; box-sizing: border-box; z-index: 100;
-    }
-    .drawer-header { display: none; }
-    .rail-fab-wrapper { margin-bottom: 20px; margin-top: 4px; }
-    .search-fab {
-      position: relative; width: 56px; height: 56px; border-radius: 16px; border: none; cursor: pointer;
-      background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
-      display: flex; align-items: center; justify-content: center; transition: transform 0.2s;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-    }
-    .search-fab:hover { transform: scale(1.05); }
-    .nav-group { display: flex; flex-direction: column; gap: 12px; width: 100%; align-items: center; }
-    .nav-item {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      width: 100%; gap: 4px; text-decoration: none; background: transparent; border: none; cursor: pointer;
-      color: var(--md-sys-color-on-surface-variant); position: relative; padding: 0;
-    }
-    .icon-container {
-      position: relative; width: 56px; height: 32px; border-radius: 16px;
-      display: flex; align-items: center; justify-content: center; transition: background 0.2s; overflow: hidden;
-    }
-    .nav-item.active .icon-container {
-        background-color: var(--md-sys-color-secondary-container);
-        color: var(--md-sys-color-on-secondary-container);
-    }
-    .nav-item.active .label { font-weight: 700; color: var(--md-sys-color-on-surface); }
-    
-    /* RSS 按钮特别样式：悬浮时图标变色 (Tertiary) */
-    .rss-btn:hover .icon-container {
-        color: var(--md-sys-color-tertiary);
-        background-color: var(--md-sys-color-tertiary-container);
-    }
-    
-    .label { font-size: 11px; font-weight: 500; text-align: center; }
+  .nav-rail {
+    display: flex;
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0 16px;
+    background: var(--md-sys-color-surface-container);
   }
 
-  /* === Mobile Styles (<= 992px) === */
-  @media (max-width: 992px) {
+  .rail-action {
+    margin: 4px 0 18px;
+  }
+
+  .search-fab {
+    position: relative;
+    display: grid;
+    width: 56px;
+    height: 56px;
+    place-items: center;
+    overflow: hidden;
+    border-radius: var(--md-sys-shape-corner-large);
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    box-shadow: var(--md-sys-elevation-level1);
+    cursor: pointer;
+    transition:
+      border-radius var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial),
+      box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      scale var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+  }
+
+  .search-fab:hover {
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    box-shadow: var(--md-sys-elevation-level2);
+    scale: 1.04;
+  }
+
+  .nav-group {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    width: 100%;
+    min-height: 52px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 0;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+  }
+
+  .icon-container {
+    position: relative;
+    display: grid;
+    width: 56px;
+    height: 32px;
+    place-items: center;
+    overflow: hidden;
+    border-radius: var(--md-sys-shape-corner-full);
+    transition:
+      background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      scale var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+  }
+
+  .nav-item:hover .icon-container {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+    scale: 1.04;
+  }
+
+  .nav-item.active .icon-container {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+  }
+
+  .nav-item.active md-icon {
+    font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24;
+  }
+
+  .label {
+    max-width: 76px;
+    overflow: hidden;
+    font-size: var(--md-sys-typescale-label-small-size);
+    font-weight: var(--md-sys-typescale-label-small-weight);
+    line-height: var(--md-sys-typescale-label-small-line-height);
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav-item.active .label {
+    color: var(--md-sys-color-on-surface);
+    font-weight: 700;
+  }
+
+  .spacer {
+    flex: 1;
+  }
+
+  .utility-nav {
+    gap: 4px;
+  }
+
+  .bottom-nav {
+    display: none;
+  }
+
+  @media (max-width: 599px) {
     .nav-rail {
-      position: fixed; top: 64px; left: 0; bottom: 0;
-      width: 300px; max-width: 80vw;
-      background-color: var(--md-sys-color-surface-container) !important;
-      border-top-right-radius: 28px; border-bottom-right-radius: 28px;
-      z-index: 1300;
-      transform: translateX(-100%);
-      transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
-      
-      /* 【关键】只保留垂直 Padding，左右不加 Padding，由子元素 Margin 控制 */
-      padding: 24px 0; 
-      
-      display: flex; flex-direction: column; align-items: flex-start;
-      box-shadow: 4px 0 24px rgba(0,0,0,0.15);
-      
-      /* 允许滚动，防止内容溢出 */
-      overflow-y: auto;
-    }
-    
-    :global(body.drawer-open) .nav-rail { transform: translateX(0); }
-    
-    .rail-fab-wrapper { display: none; }
-    .drawer-header { padding: 0 28px; margin-bottom: 12px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); }
-    
-    .nav-group { width: 100%; display: flex; flex-direction: column; gap: 4px; }
-    
-    /* 底部组加点上边距 */
-    .bottom-group { margin-top: 12px; border-top: 1px solid var(--md-sys-color-outline-variant); padding-top: 12px; }
-
-    /* 【关键修复：胶囊布局】 */
-    .nav-item {
-      display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
-      text-decoration: none; background: transparent; border: none; cursor: pointer;
-      color: var(--md-sys-color-on-surface-variant); position: relative;
-      
-      height: 56px;
-      /* 左右留 12px 边距 */
-      margin: 0 12px;
-      /* 宽度自动填满剩余空间 */
-      width: calc(100% - 24px); 
-      
-      border-radius: 28px; /* 完整圆角 */
-      padding-left: 16px; 
-      gap: 12px;
-      box-sizing: border-box; /* 确保 padding 不撑破宽度 */
+      display: none;
     }
 
-    .icon-container { width: 24px; height: 24px; background-color: transparent !important; }
-    
-    /* 选中态：整行变色 */
-    .nav-item.active {
-      background-color: var(--md-sys-color-secondary-container);
+    .bottom-nav {
+      position: fixed;
+      inset: auto 0 0;
+      z-index: 950;
+      display: grid;
+      min-height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-items: start;
+      padding: 8px max(4px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(4px, env(safe-area-inset-left));
+      border-top: 1px solid var(--md-sys-color-outline-variant);
+      background: color-mix(in srgb, var(--md-sys-color-surface-container) 94%, transparent);
+      backdrop-filter: blur(20px);
+    }
+
+    .bottom-nav-item {
+      display: flex;
+      min-width: 0;
+      min-height: 64px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    .bottom-indicator {
+      position: relative;
+      display: grid;
+      width: 64px;
+      max-width: 100%;
+      height: 32px;
+      place-items: center;
+      overflow: hidden;
+      border-radius: var(--md-sys-shape-corner-full);
+      transition:
+        background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+        scale var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+    }
+
+    .bottom-nav-item.active .bottom-indicator {
+      background: var(--md-sys-color-secondary-container);
       color: var(--md-sys-color-on-secondary-container);
     }
-    
-    .label { font-size: 14px; font-weight: 500; }
+
+    .bottom-nav-item.active md-icon {
+      font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24;
+    }
+
+    .bottom-label {
+      max-width: 100%;
+      overflow: hidden;
+      font-size: var(--md-sys-typescale-label-small-size);
+      font-weight: 600;
+      line-height: var(--md-sys-typescale-label-small-line-height);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bottom-nav-item.active .bottom-label {
+      color: var(--md-sys-color-on-surface);
+      font-weight: 700;
+    }
   }
-  
-  .spacer { flex-grow: 1; }
 </style>

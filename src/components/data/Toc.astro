@@ -1,65 +1,208 @@
 ---
+import "@material/web/icon/icon.js";
+
 interface Props {
     title?: string;
     wiki?: string; // Not used in this static impl but kept for compatibility
     open?: boolean;
 }
 
-const { title = "Table of Contents", open = true } = Astro.props;
+const { title = "Table of Contents", wiki, open = true } = Astro.props;
 ---
 
-<div class="wiki-toc">
-    {title && <div class="toc-header">{title}</div>}
+<details class="wiki-toc" open={open} data-wiki={wiki}>
+    <summary class="toc-header" aria-label={title || "目录"}>
+        <span class="toc-leading" aria-hidden="true">
+            <md-icon>format_list_bulleted</md-icon>
+        </span>
+        <span class="toc-title">{title}</span>
+        <md-icon class="toc-arrow" aria-hidden="true">expand_more</md-icon>
+    </summary>
     <div class="toc-body">
         <slot />
     </div>
-</div>
+</details>
 
 <style>
     .wiki-toc {
-        background-color: var(--md-sys-color-surface-container);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 2rem 0;
+        margin: 24px 0;
+        overflow: hidden;
         border: 1px solid var(--md-sys-color-outline-variant);
-    }
-    .toc-header {
-        font-weight: bold;
-        font-size: 1.1rem;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid var(--md-sys-color-outline-variant);
-    }
-    .toc-body {
-        font-size: 0.95rem;
-    }
-    /* Style the list inside the slot */
-    .toc-body :global(ul) {
-        list-style: none;
-        padding-left: 0;
-        margin: 0;
-    }
-    .toc-body :global(li) {
-        margin-bottom: 0.5rem;
-        line-height: 1.4;
-    }
-    .toc-body :global(a) {
-        text-decoration: none;
-        color: var(--md-sys-color-on-surface-variant);
-        display: block;
-        padding: 4px 8px;
-        border-radius: 6px;
+        border-radius: var(--md-sys-shape-corner-large-increased);
+        background: var(--md-sys-color-surface-container-low);
+        color: var(--md-sys-color-on-surface);
         transition:
-            background 0.2s,
-            color 0.2s;
+            border-radius var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial),
+            box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
     }
-    .toc-body :global(a:hover) {
-        background-color: var(--md-sys-color-surface-variant);
+
+    .wiki-toc[open] {
+        border-radius: var(--md-sys-shape-corner-extra-large);
+        box-shadow: var(--md-sys-elevation-level1);
+    }
+
+    .toc-header {
+        position: relative;
+        display: grid;
+        min-height: 64px;
+        grid-template-columns: 40px minmax(0, 1fr) 24px;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 16px;
+        overflow: hidden;
+        list-style: none;
+        color: var(--md-sys-color-on-surface);
+        cursor: pointer;
+    }
+
+    .toc-header::before {
+        position: absolute;
+        inset: 0;
+        background: var(--md-sys-color-on-surface);
+        content: "";
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+    }
+
+    .toc-header::-webkit-details-marker {
+        display: none;
+    }
+
+    .toc-header:focus-visible {
+        outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color);
+        outline-offset: calc(-1 * var(--md-sys-focus-ring-width));
+    }
+
+    .toc-leading,
+    .toc-title,
+    .toc-arrow {
+        position: relative;
+        z-index: 1;
+    }
+
+    .toc-leading {
+        display: grid;
+        width: 40px;
+        height: 40px;
+        place-items: center;
+        border-radius: var(--md-sys-shape-corner-medium);
+        background: var(--md-sys-color-secondary-container);
+        color: var(--md-sys-color-on-secondary-container);
+    }
+
+    .toc-title {
+        font-size: var(--md-sys-typescale-title-medium-size);
+        font-weight: 650;
+        letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+        line-height: var(--md-sys-typescale-title-medium-line-height);
+    }
+
+    .toc-arrow {
+        color: var(--md-sys-color-on-surface-variant);
+        transition: rotate var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial);
+    }
+
+    .wiki-toc[open] .toc-arrow {
+        rotate: 180deg;
+    }
+
+    .toc-body {
+        padding: 12px 12px 16px;
+        border-top: 1px solid var(--md-sys-color-outline-variant);
+        font-size: var(--md-sys-typescale-body-medium-size);
+        letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+        line-height: var(--md-sys-typescale-body-medium-line-height);
+    }
+
+    .toc-body :global(ul) {
+        margin: 0;
+        padding-inline-start: 0;
+        list-style: none;
+    }
+
+    .toc-body :global(li) {
+        margin: 2px 0;
+    }
+
+    .toc-body :global(a) {
+        display: flex;
+        min-height: var(--md-sys-touch-target-size);
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: var(--md-sys-shape-corner-medium);
+        color: var(--md-sys-color-on-surface-variant);
+        text-decoration: none;
+        transition:
+            background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+            color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+    }
+
+    .toc-body :global(a:focus-visible) {
+        outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color);
+        outline-offset: calc(-1 * var(--md-sys-focus-ring-width));
+    }
+
+    .toc-body :global(a:active) {
+        background: color-mix(
+            in srgb,
+            var(--md-sys-color-primary) calc(var(--md-sys-state-pressed-opacity) * 100%),
+            transparent
+        );
         color: var(--md-sys-color-primary);
     }
-    /* Indent nested lists */
+
+    .toc-body :global(a[aria-current="true"]),
+    .toc-body :global(a[aria-current="location"]) {
+        background: var(--md-sys-color-secondary-container);
+        color: var(--md-sys-color-on-secondary-container);
+        font-weight: 650;
+    }
+
     .toc-body :global(ul ul) {
-        padding-left: 1.5rem;
-        margin-top: 0.25rem;
+        margin-block-start: 2px;
+        padding-inline-start: 16px;
+    }
+
+    @media (hover: hover) {
+        .toc-header:hover::before {
+            opacity: var(--md-sys-state-hover-opacity);
+        }
+
+        .toc-body :global(a:hover) {
+            background: color-mix(
+                in srgb,
+                var(--md-sys-color-primary) calc(var(--md-sys-state-hover-opacity) * 100%),
+                transparent
+            );
+            color: var(--md-sys-color-primary);
+        }
+    }
+
+    @media (max-width: 479px) {
+        .wiki-toc,
+        .wiki-toc[open] {
+            border-radius: var(--md-sys-shape-corner-large);
+        }
+
+        .toc-header {
+            grid-template-columns: 36px minmax(0, 1fr) 24px;
+            gap: 10px;
+            padding-inline: 12px;
+        }
+
+        .toc-leading {
+            width: 36px;
+            height: 36px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .wiki-toc,
+        .toc-header::before,
+        .toc-arrow,
+        .toc-body :global(a) {
+            transition: none;
+        }
     }
 </style>

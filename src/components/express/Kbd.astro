@@ -4,19 +4,23 @@
 <kbd class="md3-kbd"><slot /></kbd>
 
 <style>
-    .md3-kbd {
-        display: inline-block;
-        background-color: var(--md-sys-color-surface-container-highest);
-        color: var(--md-sys-color-on-surface);
-        border: 1px solid var(--md-sys-color-outline-variant);
-        border-radius: 6px;
-        padding: 0 6px;
-        font-family: "Fira Code", "Cascadia Code", monospace;
-        font-size: 0.85em;
-        font-weight: 500;
-        box-shadow: 0 2px 0 var(--md-sys-color-outline-variant);
-        margin: 0 2px;
-        vertical-align: baseline;
-        line-height: 1.4;
-    }
+  .md3-kbd {
+    display: inline-flex;
+    min-width: 24px;
+    min-height: 24px;
+    align-items: center;
+    justify-content: center;
+    margin-inline: 2px;
+    padding: 1px 7px 2px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: var(--md-sys-color-surface-container-high);
+    box-shadow: inset 0 -2px 0 var(--md-sys-color-outline-variant);
+    color: var(--md-sys-color-on-surface);
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.82em;
+    font-weight: 650;
+    line-height: 1;
+    vertical-align: 0.08em;
+  }
 </style>

@@ -3,50 +3,104 @@ interface Props {
     api?: string;
     user?: string;
     type?: "issues" | "releases";
+    label?: string;
+    loadingLabel?: string;
 }
 
-const { api, user, type } = Astro.props;
-
-// Note: Dynamic API fetching would typically happen client-side or during build.
-// For now, this component mainly serves as a container for TimelineNodes (static).
-// If API is provided, we adds a data attribute for client-side scripts to potentially hook into.
+const {
+    api,
+    user,
+    type,
+    label = "Timeline",
+    loadingLabel = "Loading timeline…",
+} = Astro.props;
 ---
 
 <div class="timeline" data-api={api} data-user={user} data-type={type}>
-    <slot />
-    {api && <div class="timeline-loading">Loading timeline...</div>}
+    <div class="timeline-track" role="list" aria-label={label}>
+        <slot />
+    </div>
+
+    {api && (
+        <div class="timeline-loading" role="status" aria-live="polite" aria-busy="true">
+            <span class="loading-indicator" aria-hidden="true"></span>
+            <span>{loadingLabel}</span>
+        </div>
+    )}
 </div>
-
-<script>
-    // Basic client-side fetch implementation for demo purposes if API is present
-    // This is a placeholder for the full logic which handles GitHub/Gitea parsing
-    const timelines = document.querySelectorAll(".timeline[data-api]");
-    timelines.forEach(async (tl) => {
-        const api = tl.getAttribute("data-api");
-        if (!api) return;
-
-        try {
-            // In a real implementation, we would fetch and render nodes here.
-            // For this demo, we just update the loading text or leave it.
-            // const res = await fetch(api);
-            // const data = await res.json();
-            // ... render logic ...
-        } catch (e) {
-            console.error("Failed to load timeline", e);
-        }
-    });
-</script>
 
 <style>
     .timeline {
-        position: relative;
-        margin: 2rem 0;
-        padding-left: 2rem;
-        border-left: 2px solid var(--md-sys-color-surface-container-high);
+        margin: 24px 0;
     }
+
+    .timeline-track {
+        position: relative;
+        padding-inline-start: 44px;
+    }
+
+    .timeline-track::before {
+        position: absolute;
+        inset-block: 14px 20px;
+        inset-inline-start: 15px;
+        width: 2px;
+        border-radius: var(--md-sys-shape-corner-full);
+        background: var(--md-sys-color-outline-variant);
+        content: "";
+    }
+
     .timeline-loading {
-        padding: 1rem;
+        display: flex;
+        min-height: var(--md-sys-touch-target-size);
+        align-items: center;
+        gap: 12px;
+        margin-block-start: 12px;
+        margin-inline-start: 44px;
+        padding: 8px 16px;
+        border-radius: var(--md-sys-shape-corner-medium);
+        background: var(--md-sys-color-surface-container);
         color: var(--md-sys-color-on-surface-variant);
-        font-size: 0.875rem;
+        font-size: var(--md-sys-typescale-body-medium-size);
+        letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+        line-height: var(--md-sys-typescale-body-medium-line-height);
+    }
+
+    .loading-indicator {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 20px;
+        box-sizing: border-box;
+        border: 2px solid var(--md-sys-color-primary-container);
+        border-top-color: var(--md-sys-color-primary);
+        border-radius: var(--md-sys-shape-corner-full);
+        animation: timeline-progress 900ms linear infinite;
+    }
+
+    @keyframes timeline-progress {
+        to {
+            rotate: 1turn;
+        }
+    }
+
+    @media (max-width: 479px) {
+        .timeline-track {
+            padding-inline-start: 36px;
+        }
+
+        .timeline-track::before {
+            inset-inline-start: 11px;
+        }
+
+        .timeline-loading {
+            margin-inline-start: 36px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .loading-indicator {
+            animation: none;
+            border-color: var(--md-sys-color-primary);
+            border-inline-end-color: transparent;
+        }
     }
 </style>

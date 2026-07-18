@@ -11,23 +11,38 @@ interface LinkItem {
 
 interface Props {
     items?: LinkItem[];
-    group?: string; // Optional group name if we implement global data store later
+    group?: string;
 }
 
-const { items = [] } = Astro.props;
+const { items = [], group } = Astro.props;
 ---
 
-<div class="sites-grid">
-    {items.map((item) => <FriendLink {...item} />)}
-    <slot />
-    {/* For manual FriendLink children */}
+<div class="sites-block">
+    {group && <h3 class="sites-title">{group}</h3>}
+    <div class="sites-grid" aria-label={group}>
+        {items.map((item) => <FriendLink {...item} />)}
+        <slot />
+    </div>
 </div>
 
 <style>
+    .sites-block {
+        margin: 24px 0;
+    }
+
+    .sites-title {
+        margin: 0 0 16px;
+        color: var(--md-sys-color-on-surface);
+        font-family: var(--md-ref-typeface-brand);
+        font-size: var(--md-sys-typescale-title-large-size);
+        font-weight: 500;
+        letter-spacing: var(--md-sys-typescale-title-large-tracking);
+        line-height: var(--md-sys-typescale-title-large-line-height);
+    }
+
     .sites-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1.5rem;
-        margin: 2rem 0;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+        gap: 16px;
     }
 </style>

@@ -1,0 +1,344 @@
+---
+import type { Page } from "astro";
+import type { CollectionEntry } from "astro:content";
+import "@material/web/icon/icon.js";
+import Layout from "../layouts/Layout.astro";
+import Pagination from "./Pagination.astro";
+import PostCard from "./PostCard.astro";
+import themeConfig from "astro-mochi-tones:config";
+
+interface Props {
+  page: Page<CollectionEntry<"blog">>;
+  kind: "category" | "tag";
+  name: string;
+}
+
+const { page, kind, name } = Astro.props;
+const { labels } = themeConfig;
+const isCategory = kind === "category";
+const icon = isCategory ? "folder" : "label";
+const eyebrow = isCategory ? labels.categoryEyebrow : labels.tagEyebrow;
+const titlePrefix = isCategory ? labels.categoryTitlePrefix : labels.tagTitlePrefix;
+const title = `${titlePrefix}${name}`;
+const description = labels.taxonomyDescriptionTemplate.replaceAll("{name}", name);
+const pageInfo = labels.pageInfoTemplate
+  .replaceAll("{current}", String(page.currentPage))
+  .replaceAll("{total}", String(page.lastPage));
+---
+
+<Layout title={title} description={description}>
+  <main class:list={["taxonomy-page", { "is-tag": !isCategory }]}>
+    <header class="taxonomy-hero" aria-labelledby="taxonomy-title">
+      <a class="back-link label-large" href="/archives">
+        <md-icon aria-hidden="true">arrow_back</md-icon>
+        <span>{labels.backToArchives}</span>
+      </a>
+
+      <div class="hero-row">
+        <span class="hero-icon" aria-hidden="true"><md-icon>{icon}</md-icon></span>
+        <div class="hero-copy">
+          <p class="hero-eyebrow label-large">{eyebrow}</p>
+          <h1 id="taxonomy-title">{name}</h1>
+          <p class="hero-description body-large">{description}</p>
+        </div>
+        <div class="post-count" aria-label={labels.postsCountTemplate.replaceAll("{count}", String(page.total))}>
+          <strong>{page.total}</strong>
+          <span class="label-medium">{labels.postsLabel}</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="post-section" aria-labelledby="taxonomy-posts-title">
+      <div class="section-heading">
+        <div>
+          <p class="section-eyebrow label-medium">COLLECTION</p>
+          <h2 id="taxonomy-posts-title">{labels.postsLabel}</h2>
+        </div>
+        <span class="page-badge label-medium">{pageInfo}</span>
+      </div>
+
+      {
+        page.data.length > 0 ? (
+          <div class="post-grid">
+            {page.data.map((post) => <PostCard post={post} />)}
+          </div>
+        ) : (
+          <div class="empty-state">
+            <md-icon aria-hidden="true">inventory_2</md-icon>
+            <p>{labels.postsCountTemplate.replaceAll("{count}", "0")}</p>
+          </div>
+        )
+      }
+    </section>
+
+    <Pagination page={page} />
+  </main>
+</Layout>
+
+<style>
+  .taxonomy-page {
+    width: min(100%, 1120px);
+    margin-inline: auto;
+  }
+
+  .taxonomy-hero {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(28px, 5vw, 56px);
+    border-radius: var(--md-sys-shape-corner-extra-extra-large);
+    background:
+      radial-gradient(circle at 100% 0, color-mix(in srgb, var(--md-sys-color-tertiary-container) 78%, transparent) 0, transparent 38%),
+      var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .is-tag .taxonomy-hero {
+    background:
+      radial-gradient(circle at 100% 0, color-mix(in srgb, var(--md-sys-color-primary-container) 70%, transparent) 0, transparent 40%),
+      var(--md-sys-color-tertiary-container);
+    color: var(--md-sys-color-on-tertiary-container);
+  }
+
+  .taxonomy-hero::after {
+    position: absolute;
+    right: -72px;
+    bottom: -106px;
+    width: 260px;
+    height: 260px;
+    border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+    border-radius: var(--md-sys-shape-corner-full);
+    content: "";
+  }
+
+  .back-link {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    gap: 8px;
+    margin: -10px 0 18px -12px;
+    padding: 0 14px;
+    border-radius: var(--md-sys-shape-corner-full);
+    color: inherit;
+    font-weight: 650;
+    transition: background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+  }
+
+  .back-link:hover {
+    background: color-mix(in srgb, currentColor 8%, transparent);
+  }
+
+  .back-link:focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  .back-link md-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    font-size: 20px;
+  }
+
+  .hero-row {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: clamp(20px, 4vw, 40px);
+  }
+
+  .hero-icon {
+    display: grid;
+    width: clamp(76px, 10vw, 104px);
+    aspect-ratio: 1;
+    place-items: center;
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 76%, transparent);
+    box-shadow: var(--md-sys-elevation-level1);
+  }
+
+  .hero-icon md-icon {
+    width: clamp(40px, 5vw, 54px);
+    height: clamp(40px, 5vw, 54px);
+    font-size: clamp(40px, 5vw, 54px);
+    font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 48;
+  }
+
+  .hero-copy {
+    min-width: 0;
+  }
+
+  .hero-eyebrow,
+  .section-eyebrow {
+    margin: 0;
+    font-weight: 750;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+
+  .hero-eyebrow {
+    opacity: 0.72;
+  }
+
+  .hero-copy h1 {
+    margin: 6px 0 8px;
+    overflow-wrap: anywhere;
+    font-family: var(--md-ref-typeface-brand);
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+
+  .hero-description {
+    max-width: 620px;
+    margin: 0;
+    opacity: 0.8;
+  }
+
+  .post-count {
+    display: flex;
+    width: 96px;
+    min-height: 96px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 76%, transparent);
+    box-shadow: var(--md-sys-elevation-level1);
+    text-align: center;
+  }
+
+  .post-count strong {
+    font-family: var(--md-ref-typeface-brand);
+    font-size: var(--md-sys-typescale-headline-medium-size);
+    line-height: var(--md-sys-typescale-headline-medium-line-height);
+  }
+
+  .post-count span {
+    opacity: 0.75;
+  }
+
+  .post-section {
+    margin-top: clamp(40px, 7vw, 64px);
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .section-eyebrow {
+    color: var(--md-sys-color-primary);
+  }
+
+  .is-tag .section-eyebrow {
+    color: var(--md-sys-color-tertiary);
+  }
+
+  .section-heading h2 {
+    margin: 3px 0 0;
+    font-family: var(--md-ref-typeface-brand);
+    font-size: var(--md-sys-typescale-headline-small-size);
+    font-weight: 500;
+    line-height: var(--md-sys-typescale-headline-small-line-height);
+  }
+
+  .page-badge {
+    flex: 0 0 auto;
+    padding: 7px 12px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .post-grid {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 20px;
+  }
+
+  .empty-state {
+    display: grid;
+    min-height: 240px;
+    place-content: center;
+    justify-items: center;
+    gap: 10px;
+    padding: 32px;
+    border: 1px dashed var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    color: var(--md-sys-color-on-surface-variant);
+    text-align: center;
+  }
+
+  .empty-state md-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 44px;
+  }
+
+  .empty-state p {
+    margin: 0;
+  }
+
+  @media (max-width: 699px) {
+    .hero-row {
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .post-count {
+      width: auto;
+      min-height: 48px;
+      grid-column: 1 / -1;
+      flex-direction: row;
+      justify-content: flex-start;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: var(--md-sys-shape-corner-large);
+    }
+
+    .post-count strong {
+      font-size: var(--md-sys-typescale-title-large-size);
+      line-height: var(--md-sys-typescale-title-large-line-height);
+    }
+  }
+
+  @media (max-width: 479px) {
+    .taxonomy-hero {
+      padding: 26px 24px 30px;
+      border-radius: var(--md-sys-shape-corner-extra-large-increased) var(--md-sys-shape-corner-extra-large-increased) var(--md-sys-shape-corner-large) var(--md-sys-shape-corner-extra-large-increased);
+    }
+
+    .hero-row {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    .hero-icon {
+      width: 72px;
+    }
+
+    .hero-copy h1 {
+      font-size: clamp(34px, 12vw, 46px);
+    }
+
+    .post-count {
+      grid-column: auto;
+    }
+
+    .section-heading {
+      align-items: center;
+    }
+  }
+</style>

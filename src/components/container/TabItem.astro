@@ -13,19 +13,44 @@ const { title } = Astro.props;
 <style>
     .tab-item {
         display: none;
-        animation: fadeIn 0.2s;
+        color: var(--md-sys-color-on-surface);
+        animation: tab-enter var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-effects);
+        outline: none;
+        overflow-wrap: anywhere;
     }
+
     .tab-item.active {
         display: block;
     }
-    @keyframes fadeIn {
+
+    .tab-item:focus-visible {
+        border-radius: var(--md-sys-shape-corner-small);
+        outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color);
+        outline-offset: var(--md-sys-focus-ring-offset);
+    }
+
+    .tab-item :global(> :first-child) {
+        margin-top: 0;
+    }
+
+    .tab-item :global(> :last-child) {
+        margin-bottom: 0;
+    }
+
+    @keyframes tab-enter {
         from {
             opacity: 0;
-            transform: translateY(5px);
+            translate: 0 8px;
         }
         to {
             opacity: 1;
-            transform: translateY(0);
+            translate: 0;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .tab-item {
+            animation: none;
         }
     }
 </style>

@@ -1,4 +1,6 @@
 ---
+import "@material/web/icon/icon.js";
+
 interface Props {
     repo?: string; // user/repo format
     user?: string; // user name if displaying user card
@@ -6,41 +8,234 @@ interface Props {
 }
 
 const { repo, user, theme = "dark" } = Astro.props;
-const target = repo ? repo : user;
-const isRepo = !!repo;
-
-// Using github-readme-stats as a reliable fallback for static sites
-// Ideally we'd use the Stellaris API but that requires a backend server.
-// readme-stats provides usage SVG cards.
-
-const baseUrl = "https://github-readme-stats.vercel.app/api";
-let src = "";
-
-if (isRepo) {
-    src = `${baseUrl}/pin/?username=${target.split("/")[0]}&repo=${target.split("/")[1]}&theme=${theme === "dark" ? "radical" : "default"}`;
-} else {
-    src = `${baseUrl}/?username=${target}&theme=${theme === "dark" ? "radical" : "default"}&show_icons=true`;
-}
-
+const rawTarget = repo ?? user ?? "";
+const isRepo = Boolean(repo);
+const targetPattern = isRepo
+    ? /^[a-z0-9](?:[a-z0-9-]{0,38})\/[a-z0-9._-]{1,100}$/i
+    : /^[a-z0-9](?:[a-z0-9-]{0,38})$/i;
+const target = targetPattern.test(rawTarget) ? rawTarget : "";
 const href = `https://github.com/${target}`;
+const [owner, repository] = isRepo ? target.split("/") : [target, undefined];
+const previewTitle = repository ?? target;
+const previewSupporting = isRepo ? owner : `@${target}`;
 ---
 
-<a href={href} class="gh-card" target="_blank" rel="noopener noreferrer">
-    <img src={src} alt={`${target} github card`} loading="lazy" />
-</a>
+{target && (
+    <a
+        href={href}
+        class="gh-card"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`在 GitHub 查看 ${target}（新窗口打开）`}
+    >
+        <span class="gh-header">
+            <span class="gh-leading" aria-hidden="true">
+                <md-icon>{isRepo ? "account_tree" : "person"}</md-icon>
+            </span>
+            <span class="gh-heading">
+                <span class="gh-eyebrow">GitHub {isRepo ? "repository" : "profile"}</span>
+                <span class="gh-target">{target}</span>
+            </span>
+            <md-icon class="gh-action" aria-hidden="true">arrow_outward</md-icon>
+        </span>
+
+        <span class={`gh-preview preview-${theme}`} aria-hidden="true">
+            <span class="preview-copy">
+                <span class="preview-label">GitHub</span>
+                <span class="preview-title">{previewTitle}</span>
+                <span class="preview-supporting">{previewSupporting}</span>
+            </span>
+            <md-icon class="preview-symbol">{isRepo ? "account_tree" : "person"}</md-icon>
+        </span>
+
+        <md-ripple></md-ripple>
+    </a>
+)}
+
+<script>
+    import "@material/web/ripple/ripple.js";
+</script>
 
 <style>
     .gh-card {
-        display: inline-block;
-        margin: 1rem 0;
-        transition: transform 0.2s;
+        position: relative;
+        isolation: isolate;
+        display: inline-grid;
+        width: min(100%, 520px);
+        margin: 16px 0;
+        overflow: hidden;
+        border: 1px solid var(--md-sys-color-outline-variant);
+        border-radius: var(--md-sys-shape-corner-large-increased);
+        background: var(--md-sys-color-surface-container-low);
+        color: var(--md-sys-color-on-surface);
+        text-decoration: none;
+        transition:
+            background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+            border-radius var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial),
+            box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+            translate var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
     }
-    .gh-card:hover {
-        transform: translateY(-2px);
+
+    .gh-card:focus-visible {
+        outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color);
+        outline-offset: var(--md-sys-focus-ring-offset);
     }
-    .gh-card img {
-        height: 150px; /* Standard height */
-        max-width: 100%;
-        border-radius: 6px;
+
+    .gh-header {
+        display: grid;
+        min-width: 0;
+        min-height: 64px;
+        grid-template-columns: 40px minmax(0, 1fr) 24px;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 16px;
+    }
+
+    .gh-leading {
+        display: grid;
+        width: 40px;
+        height: 40px;
+        place-items: center;
+        border-radius: var(--md-sys-shape-corner-medium);
+        background: var(--md-sys-color-primary-container);
+        color: var(--md-sys-color-on-primary-container);
+    }
+
+    .gh-heading {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+    }
+
+    .gh-eyebrow {
+        color: var(--md-sys-color-on-surface-variant);
+        font-size: var(--md-sys-typescale-label-medium-size);
+        font-weight: var(--md-sys-typescale-label-medium-weight);
+        letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+        line-height: var(--md-sys-typescale-label-medium-line-height);
+    }
+
+    .gh-target {
+        overflow: hidden;
+        color: var(--md-sys-color-on-surface);
+        font-size: var(--md-sys-typescale-title-medium-size);
+        font-weight: 650;
+        letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+        line-height: var(--md-sys-typescale-title-medium-line-height);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .gh-action {
+        color: var(--md-sys-color-primary);
+        transition: translate var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial);
+    }
+
+    .gh-preview {
+        position: relative;
+        display: grid;
+        min-height: 144px;
+        min-width: 0;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 16px;
+        padding: 24px;
+        overflow: hidden;
+        border-top: 1px solid var(--md-sys-color-outline-variant);
+        background: var(--md-sys-color-surface-container-high);
+        color: var(--md-sys-color-on-surface);
+    }
+
+    .gh-preview.preview-light {
+        background: var(--md-sys-color-surface-container-lowest);
+    }
+
+    .preview-copy {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+    }
+
+    .preview-label {
+        margin-block-end: 6px;
+        color: var(--md-sys-color-primary);
+        font-size: var(--md-sys-typescale-label-large-size);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        line-height: var(--md-sys-typescale-label-large-line-height);
+        text-transform: uppercase;
+    }
+
+    .preview-title {
+        overflow: hidden;
+        font-family: var(--md-ref-typeface-brand);
+        font-size: var(--md-sys-typescale-headline-small-size);
+        font-weight: 550;
+        line-height: var(--md-sys-typescale-headline-small-line-height);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .preview-supporting {
+        overflow: hidden;
+        margin-block-start: 4px;
+        color: var(--md-sys-color-on-surface-variant);
+        font-size: var(--md-sys-typescale-body-medium-size);
+        letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+        line-height: var(--md-sys-typescale-body-medium-line-height);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .preview-symbol {
+        width: 72px;
+        height: 72px;
+        color: var(--md-sys-color-primary);
+        font-size: 72px;
+        opacity: 0.28;
+        rotate: -8deg;
+        transition:
+            opacity var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+            rotate var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial),
+            scale var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial);
+    }
+
+    md-ripple {
+        border-radius: inherit;
+    }
+
+    @media (hover: hover) {
+        .gh-card:hover {
+            border-radius: var(--md-sys-shape-corner-extra-large);
+            background: var(--md-sys-color-surface-container-high);
+            box-shadow: var(--md-sys-elevation-level1);
+            translate: 0 -3px;
+        }
+
+        .gh-card:hover .gh-action {
+            translate: 3px -3px;
+        }
+
+        .gh-card:hover .preview-symbol {
+            opacity: 0.4;
+            rotate: 0deg;
+            scale: 1.08;
+        }
+    }
+
+    @media (max-width: 479px) {
+        .gh-card {
+            border-radius: var(--md-sys-shape-corner-large);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .gh-card,
+        .gh-action,
+        .preview-symbol {
+            transition: none;
+        }
     }
 </style>

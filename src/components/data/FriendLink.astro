@@ -1,4 +1,7 @@
 ---
+import "@material/web/icon/icon.js";
+import { sanitizeAssetUrl, sanitizeLinkUrl } from "../../utils/security";
+
 interface Props {
     title: string;
     url: string;
@@ -8,83 +11,215 @@ interface Props {
 }
 
 const { title, url, avatar, description, screenshot } = Astro.props;
+const safeUrl = sanitizeLinkUrl(url, { allowHash: false, allowHttp: false, allowMailto: false });
+const safeAvatar = sanitizeAssetUrl(avatar);
+const safeScreenshot = sanitizeAssetUrl(screenshot);
+const external = safeUrl?.startsWith("https://") ?? false;
 ---
 
-<a href={url} class="friend-card" target="_blank" rel="noopener noreferrer">
-    {
-        screenshot && (
-            <div
-                class="friend-screenshot"
-                style={`background-image: url(${screenshot})`}
-            />
-        )
-    }
-    <div class="friend-body">
-        {avatar && <img src={avatar} alt={title} class="friend-avatar" />}
-        <div class="friend-info">
-            <div class="friend-title">{title}</div>
-            {description && <div class="friend-desc">{description}</div>}
+{safeUrl && (
+    <a
+        href={safeUrl}
+        class="friend-card"
+        target={external ? "_blank" : undefined}
+        rel={external ? "noopener noreferrer" : undefined}
+        aria-label={`访问 ${title}${external ? "（新窗口打开）" : ""}`}
+    >
+        {safeScreenshot && (
+            <div class="friend-screenshot">
+                <img
+                    src={safeScreenshot}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    referrerpolicy="no-referrer"
+                />
+            </div>
+        )}
+
+        <div class="friend-body">
+            {safeAvatar ? (
+                <img
+                    src={safeAvatar}
+                    alt=""
+                    class="friend-avatar"
+                    loading="lazy"
+                    decoding="async"
+                    referrerpolicy="no-referrer"
+                />
+            ) : (
+                <span class="friend-avatar avatar-placeholder" aria-hidden="true">
+                    <md-icon>language</md-icon>
+                </span>
+            )}
+
+            <div class="friend-info">
+                <span class="friend-title">{title}</span>
+                {description && <span class="friend-desc">{description}</span>}
+            </div>
+
+            <md-icon class="friend-action" aria-hidden="true">
+                {external ? "arrow_outward" : "arrow_forward"}
+            </md-icon>
         </div>
-    </div>
-</a>
+
+        <md-ripple></md-ripple>
+    </a>
+)}
+
+<script>
+    import "@material/web/ripple/ripple.js";
+</script>
 
 <style>
     .friend-card {
+        position: relative;
+        isolation: isolate;
         display: flex;
-        flex-direction: column;
-        background-color: var(--md-sys-color-surface-container);
-        border-radius: 12px;
-        overflow: hidden;
-        text-decoration: none;
-        color: inherit;
-        transition:
-            transform 0.2s,
-            box-shadow 0.2s;
+        min-width: 0;
         height: 100%;
+        flex-direction: column;
+        overflow: hidden;
         border: 1px solid var(--md-sys-color-outline-variant);
+        border-radius: var(--md-sys-shape-corner-large-increased);
+        background: var(--md-sys-color-surface-container-low);
+        color: var(--md-sys-color-on-surface);
+        text-decoration: none;
+        transition:
+            background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+            border-radius var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial),
+            box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+            translate var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
     }
-    .friend-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        z-index: 1;
+
+    .friend-card:focus-visible {
+        outline: var(--md-sys-focus-ring-width) solid var(--md-sys-focus-ring-color);
+        outline-offset: var(--md-sys-focus-ring-offset);
     }
+
     .friend-screenshot {
-        height: 120px;
-        background-size: cover;
-        background-position: center;
+        aspect-ratio: 16 / 7;
+        overflow: hidden;
         border-bottom: 1px solid var(--md-sys-color-outline-variant);
+        background: var(--md-sys-color-surface-container-high);
     }
+
+    .friend-screenshot img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: scale var(--md-sys-motion-duration-slow) var(--md-sys-motion-easing-spatial);
+    }
+
     .friend-body {
-        padding: 1rem;
-        display: flex;
+        display: grid;
+        min-height: 104px;
+        grid-template-columns: 56px minmax(0, 1fr) 24px;
         align-items: center;
+        gap: 16px;
+        padding: 16px;
     }
+
     .friend-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        margin-right: 1rem;
+        display: grid;
+        width: 56px;
+        height: 56px;
+        place-items: center;
         border: 1px solid var(--md-sys-color-outline-variant);
+        border-radius: var(--md-sys-shape-corner-full);
+        background: var(--md-sys-color-secondary-container);
+        color: var(--md-sys-color-on-secondary-container);
         object-fit: cover;
     }
+
+    .avatar-placeholder md-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 24px;
+    }
+
     .friend-info {
-        flex: 1;
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: 4px;
         overflow: hidden;
     }
+
     .friend-title {
-        font-weight: bold;
-        font-size: 1rem;
-        margin-bottom: 0.25rem;
-        white-space: nowrap;
         overflow: hidden;
+        color: var(--md-sys-color-on-surface);
+        font-size: var(--md-sys-typescale-title-medium-size);
+        font-weight: 650;
+        letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+        line-height: var(--md-sys-typescale-title-medium-line-height);
         text-overflow: ellipsis;
+        white-space: nowrap;
     }
+
     .friend-desc {
-        font-size: 0.8rem;
-        color: var(--md-sys-color-on-surface-variant);
         display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
         overflow: hidden;
+        color: var(--md-sys-color-on-surface-variant);
+        font-size: var(--md-sys-typescale-body-medium-size);
+        letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+        line-height: var(--md-sys-typescale-body-medium-line-height);
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .friend-action {
+        color: var(--md-sys-color-primary);
+        transition: translate var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial);
+    }
+
+    md-ripple {
+        border-radius: inherit;
+    }
+
+    .friend-card:active {
+        translate: 0;
+    }
+
+    @media (hover: hover) {
+        .friend-card:hover {
+            border-radius: var(--md-sys-shape-corner-extra-large);
+            background: var(--md-sys-color-surface-container-high);
+            box-shadow: var(--md-sys-elevation-level1);
+            translate: 0 -3px;
+        }
+
+        .friend-card:hover .friend-screenshot img {
+            scale: 1.035;
+        }
+
+        .friend-card:hover .friend-action {
+            translate: 3px -3px;
+        }
+    }
+
+    @media (max-width: 479px) {
+        .friend-card {
+            border-radius: var(--md-sys-shape-corner-large);
+        }
+
+        .friend-body {
+            grid-template-columns: 48px minmax(0, 1fr) 24px;
+            gap: 12px;
+        }
+
+        .friend-avatar {
+            width: 48px;
+            height: 48px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .friend-card,
+        .friend-screenshot img,
+        .friend-action {
+            transition: none;
+        }
     }
 </style>

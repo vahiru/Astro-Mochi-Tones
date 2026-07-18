@@ -1,103 +1,162 @@
 ---
 interface Props {
-    kr: string; // Title like KR1
-    percent: number; // 0 to 1
-    status?: "default" | "completed" | "at_risk" | "delayed"; // Optional status override
+  kr: string;
+  percent: number;
+  status?: "default" | "completed" | "at_risk" | "delayed";
 }
 
 const { kr, percent, status } = Astro.props;
+let currentStatus = status ?? "default";
+if (!status && percent >= 1) currentStatus = "completed";
+else if (!status && percent < 0) currentStatus = "delayed";
 
-// Determine status color/text based on percent if not provided
-let currentStatus = status || "default";
-if (!status) {
-    if (percent >= 1) currentStatus = "completed";
-    else if (percent < 0) currentStatus = "delayed"; // Negative for backward progress? or just low. Using logical mapping.
-}
-
-const colors = {
-    default: { color: "var(--md-sys-color-primary)", label: "In Progress" },
-    completed: { color: "var(--md-sys-color-tertiary)", label: "Done" }, // Greenish usually
-    at_risk: { color: "var(--md-sys-color-error)", label: "At Risk" },
-    delayed: { color: "var(--md-sys-color-error)", label: "Delayed" },
-};
-
-const statusConfig = colors[currentStatus] || colors.default;
-
-const displayPercent = Math.round(percent * 100) + "%";
+const statusConfig = {
+  default: { label: "In progress", icon: "pending" },
+  completed: { label: "Done", icon: "check_circle" },
+  at_risk: { label: "At risk", icon: "warning" },
+  delayed: { label: "Delayed", icon: "schedule" },
+}[currentStatus];
+const progress = Math.max(0, Math.min(100, percent * 100));
+const displayPercent = `${Math.round(progress)}%`;
 ---
 
-<div class="express-kr">
-    <div class="kr-header">
-        <div class="kr-badge">KR</div>
-        <div class="kr-title">{kr}</div>
+<article class={`express-kr status-${currentStatus}`}>
+  <header class="kr-header">
+    <span class="kr-badge label-medium">KR</span>
+    <div class="kr-title title-medium">{kr}</div>
+    <span class="status-chip label-small">
+      <md-icon aria-hidden="true">{statusConfig.icon}</md-icon>
+      {statusConfig.label}
+    </span>
+  </header>
+  <div class="kr-progress-row">
+    <div
+      class="kr-progress-bar"
+      role="progressbar"
+      aria-label={kr}
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow={Math.round(progress)}
+    >
+      <span class="kr-progress-fill" style={`--progress: ${progress}%`}></span>
     </div>
-    <div class="kr-progress-row">
-        <div class="kr-progress-bar">
-            <div
-                class="kr-progress-fill"
-                style={`width: ${Math.max(0, Math.min(100, percent * 100))}%; background-color: ${statusConfig.color};`}
-            >
-            </div>
-        </div>
-        <div class="kr-stat" style={`color: ${statusConfig.color};`}>
-            {displayPercent}
-        </div>
-    </div>
-    <div class="kr-content">
-        <slot />
-    </div>
-</div>
+    <span class="kr-stat label-large">{displayPercent}</span>
+  </div>
+  <div class="kr-content body-medium"><slot /></div>
+</article>
+
+<script>
+  import "@material/web/icon/icon.js";
+</script>
 
 <style>
-    .express-kr {
-        padding: 1.5rem 0;
-        border-bottom: 1px solid var(--md-sys-color-outline-variant);
-    }
-    .express-kr:last-child {
-        border-bottom: none;
-    }
-    .kr-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-    .kr-badge {
-        font-size: 0.75rem;
-        font-weight: bold;
-        color: var(--md-sys-color-on-surface-variant);
-        background-color: var(--md-sys-color-surface-variant);
-        padding: 2px 6px;
-        border-radius: 4px;
-        margin-right: 0.5rem;
-    }
-    .kr-title {
-        font-weight: 500;
-    }
-    .kr-progress-row {
-        display: flex;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-    .kr-progress-bar {
-        flex-grow: 1;
-        height: 6px;
-        background-color: var(--md-sys-color-surface-container-high);
-        border-radius: 3px;
-        overflow: hidden;
-        margin-right: 1rem;
-    }
-    .kr-progress-fill {
-        height: 100%;
-        transition: width 0.5s ease;
-    }
-    .kr-stat {
-        font-weight: bold;
-        font-size: 0.875rem;
-        width: 3rem;
-        text-align: right;
-    }
-    .kr-content {
-        font-size: 0.95rem;
-        color: var(--md-sys-color-on-surface-variant);
-    }
+  .express-kr {
+    --kr-color: var(--md-sys-color-primary);
+    --kr-container: var(--md-sys-color-primary-container);
+    --kr-on-container: var(--md-sys-color-on-primary-container);
+    padding: 20px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-large-increased);
+    background: var(--md-sys-color-surface-container-lowest);
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .kr-header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .kr-badge,
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--md-sys-shape-corner-small);
+    background: var(--kr-container);
+    color: var(--kr-on-container);
+    font-weight: 750;
+  }
+
+  .kr-badge { min-height: 28px; padding: 0 9px; }
+
+  .kr-title {
+    min-width: 0;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
+
+  .status-chip {
+    min-height: 28px;
+    gap: 5px;
+    padding: 0 9px;
+  }
+
+  .status-chip md-icon { width: 16px; height: 16px; font-size: 16px; }
+
+  .kr-progress-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 48px;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .kr-progress-bar {
+    height: 8px;
+    overflow: hidden;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-surface-container-highest);
+  }
+
+  .kr-progress-fill {
+    display: block;
+    width: var(--progress);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--kr-color);
+    transition: width var(--md-sys-motion-duration-slow) var(--md-sys-motion-easing-spatial);
+  }
+
+  .kr-stat {
+    color: var(--kr-color);
+    font-weight: 750;
+    text-align: end;
+  }
+
+  .kr-content {
+    margin-top: 14px;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .kr-content :global(> :first-child) { margin-top: 0; }
+  .kr-content :global(> :last-child) { margin-bottom: 0; }
+
+  .status-completed {
+    --kr-color: var(--md-extended-color-success);
+    --kr-container: var(--md-extended-color-success-container);
+    --kr-on-container: var(--md-extended-color-on-success-container);
+  }
+
+  .status-at_risk {
+    --kr-color: var(--md-extended-color-warning);
+    --kr-container: var(--md-extended-color-warning-container);
+    --kr-on-container: var(--md-extended-color-on-warning-container);
+  }
+
+  .status-delayed {
+    --kr-color: var(--md-sys-color-error);
+    --kr-container: var(--md-sys-color-error-container);
+    --kr-on-container: var(--md-sys-color-on-error-container);
+  }
+
+  @media (max-width: 479px) {
+    .express-kr { padding: 16px; border-radius: var(--md-sys-shape-corner-large); }
+    .kr-header { grid-template-columns: auto minmax(0, 1fr); }
+    .status-chip { grid-column: 1 / -1; width: fit-content; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kr-progress-fill { transition: none; }
+  }
 </style>

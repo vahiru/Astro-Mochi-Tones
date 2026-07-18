@@ -1,120 +1,135 @@
 ---
 interface Props {
-    title?: string;
-    author?: string;
-    date?: string;
-    footer?: string;
-    style?: "underline" | "simple";
+  title?: string;
+  author?: string;
+  date?: string;
+  footer?: string;
+  style?: "underline" | "simple";
 }
 
 const { title, author, date, footer, style = "simple" } = Astro.props;
 ---
 
-<div class={`md3-paper ${style}`}>
-    <div class="paper-inner">
-        {
-            (title || author || date) && (
-                <div class="paper-header">
-                    {title && <div class="paper-title headline-small">{title}</div>}
-                    <div class="paper-meta label-medium">
-                        {author && <span class="paper-author">{author}</span>}
-                        {date && <span class="paper-date">{date}</span>}
-                    </div>
-                </div>
-            )
-        }
-
-        <div class="paper-content body-large">
-            <slot />
+<article class={`md3-paper ${style}`} aria-label={title}>
+  {
+    (title || author || date) && (
+      <header class="paper-header">
+        <span class="paper-icon" aria-hidden="true"><md-icon>article</md-icon></span>
+        <div class="paper-heading">
+          {title && <div class="paper-title headline-small">{title}</div>}
+          <div class="paper-meta label-medium">
+            {author && <span>{author}</span>}
+            {date && <span>{date}</span>}
+          </div>
         </div>
+      </header>
+    )
+  }
 
-        {footer && <div class="paper-footer label-small">{footer}</div>}
-    </div>
-</div>
+  <div class="paper-content body-large"><slot /></div>
+  {footer && <footer class="paper-footer label-small">{footer}</footer>}
+</article>
+
+<script>
+  import "@material/web/icon/icon.js";
+</script>
 
 <style>
+  .md3-paper {
+    position: relative;
+    margin: 36px 0;
+    overflow: hidden;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    background: var(--md-sys-color-surface-container-lowest);
+    color: var(--md-sys-color-on-surface);
+    box-shadow: var(--md-sys-elevation-level1);
+  }
+
+  .paper-header {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container);
+  }
+
+  .paper-icon {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border-radius: var(--md-sys-shape-corner-large);
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .paper-icon md-icon { width: 26px; height: 26px; font-size: 26px; }
+
+  .paper-heading { min-width: 0; }
+
+  .paper-title {
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--md-ref-typeface-brand);
+    font-weight: 600;
+  }
+
+  .paper-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: 4px;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .paper-meta span + span::before {
+    margin-right: 16px;
+    content: "·";
+  }
+
+  .paper-content {
+    padding: clamp(24px, 5vw, 48px);
+    color: var(--md-sys-color-on-surface);
+    font-family: "Noto Serif SC", "Songti SC", Georgia, serif;
+    line-height: 1.9;
+    overflow-wrap: anywhere;
+  }
+
+  .md3-paper.underline .paper-content {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(2rem - 1px),
+      var(--md-sys-color-outline-variant) calc(2rem - 1px),
+      var(--md-sys-color-outline-variant) 2rem
+    );
+    background-position: 0 48px;
+    line-height: 2rem;
+  }
+
+  .paper-content :global(> :first-child) { margin-top: 0; }
+  .paper-content :global(> :last-child) { margin-bottom: 0; }
+
+  .paper-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container-low);
+    color: var(--md-sys-color-on-surface-variant);
+    font-style: italic;
+    text-align: end;
+  }
+
+  @media (max-width: 599px) {
     .md3-paper {
-        background-color: var(--md-sys-color-surface-container-low);
-        margin: 2.5rem 0;
-        border-radius: 4px; /* Classic paper slight roundness */
-        position: relative;
-        box-shadow: var(--md-sys-elevation-level1);
-        transition: box-shadow 0.3s ease;
+      margin-block: 28px;
+      border-radius: var(--md-sys-shape-corner-large);
     }
 
-    .paper-inner {
-        padding: 3rem 2.5rem;
-        border: 1px solid var(--md-sys-color-outline-variant);
-        border-radius: inherit;
-    }
-
-    /* 纸张装饰线 */
-    .md3-paper::before, .md3-paper::after {
-        content: "";
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        left: 0;
-        top: 0;
-        border-radius: inherit;
-        z-index: -1;
-        background-color: var(--md-sys-color-surface-container-low);
-        border: 1px solid var(--md-sys-color-outline-variant);
-    }
-    .md3-paper::before { transform: rotate(1deg); }
-    .md3-paper::after { transform: rotate(-0.5deg); }
-
-    .md3-paper.underline .paper-content {
-        background-image: linear-gradient(
-            transparent 1.95rem,
-            var(--md-sys-color-outline-variant) 2rem
-        );
-        background-size: 100% 2rem;
-        line-height: 2rem;
-    }
-
-    .paper-header {
-        text-align: center;
-        margin-bottom: 2.5rem;
-        border-bottom: 1px double var(--md-sys-color-outline-variant);
-        padding-bottom: 1.5rem;
-    }
-    
-    .paper-title {
-        color: var(--md-sys-color-on-surface);
-        font-family: serif;
-        font-weight: 700;
-        margin-bottom: 8px;
-    }
-    
-    .paper-meta {
-        color: var(--md-sys-color-on-surface-variant);
-        display: flex;
-        gap: 1.5rem;
-        justify-content: center;
-        opacity: 0.8;
-    }
-
-    .paper-content {
-        color: var(--md-sys-color-on-surface);
-        text-align: justify;
-        font-family: "Georgia", "Noto Serif SC", serif;
-        line-height: 1.8;
-    }
-
-    .paper-footer {
-        margin-top: 3rem;
-        text-align: right;
-        color: var(--md-sys-color-on-surface-variant);
-        font-style: italic;
-        border-top: 1px solid var(--md-sys-color-outline-variant);
-        padding-top: 1rem;
-    }
-
-    /* 响应式调整 */
-    @media (max-width: 600px) {
-        .paper-inner {
-            padding: 2rem 1.25rem;
-        }
-    }
+    .paper-header { grid-template-columns: 40px minmax(0, 1fr); padding: 16px; }
+    .paper-icon { width: 40px; height: 40px; border-radius: var(--md-sys-shape-corner-medium); }
+    .paper-content { padding: 24px 18px; }
+    .paper-meta span + span::before { margin-right: 10px; }
+  }
 </style>

@@ -1,34 +1,40 @@
-// src/pages/search.json.ts
-import { getCollection } from 'astro:content';
-import striptags from 'striptags'; // 引入去标签库
+import { getCollection, type CollectionEntry } from "astro:content";
+import { markdownToPlainText } from "../utils/content-output";
 
-const getPostSlug = (post) => ("slug" in post && typeof post.slug === "string")
-  ? post.slug
-  : post.id.replace(/\.(md|mdx)$/i, "");
+const MAX_CONTENT_CHARACTERS = 5000;
 
-export async function GET({}) {
-  const posts = await getCollection('blog');
-  
-  const searchIndex = posts
-    .filter(post => !post.data.draft)
-    .map(post => {
-      // 1. 移除 Markdown/HTML 标签，只保留纯文本
-      // 2. 截取前 5000 个字符 (防止 JSON 文件过大，影响加载速度)
-      //    通常搜不到是因为内容太长，JSON只截取摘要。
-      //    这里我们保留全文的纯文本版本用于搜索。
-      const cleanContent = striptags(post.body).replace(/\s+/g, ' ').trim();
+const getPostSlug = (post: CollectionEntry<"blog">) =>
+  "slug" in post && typeof post.slug === "string"
+    ? post.slug
+    : post.id.replace(/\.(md|mdx)$/i, "");
 
-      return {
-        title: post.data.title,
-        // 专门加一个 content 字段给搜索引擎用
-        content: cleanContent, 
-        description: post.data.description,
-        slug: `/blog/${getPostSlug(post)}`,
-        date: post.data.date
-      };
-    });
+const getPostPath = (post: CollectionEntry<"blog">) => {
+  const segments = getPostSlug(post)
+    .split("/")
+    .filter((segment) => segment && segment !== "." && segment !== "..")
+    .map((segment) => encodeURIComponent(segment));
+  return `/blog/${segments.join("/")}`;
+};
+
+export async function GET() {
+  const searchIndex = (await getCollection("blog"))
+    .filter((post) => !post.data.draft)
+    .sort((left, right) => right.data.date.valueOf() - left.data.date.valueOf())
+    .map((post) => ({
+      title: post.data.title,
+      description: post.data.description ?? "",
+      content: markdownToPlainText(post.body, MAX_CONTENT_CHARACTERS),
+      slug: getPostPath(post),
+      date: post.data.date.toISOString(),
+      tags: post.data.tags ?? [],
+      categories: post.data.categories ?? [],
+    }));
 
   return new Response(JSON.stringify(searchIndex), {
-    headers: { 'Content-Type': 'application/json' }
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",
+      "X-Content-Type-Options": "nosniff",
+    },
   });
 }
