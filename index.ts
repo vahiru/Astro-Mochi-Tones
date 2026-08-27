@@ -1,7 +1,8 @@
 import type { AstroIntegration } from "astro";
 import { z } from "astro/zod";
 import { fileURLToPath } from "node:url";
-import { isAbsolute, relative, resolve } from "node:path";
+import { existsSync, statSync } from "node:fs";
+import { extname, isAbsolute, relative, resolve } from "node:path";
 
 const safeHrefSchema = z.string().min(1).refine((value) => {
     if (value.startsWith("#")) return true;
@@ -62,6 +63,8 @@ const configSchema = z.object({
         defaultImage: safeResourceSchema.default("/images/default-og.png"),
         rssPath: sitePathSchema.default("/rss.xml"),
         searchPath: sitePathSchema.default("/search.json"),
+        // 核心字体（Material Symbols 图标子集 + Roboto 拉丁子集）已由主题自托管，
+        // 见 src/styles/global.css。这里只用于额外追加外部字体，默认不请求任何第三方域。
         fonts: z
             .array(
                 z.object({
@@ -70,25 +73,7 @@ const configSchema = z.object({
                     crossorigin: z.boolean().optional(),
                 }),
             )
-            .default([
-                {
-                    href: "https://fonts.googleapis.com",
-                    rel: "preconnect",
-                },
-                {
-                    href: "https://fonts.gstatic.com",
-                    rel: "preconnect",
-                    crossorigin: true,
-                },
-                {
-                    href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200",
-                    rel: "stylesheet",
-                },
-                {
-                    href: "https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap",
-                    rel: "stylesheet",
-                },
-            ]),
+            .default([]),
         nav: z
             .object({
                 drawerTitle: z.string().default("Menu"),
@@ -215,6 +200,30 @@ const configSchema = z.object({
             .optional(),
 });
 
+/**
+ * 虚拟模块允许省略扩展名（`astro-mochi-tones:utils/images`），
+ * 这里补上常规解析顺序；组件那种写全 `.astro` 的写法也照样通过。
+ */
+const MODULE_EXTENSIONS = [".ts", ".js", ".astro", ".tsx", ".mjs"] as const;
+
+function resolveModuleFile(target: string) {
+    if (extname(target) && existsSync(target)) return target;
+
+    for (const extension of MODULE_EXTENSIONS) {
+        const candidate = `${target}${extension}`;
+        if (existsSync(candidate)) return candidate;
+    }
+
+    if (existsSync(target) && statSync(target).isDirectory()) {
+        for (const extension of MODULE_EXTENSIONS) {
+            const candidate = resolve(target, `index${extension}`);
+            if (existsSync(candidate)) return candidate;
+        }
+    }
+
+    return existsSync(target) ? target : null;
+}
+
 const themeRoot = fileURLToPath(new URL(".", import.meta.url));
 const sourceRoot = resolve(themeRoot, "src");
 const virtualConfigId = "\0astro-mochi-tones:config";
@@ -223,6 +232,7 @@ const moduleRoots = {
     components: resolve(sourceRoot, "components"),
     layouts: resolve(sourceRoot, "layouts"),
     styles: resolve(sourceRoot, "styles"),
+    utils: resolve(sourceRoot, "utils"),
 } as const;
 
 const themeRoutes = {
@@ -268,7 +278,7 @@ export default function MochiTones(options: MochiTonesOptions): AstroIntegration
                                         return virtualConfigId;
                                     }
 
-                                    const match = /^astro-mochi-tones:(components|layouts|styles)\/(.+)$/.exec(source);
+                                    const match = /^astro-mochi-tones:(components|layouts|styles|utils)\/(.+)$/.exec(source);
                                     if (!match) return null;
 
                                     const moduleType = match[1] as keyof typeof moduleRoots;
@@ -280,7 +290,12 @@ export default function MochiTones(options: MochiTonesOptions): AstroIntegration
                                         throw new Error(`Invalid astro-mochi-tones import: ${source}`);
                                     }
 
-                                    return resolved;
+                                    const file = resolveModuleFile(resolved);
+                                    if (!file) {
+                                        throw new Error(`astro-mochi-tones module not found: ${source}`);
+                                    }
+
+                                    return file;
                                 },
                                 load(id) {
                                     if (id !== virtualConfigId) return null;
