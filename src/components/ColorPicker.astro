@@ -58,11 +58,15 @@ const { labels, colorPicker } = themeConfig;
 </dialog>
 
 <script>
-  import {
-    argbFromHex,
-    hexFromArgb,
-    themeFromSourceColor,
-  } from "@material/material-color-utilities";
+  /*
+   * @material/material-color-utilities 压缩后约 74 KB，但只有用户真正换色时才需要它。
+   * 因此这里把配色结果（两套 CSS 变量：亮色 / 暗色）缓存进 localStorage，
+   * 首屏由 Layout 的内联脚本在绘制前直接套用缓存，算法库改为交互时动态导入。
+   */
+  const VARS_STORAGE_KEY = "source-color-vars";
+
+  type SchemeVars = Record<string, string>;
+  type VarsCache = { color: string; light: SchemeVars; dark: SchemeVars };
 
   const dialog = document.querySelector<HTMLDialogElement>("#theme-dialog");
   const colorInput = document.querySelector<HTMLInputElement>("#color-input");
@@ -71,6 +75,9 @@ const { labels, colorPicker } = themeConfig;
   let activeSourceColor: string | null = null;
 
   const isHexColor = (value: string): value is `#${string}` => /^#[0-9a-f]{6}$/i.test(value);
+
+  let colorUtils: Promise<typeof import("@material/material-color-utilities")> | null = null;
+  const loadColorUtils = () => (colorUtils ??= import("@material/material-color-utilities"));
 
   const getSavedColor = () => {
     try {
@@ -89,6 +96,26 @@ const { labels, colorPicker } = themeConfig;
     }
   };
 
+  const getCachedVars = (color: string): VarsCache | null => {
+    try {
+      const raw = localStorage.getItem(VARS_STORAGE_KEY);
+      if (!raw) return null;
+      const cache = JSON.parse(raw) as VarsCache | null;
+      if (!cache || cache.color !== color) return null;
+      return cache.light && cache.dark ? cache : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const saveVars = (cache: VarsCache) => {
+    try {
+      localStorage.setItem(VARS_STORAGE_KEY, JSON.stringify(cache));
+    } catch {
+      // Falling back to recomputing the palette on the next visit is fine.
+    }
+  };
+
   const updateSelection = (hexColor: string) => {
     const normalized = hexColor.toLowerCase();
     colorButtons.forEach((button) => {
@@ -99,82 +126,113 @@ const { labels, colorPicker } = themeConfig;
     if (colorValue) colorValue.textContent = hexColor.toUpperCase();
   };
 
-  const applyTheme = (hexColor: string, persist = true) => {
-    if (!isHexColor(hexColor)) return;
+  const roleMap = {
+    primary: "primary",
+    onPrimary: "on-primary",
+    primaryContainer: "primary-container",
+    onPrimaryContainer: "on-primary-container",
+    secondary: "secondary",
+    onSecondary: "on-secondary",
+    secondaryContainer: "secondary-container",
+    onSecondaryContainer: "on-secondary-container",
+    tertiary: "tertiary",
+    onTertiary: "on-tertiary",
+    tertiaryContainer: "tertiary-container",
+    onTertiaryContainer: "on-tertiary-container",
+    error: "error",
+    onError: "on-error",
+    errorContainer: "error-container",
+    onErrorContainer: "on-error-container",
+    surface: "surface",
+    onSurface: "on-surface",
+    surfaceVariant: "surface-variant",
+    onSurfaceVariant: "on-surface-variant",
+    outline: "outline",
+    outlineVariant: "outline-variant",
+    shadow: "shadow",
+    scrim: "scrim",
+    inverseSurface: "inverse-surface",
+    inverseOnSurface: "inverse-on-surface",
+    inversePrimary: "inverse-primary",
+  } as const;
 
-    const dark = document.documentElement.classList.contains("dark");
-    const theme = themeFromSourceColor(argbFromHex(hexColor));
-    const scheme = dark ? theme.schemes.dark : theme.schemes.light;
-    const values = scheme.toJSON();
-    const root = document.documentElement;
+  const surfaceTones = {
+    dark: {
+      "surface-dim": 6,
+      "surface-bright": 24,
+      "surface-container-lowest": 4,
+      "surface-container-low": 10,
+      "surface-container": 12,
+      "surface-container-high": 17,
+      "surface-container-highest": 22,
+    },
+    light: {
+      "surface-dim": 87,
+      "surface-bright": 98,
+      "surface-container-lowest": 100,
+      "surface-container-low": 96,
+      "surface-container": 94,
+      "surface-container-high": 92,
+      "surface-container-highest": 90,
+    },
+  } as const;
 
-    const roleMap = {
-      primary: "primary",
-      onPrimary: "on-primary",
-      primaryContainer: "primary-container",
-      onPrimaryContainer: "on-primary-container",
-      secondary: "secondary",
-      onSecondary: "on-secondary",
-      secondaryContainer: "secondary-container",
-      onSecondaryContainer: "on-secondary-container",
-      tertiary: "tertiary",
-      onTertiary: "on-tertiary",
-      tertiaryContainer: "tertiary-container",
-      onTertiaryContainer: "on-tertiary-container",
-      error: "error",
-      onError: "on-error",
-      errorContainer: "error-container",
-      onErrorContainer: "on-error-container",
-      surface: "surface",
-      onSurface: "on-surface",
-      surfaceVariant: "surface-variant",
-      onSurfaceVariant: "on-surface-variant",
-      outline: "outline",
-      outlineVariant: "outline-variant",
-      shadow: "shadow",
-      scrim: "scrim",
-      inverseSurface: "inverse-surface",
-      inverseOnSurface: "inverse-on-surface",
-      inversePrimary: "inverse-primary",
-    } as const;
+  /** 把种子色展开成一整套 `--md-sys-color-*` 变量，亮色和暗色各算一次。 */
+  const buildSchemeVars = (
+    utils: Awaited<ReturnType<typeof loadColorUtils>>,
+    hexColor: `#${string}`,
+    dark: boolean,
+  ): SchemeVars => {
+    const theme = utils.themeFromSourceColor(utils.argbFromHex(hexColor));
+    const values = (dark ? theme.schemes.dark : theme.schemes.light).toJSON();
+    const vars: SchemeVars = {};
 
     (Object.entries(roleMap) as Array<[keyof typeof values, string]>).forEach(([key, token]) => {
-      root.style.setProperty(`--md-sys-color-${token}`, hexFromArgb(values[key]));
+      vars[`--md-sys-color-${token}`] = utils.hexFromArgb(values[key]);
     });
 
     const neutral = theme.palettes.neutral;
-    const surfaceTones = dark
-      ? {
-          "surface-dim": 6,
-          "surface-bright": 24,
-          "surface-container-lowest": 4,
-          "surface-container-low": 10,
-          "surface-container": 12,
-          "surface-container-high": 17,
-          "surface-container-highest": 22,
-        }
-      : {
-          "surface-dim": 87,
-          "surface-bright": 98,
-          "surface-container-lowest": 100,
-          "surface-container-low": 96,
-          "surface-container": 94,
-          "surface-container-high": 92,
-          "surface-container-highest": 90,
-        };
-
-    Object.entries(surfaceTones).forEach(([token, tone]) => {
-      root.style.setProperty(`--md-sys-color-${token}`, hexFromArgb(neutral.tone(tone)));
+    Object.entries(dark ? surfaceTones.dark : surfaceTones.light).forEach(([token, tone]) => {
+      vars[`--md-sys-color-${token}`] = utils.hexFromArgb(neutral.tone(tone));
     });
-    root.style.setProperty("--md-sys-color-background", hexFromArgb(values.surface));
-    root.style.setProperty("--md-sys-color-on-background", hexFromArgb(values.onSurface));
 
-    activeSourceColor = hexColor.toLowerCase();
-    if (persist) saveColor(activeSourceColor);
-    updateSelection(activeSourceColor);
+    vars["--md-sys-color-background"] = utils.hexFromArgb(values.surface);
+    vars["--md-sys-color-on-background"] = utils.hexFromArgb(values.onSurface);
+    return vars;
+  };
+
+  const applyVars = (vars: SchemeVars) => {
+    const root = document.documentElement;
+    Object.entries(vars).forEach(([token, value]) => {
+      root.style.setProperty(token, value);
+    });
+  };
+
+  const applyTheme = async (hexColor: string, persist = true) => {
+    if (!isHexColor(hexColor)) return;
+    const normalized = hexColor.toLowerCase() as `#${string}`;
+    const dark = document.documentElement.classList.contains("dark");
+
+    let cache = getCachedVars(normalized);
+    if (!cache) {
+      const utils = await loadColorUtils();
+      cache = {
+        color: normalized,
+        light: buildSchemeVars(utils, normalized, false),
+        dark: buildSchemeVars(utils, normalized, true),
+      };
+      saveVars(cache);
+    }
+
+    applyVars(dark ? cache.dark : cache.light);
+    activeSourceColor = normalized;
+    if (persist) saveColor(normalized);
+    updateSelection(normalized);
   };
 
   window.addEventListener("open-theme-picker", () => {
+    // 打开面板时就预取算法库，让第一次点击色板不必等网络。
+    void loadColorUtils();
     if (!dialog?.open) dialog?.showModal();
     colorInput?.focus();
   });
@@ -190,21 +248,28 @@ const { labels, colorPicker } = themeConfig;
   colorButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const color = button.dataset.color;
-      if (color) applyTheme(color);
+      if (color) void applyTheme(color);
     });
   });
 
-  colorInput?.addEventListener("input", () => applyTheme(colorInput.value));
+  colorInput?.addEventListener("input", () => void applyTheme(colorInput.value));
 
   window.addEventListener("theme-change", () => {
-    if (activeSourceColor) applyTheme(activeSourceColor, false);
+    if (activeSourceColor) void applyTheme(activeSourceColor, false);
   });
 
   const savedColor = getSavedColor();
-  if (savedColor) {
-    applyTheme(savedColor, false);
-  } else {
-    updateSelection(colorInput?.dataset.defaultColor ?? "#6750a4");
+  activeSourceColor = savedColor;
+  updateSelection(savedColor ?? colorInput?.dataset.defaultColor ?? "#6750a4");
+
+  // 首屏变量已由 Layout 的内联脚本套用；只有缓存缺失（首次启用或换过配色方案）时才补算。
+  if (savedColor && !getCachedVars(savedColor)) {
+    const backfill = () => void applyTheme(savedColor, false);
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(backfill, { timeout: 2000 });
+    } else {
+      setTimeout(backfill, 200);
+    }
   }
 </script>
 

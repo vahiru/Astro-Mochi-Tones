@@ -41,6 +41,8 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
     />
 
     <script is:inline>
+      // 必须在首次绘制前同步执行：先定明暗，再套用用户自定义配色的缓存变量，
+      // 否则会先闪一下默认配色。缓存由 ColorPicker 写入，这里只读、不引入任何算法库。
       (() => {
         let preference = null;
         try {
@@ -52,7 +54,24 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
         const useDark = preference === "dark" || (
           preference !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches
         );
-        document.documentElement.classList.toggle("dark", useDark);
+        const root = document.documentElement;
+        root.classList.toggle("dark", useDark);
+
+        try {
+          const raw = localStorage.getItem("source-color-vars");
+          if (!raw) return;
+          const vars = JSON.parse(raw)?.[useDark ? "dark" : "light"];
+          if (!vars || typeof vars !== "object") return;
+
+          // localStorage 可被页面内任意脚本改写，写进 style 前逐条校验格式。
+          for (const [token, value] of Object.entries(vars)) {
+            if (/^--md-sys-color-[a-z-]+$/.test(token) && /^#[0-9a-f]{6}$/i.test(value)) {
+              root.style.setProperty(token, value);
+            }
+          }
+        } catch {
+          // 缓存损坏时退回默认配色，ColorPicker 稍后会重新算一份。
+        }
       })();
     </script>
   </head>

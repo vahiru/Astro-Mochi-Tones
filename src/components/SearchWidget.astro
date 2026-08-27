@@ -41,7 +41,8 @@ const { labels } = themeConfig;
 </dialog>
 
 <script>
-  import Fuse from "fuse.js";
+  // fuse.js 只在搜索框第一次打开时才需要，这里用动态导入把它挪出每个页面的首屏包。
+  import type Fuse from "fuse.js";
 
   interface SearchPost {
     title: string;
@@ -125,17 +126,21 @@ const { labels } = themeConfig;
       }
 
       resultsContainer?.setAttribute("aria-busy", "true");
-      const response = await fetch(searchURL, {
-        credentials: "same-origin",
-        headers: { Accept: "application/json" },
-      });
+      // 检索库和索引互不依赖，并行取回可以省掉一个往返。
+      const [{ default: FuseConstructor }, response] = await Promise.all([
+        import("fuse.js"),
+        fetch(searchURL, {
+          credentials: "same-origin",
+          headers: { Accept: "application/json" },
+        }),
+      ]);
       if (!response.ok) throw new Error(`Search index request failed: ${response.status}`);
 
       const payload: unknown = await response.json();
       if (!Array.isArray(payload)) throw new Error("Search index is not an array");
       posts = payload.filter(isSearchPost);
 
-      fuse = new Fuse(posts, {
+      fuse = new FuseConstructor(posts, {
         keys: [
           { name: "title", weight: 1 },
           { name: "description", weight: 0.7 },
