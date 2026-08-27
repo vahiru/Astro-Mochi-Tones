@@ -60,7 +60,7 @@ const pageInfo = labels.pageInfoTemplate
       {
         page.data.length > 0 ? (
           <div class="post-grid">
-            {page.data.map((post) => <PostCard post={post} />)}
+            {page.data.map((post) => <PostCard post={post} mediaWidth={548} />)}
           </div>
         ) : (
           <div class="empty-state">

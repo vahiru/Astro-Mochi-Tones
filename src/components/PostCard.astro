@@ -1,13 +1,21 @@
 ---
 import type { CollectionEntry } from "astro:content";
+import { Image } from "astro:assets";
 import themeConfig from "astro-mochi-tones:config";
+import { isLocalAsset, resolveImage } from "../utils/images";
 
 interface Props {
   post: CollectionEntry<"blog">;
   featured?: boolean;
+  /**
+   * 卡片图片在宽屏（≥1100px 视口）下的显示宽度，用于生成 `sizes`。
+   * 组件本身看不到自己所处的栅格，所以由调用方按实际布局给出：
+   * 首页两栏约 400px，归档约 524px，分类/标签约 548px。默认取偏大的一档。
+   */
+  mediaWidth?: number;
 }
 
-const { post, featured = false } = Astro.props;
+const { post, featured = false, mediaWidth = 560 } = Astro.props;
 const date = post.data.date instanceof Date ? post.data.date : new Date(post.data.date);
 const validDate = !Number.isNaN(date.valueOf());
 const dateLabel = validDate
@@ -32,6 +40,27 @@ const postSlug = "slug" in post && typeof post.slug === "string"
   : post.id.replace(/\.(md|mdx)$/i, "");
 const category = post.data.categories?.[0];
 const placeholderLabel = category?.trim().charAt(0) || "auto_stories";
+
+/*
+ * 缩略图的 sizes 按浏览器里实测的渲染尺寸标定。注意 object-fit: cover 需要的是
+ * 裁切后的源图宽度，不等于图框宽度：
+ *
+ *   普通卡片  <600px 视口：120×109 图框 → 需 ~145px
+ *             ≥600px 视口：改为上下堆叠，图片占满卡片宽度
+ *                          首页 393×184、归档 524×184、分类/标签 548×184
+ *   精选卡片  1440 视口：355×338 图框（16:9 源图）→ 需 ~613px
+ *             480  视口：446×278 → 需 ~504px
+ *
+ * 命中 src/assets/images/ 的封面走 astro:assets 生成多尺寸 WebP，
+ * 仍放在 public/ 或使用外链的封面退回普通 <img>。
+ */
+const cover = await resolveImage(post.data.cover);
+const coverWidths = featured
+  ? [480, 600, 900, 1200, 1600]
+  : [160, 320, 480, 640, 800, 1120];
+const coverSizes = featured
+  ? "(min-width: 1100px) 600px, (min-width: 840px) 42vw, (min-width: 700px) 80vw, 100vw"
+  : `(max-width: 599px) 160px, (max-width: 1099px) 42vw, ${mediaWidth}px`;
 ---
 
 <a
@@ -41,9 +70,21 @@ const placeholderLabel = category?.trim().charAt(0) || "auto_stories";
 >
   <div class="card-media">
     {
-      post.data.cover ? (
+      isLocalAsset(cover) ? (
+        <Image
+          src={cover}
+          alt=""
+          class="card-image"
+          widths={coverWidths}
+          sizes={coverSizes}
+          format="webp"
+          loading={featured ? "eager" : "lazy"}
+          decoding="async"
+          fetchpriority={featured ? "high" : "auto"}
+        />
+      ) : cover ? (
         <img
-          src={post.data.cover}
+          src={cover}
           alt=""
           class="card-image"
           loading={featured ? "eager" : "lazy"}

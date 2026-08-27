@@ -1,6 +1,10 @@
 ---
+import { getImage } from "astro:assets";
 import themeConfig from "astro-mochi-tones:config";
 import { sanitizeAssetUrl } from "../utils/security";
+import { isLocalAsset, resolveImage } from "../utils/images";
+// 图标字体自托管并由 Vite 输出带哈希的地址，预加载可以让首屏图标尽早可见。
+import iconFontUrl from "../assets/fonts/material-symbols-rounded-subset.woff2?url";
 
 interface Props {
   title: string;
@@ -19,17 +23,41 @@ const {
 const siteBase = Astro.site ?? new URL(Astro.url.origin);
 const canonicalURL = new URL(Astro.url.pathname, siteBase);
 
-const resolvePublicURL = (value: string) => {
+/*
+ * 社交预览图。命中 src/assets/images/ 时交给 astro:assets 输出 1200px 宽的 JPEG：
+ * 各家抓取器对 WebP 的支持不一致，而 1200px 是 Open Graph 的推荐宽度，
+ * 所以这里固定格式和宽度，不做多尺寸。其余情况（public/ 下的文件、/og/*.png
+ * 这类构建期生成的端点、外链）按原地址输出。
+ */
+const OG_WIDTH = 1200;
+
+const resolveSocialImage = async (value: string) => {
   const normalized = value.startsWith("/") || /^https:\/\//i.test(value)
     ? value
     : `/images/${value}`;
-  const safeValue = sanitizeAssetUrl(normalized)
+  const asset = await resolveImage(normalized);
+
+  if (isLocalAsset(asset)) {
+    const optimized = await getImage({
+      src: asset,
+      width: Math.min(asset.width, OG_WIDTH),
+      format: "jpeg",
+    });
+    return {
+      url: new URL(optimized.src, siteBase),
+      width: optimized.attributes.width ?? optimized.options.width,
+      height: optimized.attributes.height ?? optimized.options.height,
+    };
+  }
+
+  const safeValue = sanitizeAssetUrl(typeof asset === "string" ? asset : normalized)
     ?? sanitizeAssetUrl(themeConfig.defaultImage)
     ?? "/images/default-og.png";
-  return new URL(safeValue, siteBase);
+  return { url: new URL(safeValue, siteBase), width: undefined, height: undefined };
 };
 
-const socialImageURL = resolvePublicURL(image);
+const socialImage = await resolveSocialImage(image);
+const socialImageURL = socialImage.url;
 ---
 
 <meta charset="utf-8" />
@@ -39,6 +67,14 @@ const socialImageURL = resolvePublicURL(image);
 <meta name="generator" content={Astro.generator} />
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fffbfe" />
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141218" />
+
+<link
+  rel="preload"
+  href={iconFontUrl}
+  as="font"
+  type="font/woff2"
+  crossorigin
+/>
 
 <link rel="icon" href={themeConfig.favicon} />
 <link rel="canonical" href={canonicalURL} />
@@ -53,6 +89,8 @@ const socialImageURL = resolvePublicURL(image);
 <meta property="og:site_name" content={themeConfig.title} />
 <meta property="og:locale" content={themeConfig.locale} />
 <meta property="og:image" content={socialImageURL} />
+{socialImage.width && <meta property="og:image:width" content={String(socialImage.width)} />}
+{socialImage.height && <meta property="og:image:height" content={String(socialImage.height)} />}
 {articleDate && <meta property="article:published_time" content={articleDate.toISOString()} />}
 
 <meta name="twitter:card" content="summary_large_image" />

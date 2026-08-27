@@ -55,12 +55,25 @@ export default defineConfig({
 ```
 your-blog/
 ├── src/
+│   ├── assets/
+│   │   └── images/        # 文章图片 (会被自动生成多尺寸 WebP)
 │   ├── content/
 │   │   └── blog/          # 你的文章 (Markdown/MDX)
 │   └── pages/             # 自定义页面 (可覆盖主题页面)
-├── public/                # 静态资源
+├── public/                # 原样发布的静态资源 (favicon、社交预览图等)
 └── astro.config.ts        # 配置文件
 ```
+
+### 图片放哪里
+
+封面和正文图片一律按 `/images/xxx.jpg` 引用，主题会按这个顺序解析：
+
+1. `src/assets/images/xxx.jpg` —— 命中则交给 `astro:assets`，按实际显示尺寸
+   生成多档 WebP 并输出 `srcset`。列表页 120px 的缩略图只会下载 180/360px 的版本。
+2. 没命中则当作 `public/images/xxx.jpg` 原样输出 `<img>`。
+
+也就是说，把图片从 `public/images/` 移到 `src/assets/images/` 就能获得优化，
+**不需要改动任何文章**。需要固定地址的图（社交预览图）留在 `public/` 即可。
 
 ---
 
@@ -98,6 +111,16 @@ draft: false                 # 草稿状态
 ### 覆盖页面
 
 在你的 `src/pages/` 目录创建同名页面可以覆盖主题默认页面。
+
+### 新增图标
+
+主题自托管的是 Material Symbols Rounded 的**字形子集**（完整可变字体有 5.1 MB，
+子集后约 73 KB，见 `src/assets/fonts/`）。用到列表之外的新图标时，它不会显示，
+需要把图标名补进 `scripts/fetch-fonts.sh` 的 `ICONS` 列表并重新生成：
+
+```bash
+bash scripts/fetch-fonts.sh
+```
 
 ### 覆盖组件
 

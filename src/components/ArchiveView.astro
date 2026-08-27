@@ -120,7 +120,7 @@ const yearGroups = [...postsByYear.entries()].sort(([left], [right]) => {
                   <span class="label-medium">{countText(posts.length)}</span>
                 </header>
                 <div class="posts-grid">
-                  {posts.map((post) => <PostCard post={post} />)}
+                  {posts.map((post) => <PostCard post={post} mediaWidth={524} />)}
                 </div>
               </section>
             ))}

@@ -1,10 +1,12 @@
 ---
+import { Image, getImage } from "astro:assets";
 import {
   sanitizeAssetUrl,
   sanitizeCssColor,
   sanitizeCssLength,
   sanitizeCssSpacing,
 } from "../../utils/security";
+import { isLocalAsset, resolveImage } from "../../utils/images";
 
 interface Props {
   src: string;
@@ -24,11 +26,34 @@ const safeHeight = sanitizeCssLength(height);
 const safePadding = sanitizeCssSpacing(padding);
 const safeBackground = sanitizeCssColor(bg);
 
+
+/*
+ * 正文栏宽上限是 820px，按 2x 高清屏最多需要 1640px。命中 src/assets/images/
+ * 的图片交给 astro:assets 生成多尺寸 WebP；点开大图的链接指向最大那一档，
+ * 而不是未优化的原图。
+ */
+const asset = await resolveImage(src);
+const localAsset = isLocalAsset(asset) ? asset : null;
+const contentWidths = [420, 820, 1240, 1640];
+const contentSizes = "(min-width: 1100px) 820px, (min-width: 700px) 78vw, 92vw";
+const lightboxHref = localAsset
+  ? (await getImage({
+      src: localAsset,
+      width: Math.min(localAsset.width, 1640),
+      format: "webp",
+    })).src
+  : safeSrc;
+
+// 下载按钮必须指向真实存在的地址：src/assets/ 下的原文件不会被直接发布，
+// 所以本地资源要用优化后的产物地址。
 let downloadUrl: string | undefined;
 if (download === true || download === "true") {
-  downloadUrl = safeSrc ?? undefined;
+  downloadUrl = lightboxHref ?? undefined;
 } else if (typeof download === "string" && download) {
-  downloadUrl = sanitizeAssetUrl(download) ?? undefined;
+  const target = await resolveImage(download);
+  downloadUrl = isLocalAsset(target)
+    ? (await getImage({ src: target, format: "webp" })).src
+    : (target ?? undefined);
 }
 
 const containerStyle = [
@@ -47,19 +72,32 @@ const imageStyle = [safeHeight && `height: ${safeHeight}`, safeHeight && "object
       <figure class="express-figure" style={containerStyle}>
         <a
           class="image-link"
-          href={safeSrc}
+          href={lightboxHref}
           data-fancybox={fancybox ? "gallery" : undefined}
           data-caption={desc}
           aria-label={desc ? `查看大图：${desc}` : "查看大图"}
         >
-          <img
-            src={safeSrc}
-            alt={desc || ""}
-            style={imageStyle}
-            loading="lazy"
-            decoding="async"
-            referrerpolicy="no-referrer"
-          />
+          {localAsset ? (
+            <Image
+              src={localAsset}
+              alt={desc || ""}
+              style={imageStyle}
+              widths={contentWidths.filter((width) => width <= localAsset.width)}
+              sizes={contentSizes}
+              format="webp"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <img
+              src={safeSrc}
+              alt={desc || ""}
+              style={imageStyle}
+              loading="lazy"
+              decoding="async"
+              referrerpolicy="no-referrer"
+            />
+          )}
         </a>
         {(desc || downloadUrl) && (
           <div class="image-meta">
