@@ -1,10 +1,11 @@
 ---
+import BrandMark from "./BrandMark.astro";
 import themeConfig from "astro-mochi-tones:config";
 
 const year = new Date().getFullYear();
 const siteTitle = themeConfig.title;
 const author = themeConfig.author || siteTitle;
-const { footer } = themeConfig;
+const { footer, labels } = themeConfig;
 const slogan = footer.slogan || themeConfig.description || "";
 const copyright = footer.copyrightTemplate
   .replaceAll("{year}", String(year))
@@ -13,12 +14,12 @@ const copyright = footer.copyrightTemplate
 ---
 
 <footer class="site-footer">
-  <div class="footer-inner">
+  <div class="footer-main">
     <div class="footer-brand">
-      <span class="footer-mark" aria-hidden="true">V</span>
-      <div>
-        <strong class="brand-name">{siteTitle}</strong>
-        {slogan && <p class="brand-slogan">{slogan}</p>}
+      <BrandMark size={48} />
+      <div class="footer-brand-copy">
+        <a class="brand-name title-medium" href="/">{siteTitle}</a>
+        {slogan && <p class="brand-slogan body-medium">{slogan}</p>}
       </div>
     </div>
 
@@ -29,170 +30,331 @@ const copyright = footer.copyrightTemplate
           {footer.links.map((link) => (
             <li>
               <a
+                class="nav-link label-large"
                 href={link.href}
                 target={link.external ? "_blank" : undefined}
                 rel={link.external ? "noopener noreferrer" : undefined}
               >
+                {link.icon && <md-icon aria-hidden="true">{link.icon}</md-icon>}
                 {link.label}
-                {link.external && <md-icon aria-hidden="true">north_east</md-icon>}
+                {link.external && !link.icon && (
+                  <md-icon class="trailing" aria-hidden="true">north_east</md-icon>
+                )}
               </a>
             </li>
           ))}
         </ul>
       </nav>
     )}
+  </div>
 
-    <div class="footer-bottom">
-      <span>{copyright}</span>
-      {footer.showThemeCredit && (
-        <span class="theme-credit">
-          {footer.themeCreditLabel}{" "}
-          <a href={footer.themeCreditHref} target="_blank" rel="noopener noreferrer">
-            {footer.themeCreditText}
-          </a>
-        </span>
-      )}
-    </div>
+  <div class="footer-bottom body-small">
+    <span class="copyright">{copyright}</span>
+    {footer.showThemeCredit && (
+      <span class="theme-credit">
+        {footer.themeCreditLabel}{" "}
+        <a href={footer.themeCreditHref} target="_blank" rel="noopener noreferrer">
+          {footer.themeCreditText}
+        </a>
+      </span>
+    )}
+    <button
+      class="back-to-top"
+      type="button"
+      data-back-to-top
+      aria-label={labels.backToTop}
+      title={labels.backToTop}
+    >
+      <md-icon aria-hidden="true">arrow_upward</md-icon>
+    </button>
   </div>
 </footer>
 
+<script>
+  // 桌面端的滚动容器是 .main-content，紧凑端才是 window；两个都处理。
+  const getScroller = () => document.querySelector<HTMLElement>(".main-content");
+
+  const canScroll = () => {
+    const scroller = getScroller();
+    const innerScrollable = !!scroller && scroller.scrollHeight > scroller.clientHeight + 1;
+    const outerScrollable = document.documentElement.scrollHeight > window.innerHeight + 1;
+    return innerScrollable || outerScrollable;
+  };
+
+  // 页面本身滚不动时（内容很短），回到顶部按钮没有意义，直接隐藏。
+  const updateBackToTop = () => {
+    const visible = canScroll();
+    document.querySelectorAll<HTMLButtonElement>("[data-back-to-top]").forEach((button) => {
+      button.hidden = !visible;
+    });
+  };
+
+  const bindBackToTop = () => {
+    document.querySelectorAll<HTMLButtonElement>("[data-back-to-top]").forEach((button) => {
+      if (button.dataset.bound === "true") return;
+      button.dataset.bound = "true";
+      button.addEventListener("click", () => {
+        const behavior: ScrollBehavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth";
+        getScroller()?.scrollTo({ top: 0, behavior });
+        window.scrollTo({ top: 0, behavior });
+      });
+    });
+    updateBackToTop();
+  };
+
+  bindBackToTop();
+  window.addEventListener("resize", updateBackToTop);
+  document.addEventListener("astro:after-swap", bindBackToTop);
+</script>
+
 <style>
+  /*
+   * 页脚是一块内嵌的圆角色块，而不是贴底的通栏色带，与首页侧栏卡片、
+   * 关于页内容卡片共用同一套 surface-container-low + extra-large 圆角语言。
+   * 右上角叠一层很淡的 primary-container 径向光晕，呼应首页 hero 的主色装饰，
+   * 并跟随用户在配色器里选的种子色一起变化。
+   * --footer-inset 必须与 Layout.astro 里 .content-inner 的 padding 保持一致，
+   * 这样页脚的左右边缘才能和正文对齐。
+   */
   .site-footer {
-    margin-top: 72px;
-    border-top: 1px solid var(--md-sys-color-outline-variant);
-    background: var(--md-sys-color-surface-container-low);
+    --footer-inset: clamp(24px, 3vw, 48px);
+
+    margin: 24px var(--footer-inset) var(--footer-inset);
+    padding: 28px 32px 24px;
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    background:
+      radial-gradient(
+        360px circle at 100% 0%,
+        color-mix(in srgb, var(--md-sys-color-primary-container) 55%, transparent),
+        transparent
+      ),
+      var(--md-sys-color-surface-container-low);
     color: var(--md-sys-color-on-surface);
   }
 
-  .footer-inner {
+  .footer-main {
     display: grid;
-    width: min(100%, 1376px);
-    margin: 0 auto;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 36px 64px;
-    padding: 40px clamp(24px, 4vw, 56px) 28px;
+    gap: 24px;
   }
 
   .footer-brand {
     display: flex;
-    max-width: 620px;
-    align-items: flex-start;
+    max-width: 560px;
+    align-items: center;
     gap: 16px;
   }
 
-  .footer-mark {
-    display: grid;
-    width: 48px;
-    height: 48px;
-    flex: 0 0 48px;
-    place-items: center;
-    border-radius: var(--md-sys-shape-corner-large);
-    background: var(--md-sys-color-primary-container);
-    color: var(--md-sys-color-on-primary-container);
-    font-family: var(--md-ref-typeface-brand);
-    font-size: 22px;
-    font-weight: 700;
+  .footer-brand-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .brand-name {
-    display: block;
-    font-size: var(--md-sys-typescale-title-large-size);
-    line-height: var(--md-sys-typescale-title-large-line-height);
+    align-self: flex-start;
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    color: var(--md-sys-color-on-surface);
+    font-weight: 600;
+    transition: color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+  }
+
+  .brand-name:hover {
+    color: var(--md-sys-color-primary);
   }
 
   .brand-slogan {
-    margin: 6px 0 0;
+    margin: 0;
     color: var(--md-sys-color-on-surface-variant);
-    font-size: var(--md-sys-typescale-body-medium-size);
-    line-height: var(--md-sys-typescale-body-medium-line-height);
   }
 
   .footer-nav {
-    min-width: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
 
   .nav-title {
-    display: block;
-    margin-bottom: 12px;
-    color: var(--md-sys-color-primary);
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    color: var(--md-sys-color-on-surface-variant);
   }
 
+  /* 文字按钮自带 12px 内边距，向外抵消一份，让首个按钮的图标与标题左对齐。 */
   .nav-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin: 0;
+    gap: 4px;
+    margin: 0 0 0 -12px;
     padding: 0;
     list-style: none;
   }
 
-  .nav-list a {
+  /* M3 带图标的文字按钮：图标侧 12px、文字侧 16px 内边距。 */
+  .nav-link {
     display: inline-flex;
-    min-height: var(--md-sys-touch-target-size);
+    height: 40px;
     align-items: center;
-    gap: 5px;
-    padding: 0 14px;
-    border: 1px solid var(--md-sys-color-outline-variant);
+    gap: 8px;
+    padding: 0 16px 0 12px;
     border-radius: var(--md-sys-shape-corner-full);
     color: var(--md-sys-color-on-surface-variant);
-    font-size: var(--md-sys-typescale-label-large-size);
-    font-weight: 600;
     transition:
       background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
       color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
   }
 
-  .nav-list a:hover {
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
+  /* 没配图标的链接退回纯文字按钮，外链在末尾补一个小箭头。 */
+  .nav-link:not(:has(> md-icon)),
+  .nav-link:has(> .trailing) {
+    gap: 4px;
+    padding: 0 12px;
   }
 
-  .nav-list md-icon {
-    width: 16px;
-    height: 16px;
-    flex-basis: 16px;
-    font-size: 16px;
+  .nav-link:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .nav-link md-icon {
+    --md-icon-size: 18px;
+
+    width: 18px;
+    height: 18px;
+    flex-basis: 18px;
+    font-size: 18px;
   }
 
   .footer-bottom {
-    display: flex;
-    grid-column: 1 / -1;
+    display: grid;
+    grid-template-areas: "copyright credit top";
+    grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding-top: 24px;
+    column-gap: 16px;
+    margin-top: 20px;
+    padding-top: 12px;
     border-top: 1px solid var(--md-sys-color-outline-variant);
     color: var(--md-sys-color-on-surface-variant);
-    font-size: var(--md-sys-typescale-body-small-size);
+  }
+
+  .copyright {
+    grid-area: copyright;
+  }
+
+  .theme-credit {
+    grid-area: credit;
   }
 
   .theme-credit a {
     color: var(--md-sys-color-primary);
-    font-weight: 700;
+    font-weight: 500;
   }
 
-  @media (max-width: 839px) {
-    .footer-inner {
-      grid-template-columns: 1fr;
+  .theme-credit a:hover {
+    text-decoration: underline;
+  }
+
+  .back-to-top {
+    display: inline-grid;
+    width: 40px;
+    height: 40px;
+    grid-area: top;
+    place-items: center;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    transition:
+      background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
+      color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
+  }
+
+  /* 作者样式里的 display 会压过 UA 对 [hidden] 的 display: none，需显式补上。 */
+  .back-to-top[hidden] {
+    display: none;
+  }
+
+  .back-to-top:hover {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+  }
+
+  .back-to-top md-icon {
+    --md-icon-size: 20px;
+
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+    font-size: 20px;
+    transition: translate var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial);
+  }
+
+  .back-to-top:hover md-icon {
+    translate: 0 -2px;
+  }
+
+  /* 宽屏时品牌信息与社交链接左右分列；链接列最多占 60%，放不下就折行。 */
+  @media (min-width: 1024px) {
+    .footer-main {
+      grid-template-columns: minmax(0, 1fr) fit-content(60%);
+      align-items: start;
+      column-gap: 48px;
     }
 
-    .footer-bottom {
-      align-items: flex-start;
-      flex-direction: column;
+    .footer-nav {
+      align-items: flex-end;
+    }
+
+    .nav-list {
+      justify-content: flex-end;
+      margin: 0 -12px 0 0;
+    }
+  }
+
+  @media (min-width: 600px) and (max-width: 839px) {
+    .site-footer {
+      --footer-inset: 24px;
+    }
+  }
+
+  @media print {
+    .site-footer {
+      border: 1px solid var(--md-sys-color-outline-variant);
+      background: none;
+    }
+
+    .back-to-top {
+      display: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .back-to-top {
+      border: 1px solid ButtonBorder;
     }
   }
 
   @media (max-width: 599px) {
     .site-footer {
-      margin-top: 56px;
+      --footer-inset: 16px;
+
+      margin-top: 16px;
+      padding: 24px 20px 20px;
     }
 
-    .footer-inner {
-      gap: 28px;
-      padding: 32px 20px 24px;
+    /* 紧凑屏上链接排成对齐的两列，避免最后一项孤零零地折到下一行。 */
+    .nav-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0 4px;
+    }
+
+    .footer-bottom {
+      grid-template-areas:
+        "copyright top"
+        "credit top";
+      grid-template-columns: minmax(0, 1fr) auto;
+      row-gap: 4px;
     }
   }
 </style>

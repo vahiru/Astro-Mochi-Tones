@@ -12,7 +12,7 @@ OUT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/src/assets/fonts"
 UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 # 全站实际使用的图标名（由 <md-icon>、config 的 *Icon 字段和 JS 动态赋值汇总而来）。
-ICONS="add,arrow_back,arrow_forward,arrow_outward,article,auto_awesome,auto_stories,\
+ICONS="add,alternate_email,arrow_upward,arrow_back,arrow_forward,arrow_outward,article,auto_awesome,auto_stories,\
 calendar_today,category,check,check_circle,close,code,code_blocks,content_copy,dark_mode,\
 diversity_3,download,edit_note,error,expand_more,face,favorite,folder,folder_off,\
 format_list_bulleted,format_quote,group,history,home,inventory_2,label,language,light_mode,\
@@ -37,7 +37,7 @@ fetch_font() {
     fi
     [ -n "$font_url" ] || { echo "无法从 $css_url 解析字体地址" >&2; exit 1; }
     curl -fsS -A "$UA" -o "$OUT_DIR/$out" "$font_url"
-    printf '%-40s %8s bytes\n' "$out" "$(stat -c%s "$OUT_DIR/$out")"
+    printf '%-40s %8s bytes\n' "$out" "$(wc -c < "$OUT_DIR/$out" | tr -d " ")"
 }
 
 # 图标字体：保留 opsz/wght/FILL/GRAD 四个可变轴，仅子集化字形。

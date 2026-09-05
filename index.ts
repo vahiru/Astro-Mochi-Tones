@@ -51,6 +51,7 @@ const footerLinkSchema = z.object({
     label: z.string().min(1).max(80),
     href: safeHrefSchema,
     external: z.boolean().optional(),
+    icon: z.string().regex(/^[a-z0-9_]+$/i).max(64).optional(),
 });
 
 const configSchema = z.object({
@@ -60,6 +61,8 @@ const configSchema = z.object({
         lang: z.string().default("zh-CN"),
         locale: z.string().default("zh_CN"),
         favicon: safeResourceSchema.default("/favicon.svg"),
+        // 品牌标识图片，用于页脚与紧凑屏顶栏。留空时显示站名首字。
+        logo: safeResourceSchema.optional(),
         defaultImage: safeResourceSchema.default("/images/default-og.png"),
         rssPath: sitePathSchema.default("/rss.xml"),
         searchPath: sitePathSchema.default("/search.json"),
@@ -167,6 +170,7 @@ const configSchema = z.object({
                     .string()
                     .default("Explore every post filed under {name}."),
                 backToArchives: z.string().default("All archives"),
+                backToTop: z.string().default("Back to top"),
                 paginationLabel: z.string().default("Pagination"),
                 paginationPrevious: z.string().default("Previous"),
                 paginationNext: z.string().default("Next"),

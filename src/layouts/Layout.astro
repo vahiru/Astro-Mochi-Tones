@@ -1,5 +1,6 @@
 ---
 import BaseHead from "../components/BaseHead.astro";
+import BrandMark from "../components/BrandMark.astro";
 import Footer from "../components/Footer.astro";
 import NavRail from "../components/NavRail.astro";
 import SearchWidget from "../components/SearchWidget.astro";
@@ -81,7 +82,7 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
 
     <header class="compact-top-app-bar">
       <a class="compact-brand" href="/" aria-label={`${siteTitle} 首页`}>
-        <span class="brand-mark" aria-hidden="true">V</span>
+        <BrandMark class="compact-mark" size={40} radius="var(--md-sys-shape-corner-medium)" loading="eager" />
         <span class="header-title">{title}</span>
       </a>
       <div class="top-app-bar-actions">
@@ -118,12 +119,13 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
 
     <div class="app-layout">
       <NavRail />
-      <main id="main-content" class="main-content" tabindex="-1">
-        <div class="content-inner">
+      {/* 滚动容器只是个 div：各页面自带 <main>，页脚留在容器内但位于 <main> 之外，才是合规的 contentinfo 地标。 */}
+      <div class="main-content">
+        <div id="main-content" class="content-inner" tabindex="-1">
           <slot />
         </div>
         <Footer />
-      </main>
+      </div>
     </div>
 
     <SearchWidget />
@@ -234,20 +236,6 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
       border-radius: var(--md-sys-shape-corner-full);
     }
 
-    .brand-mark {
-      display: grid;
-      width: 40px;
-      height: 40px;
-      flex: 0 0 40px;
-      place-items: center;
-      border-radius: var(--md-sys-shape-corner-medium);
-      background: var(--md-sys-color-primary-container);
-      color: var(--md-sys-color-on-primary-container);
-      font-family: var(--md-ref-typeface-brand);
-      font-size: 20px;
-      font-weight: 700;
-    }
-
     .header-title {
       min-width: 0;
       overflow: hidden;
@@ -285,7 +273,7 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
   }
 
   @media (max-width: 380px) {
-    .brand-mark {
+    .compact-brand .compact-mark {
       display: none;
     }
   }

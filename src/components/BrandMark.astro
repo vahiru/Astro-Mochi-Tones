@@ -1,0 +1,80 @@
+---
+/**
+ * 站点品牌标识，供页脚与紧凑屏顶栏共用，保证两处一致。
+ * 配置了 `logo` 就显示图片：命中 src/assets/images/ 时交给 astro:assets 按需生成 1x/2x，
+ * 否则原样输出 <img>；没配 logo 时退回用站名首字推导的字母块。
+ * 父组件传入的 class 会连同 Astro 的作用域属性一起透传，父级样式可直接选中它。
+ */
+import { Image } from "astro:assets";
+import themeConfig from "astro-mochi-tones:config";
+import { isLocalAsset, resolveImage } from "../utils/images";
+
+interface Props {
+  size?: number;
+  radius?: string;
+  loading?: "lazy" | "eager";
+  class?: string;
+}
+
+const {
+  size = 48,
+  radius = "var(--md-sys-shape-corner-large)",
+  loading = "lazy",
+  class: className,
+  ...rest
+} = Astro.props;
+
+const initial = Array.from(themeConfig.title.trim())[0]?.toUpperCase() ?? "";
+const logo = await resolveImage(themeConfig.logo);
+const style = `--brand-mark-size: ${size}px; --brand-mark-radius: ${radius};`;
+---
+
+<span
+  class:list={["site-brand-mark", { "has-logo": Boolean(logo) }, className]}
+  style={style}
+  aria-hidden="true"
+  {...rest}
+>
+  {logo ? (
+    isLocalAsset(logo) ? (
+      <Image
+        src={logo}
+        alt=""
+        width={size}
+        height={size}
+        densities={[1, 2]}
+        loading={loading}
+        decoding="async"
+      />
+    ) : (
+      <img src={logo} alt="" width={size} height={size} loading={loading} decoding="async" />
+    )
+  ) : (
+    initial
+  )}
+</span>
+
+<style>
+  .site-brand-mark {
+    display: grid;
+    width: var(--brand-mark-size);
+    height: var(--brand-mark-size);
+    flex: 0 0 var(--brand-mark-size);
+    place-items: center;
+    overflow: hidden;
+    border-radius: var(--brand-mark-radius);
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    font-family: var(--md-ref-typeface-brand);
+    font-size: calc(var(--brand-mark-size) * 0.46);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .site-brand-mark img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>
