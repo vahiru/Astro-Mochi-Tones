@@ -12,11 +12,11 @@ OUT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/src/assets/fonts"
 UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 # 全站实际使用的图标名（由 <md-icon>、config 的 *Icon 字段和 JS 动态赋值汇总而来）。
-ICONS="add,alternate_email,arrow_upward,arrow_back,arrow_forward,arrow_outward,article,auto_awesome,auto_stories,\
-calendar_today,category,check,check_circle,close,code,code_blocks,content_copy,dark_mode,\
+ICONS="account_tree,add,alternate_email,arrow_upward,arrow_back,arrow_forward,arrow_outward,article,auto_awesome,auto_stories,\
+bookmark,cake,calendar_today,category,check,check_circle,close,code,code_blocks,content_copy,dark_mode,\
 diversity_3,download,edit_note,error,expand_more,face,favorite,folder,folder_off,\
-format_list_bulleted,format_quote,group,history,home,inventory_2,label,language,light_mode,\
-link,mail,manage_search,menu,monitoring,north_east,palette,pending,person_add,pets,\
+format_list_bulleted,format_quote,group,history,home,info,inventory_2,label,language,light_mode,lightbulb,\
+link,mail,manage_search,menu,monitoring,north_east,notes,open_in_new,palette,pending,person,person_add,pets,\
 progress_activity,public,rss_feed,schedule,search,search_off,send,tag,terminal,timeline,\
 unfold_more,warning,waving_hand"
 
