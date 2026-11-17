@@ -63,7 +63,7 @@ const { labels, colorPicker } = themeConfig;
    * 因此这里把配色结果（两套 CSS 变量：亮色 / 暗色）缓存进 localStorage，
    * 首屏由 Layout 的内联脚本在绘制前直接套用缓存，算法库改为交互时动态导入。
    */
-  const VARS_STORAGE_KEY = "source-color-vars";
+  const VARS_STORAGE_KEY = "source-color-vars-v2";
 
   type SchemeVars = Record<string, string>;
   type VarsCache = { color: string; light: SchemeVars; dark: SchemeVars };
@@ -126,78 +126,38 @@ const { labels, colorPicker } = themeConfig;
     if (colorValue) colorValue.textContent = hexColor.toUpperCase();
   };
 
-  const roleMap = {
-    primary: "primary",
-    onPrimary: "on-primary",
-    primaryContainer: "primary-container",
-    onPrimaryContainer: "on-primary-container",
-    secondary: "secondary",
-    onSecondary: "on-secondary",
-    secondaryContainer: "secondary-container",
-    onSecondaryContainer: "on-secondary-container",
-    tertiary: "tertiary",
-    onTertiary: "on-tertiary",
-    tertiaryContainer: "tertiary-container",
-    onTertiaryContainer: "on-tertiary-container",
-    error: "error",
-    onError: "on-error",
-    errorContainer: "error-container",
-    onErrorContainer: "on-error-container",
-    surface: "surface",
-    onSurface: "on-surface",
-    surfaceVariant: "surface-variant",
-    onSurfaceVariant: "on-surface-variant",
-    outline: "outline",
-    outlineVariant: "outline-variant",
-    shadow: "shadow",
-    scrim: "scrim",
-    inverseSurface: "inverse-surface",
-    inverseOnSurface: "inverse-on-surface",
-    inversePrimary: "inverse-primary",
-  } as const;
+  /** 由 SchemeTonalSpot 生成的颜色角色；与 global.css 的静态默认值一一对应。 */
+  const colorRoles = [
+    "primary", "on-primary", "primary-container", "on-primary-container",
+    "secondary", "on-secondary", "secondary-container", "on-secondary-container",
+    "tertiary", "on-tertiary", "tertiary-container", "on-tertiary-container",
+    "error", "on-error", "error-container", "on-error-container",
+    "surface", "on-surface", "surface-dim", "surface-bright",
+    "surface-container-lowest", "surface-container-low", "surface-container",
+    "surface-container-high", "surface-container-highest",
+    "surface-variant", "on-surface-variant", "outline", "outline-variant",
+    "shadow", "scrim", "inverse-surface", "inverse-on-surface", "inverse-primary",
+    "background", "on-background",
+  ] as const;
 
-  const surfaceTones = {
-    dark: {
-      "surface-dim": 6,
-      "surface-bright": 24,
-      "surface-container-lowest": 4,
-      "surface-container-low": 10,
-      "surface-container": 12,
-      "surface-container-high": 17,
-      "surface-container-highest": 22,
-    },
-    light: {
-      "surface-dim": 87,
-      "surface-bright": 98,
-      "surface-container-lowest": 100,
-      "surface-container-low": 96,
-      "surface-container": 94,
-      "surface-container-high": 92,
-      "surface-container-highest": 90,
-    },
-  } as const;
+  const toCamel = (token: string) => token.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
 
-  /** 把种子色展开成一整套 `--md-sys-color-*` 变量，亮色和暗色各算一次。 */
+  /**
+   * 把种子色展开成一整套 `--md-sys-color-*` 变量，亮色和暗色各算一次。
+   * 必须用 DynamicScheme 一次性取全部角色：旧版 themeFromSourceColor().schemes 的 surface
+   * 在暗色下是 tone 10，与 surface-container-low 重合，会让表面层级失效。
+   */
   const buildSchemeVars = (
     utils: Awaited<ReturnType<typeof loadColorUtils>>,
     hexColor: `#${string}`,
     dark: boolean,
   ): SchemeVars => {
-    const theme = utils.themeFromSourceColor(utils.argbFromHex(hexColor));
-    const values = (dark ? theme.schemes.dark : theme.schemes.light).toJSON();
+    const scheme = new utils.SchemeTonalSpot(utils.Hct.fromInt(utils.argbFromHex(hexColor)), dark, 0);
     const vars: SchemeVars = {};
-
-    (Object.entries(roleMap) as Array<[keyof typeof values, string]>).forEach(([key, token]) => {
-      vars[`--md-sys-color-${token}`] = utils.hexFromArgb(values[key]);
+    colorRoles.forEach((token) => {
+      const argb = (scheme as unknown as Record<string, number>)[toCamel(token)];
+      vars[`--md-sys-color-${token}`] = utils.hexFromArgb(argb);
     });
-
-    const neutral = theme.palettes.neutral;
-    Object.entries(dark ? surfaceTones.dark : surfaceTones.light).forEach(([token, tone]) => {
-      vars[`--md-sys-color-${token}`] = utils.hexFromArgb(neutral.tone(tone));
-    });
-
-    vars["--md-sys-color-background"] = utils.hexFromArgb(values.surface);
-    vars["--md-sys-color-on-background"] = utils.hexFromArgb(values.onSurface);
     return vars;
   };
 
@@ -339,7 +299,7 @@ const { labels, colorPicker } = themeConfig;
     margin: 0;
     color: var(--md-sys-color-on-surface);
     font-size: var(--md-sys-typescale-title-small-size);
-    font-weight: 600;
+    font-weight: var(--md-sys-typescale-title-small-weight);
     line-height: var(--md-sys-typescale-title-small-line-height);
   }
 
@@ -445,7 +405,7 @@ const { labels, colorPicker } = themeConfig;
     color: var(--md-sys-color-primary);
     font-family: inherit;
     font-size: var(--md-sys-typescale-label-large-size);
-    font-weight: 600;
+    font-weight: var(--md-sys-typescale-label-large-weight);
     cursor: pointer;
     transition: background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
   }

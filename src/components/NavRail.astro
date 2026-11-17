@@ -192,16 +192,12 @@ const navItems = nav.items.map((item) => {
     color: var(--md-sys-color-on-primary-container);
     box-shadow: var(--md-sys-elevation-level1);
     cursor: pointer;
-    transition:
-      border-radius var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial),
-      box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
-      scale var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+    transition: box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
   }
 
+  /* 悬停的 state layer 由 md-ripple 提供；FAB 只额外抬升一级阴影。 */
   .search-fab:hover {
-    border-radius: var(--md-sys-shape-corner-extra-large);
     box-shadow: var(--md-sys-elevation-level2);
-    scale: 1.04;
   }
 
   .nav-group {
@@ -236,13 +232,7 @@ const navItems = nav.items.map((item) => {
     border-radius: var(--md-sys-shape-corner-full);
     transition:
       background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
-      color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
-      scale var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
-  }
-
-  .nav-item:hover .icon-container {
-    background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
-    scale: 1.04;
+      color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
   }
 
   .nav-item.active .icon-container {
@@ -257,9 +247,10 @@ const navItems = nav.items.map((item) => {
   .label {
     max-width: 76px;
     overflow: hidden;
-    font-size: var(--md-sys-typescale-label-small-size);
-    font-weight: var(--md-sys-typescale-label-small-weight);
-    line-height: var(--md-sys-typescale-label-small-line-height);
+    font-size: var(--md-sys-typescale-label-medium-size);
+    font-weight: var(--md-sys-typescale-label-medium-weight);
+    line-height: var(--md-sys-typescale-label-medium-line-height);
+    letter-spacing: var(--md-sys-typescale-label-medium-tracking);
     text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -296,9 +287,7 @@ const navItems = nav.items.map((item) => {
       grid-template-columns: repeat(4, minmax(0, 1fr));
       align-items: start;
       padding: 8px max(4px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(4px, env(safe-area-inset-left));
-      border-top: 1px solid var(--md-sys-color-outline-variant);
-      background: color-mix(in srgb, var(--md-sys-color-surface-container) 94%, transparent);
-      backdrop-filter: blur(20px);
+      background: var(--md-sys-color-surface-container);
     }
 
     .bottom-nav-item {
@@ -321,9 +310,7 @@ const navItems = nav.items.map((item) => {
       place-items: center;
       overflow: hidden;
       border-radius: var(--md-sys-shape-corner-full);
-      transition:
-        background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
-        scale var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+      transition: background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
     }
 
     .bottom-nav-item.active .bottom-indicator {
@@ -338,9 +325,10 @@ const navItems = nav.items.map((item) => {
     .bottom-label {
       max-width: 100%;
       overflow: hidden;
-      font-size: var(--md-sys-typescale-label-small-size);
-      font-weight: 600;
-      line-height: var(--md-sys-typescale-label-small-line-height);
+      font-size: var(--md-sys-typescale-label-medium-size);
+      font-weight: var(--md-sys-typescale-label-medium-weight);
+      line-height: var(--md-sys-typescale-label-medium-line-height);
+      letter-spacing: var(--md-sys-typescale-label-medium-tracking);
       text-overflow: ellipsis;
       white-space: nowrap;
     }

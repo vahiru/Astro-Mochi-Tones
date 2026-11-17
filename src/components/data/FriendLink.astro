@@ -151,7 +151,7 @@ const external = safeUrl?.startsWith("https://") ?? false;
         overflow: hidden;
         color: var(--md-sys-color-on-surface);
         font-size: var(--md-sys-typescale-title-medium-size);
-        font-weight: 650;
+        font-weight: var(--md-sys-typescale-title-medium-weight);
         letter-spacing: var(--md-sys-typescale-title-medium-tracking);
         line-height: var(--md-sys-typescale-title-medium-line-height);
         text-overflow: ellipsis;
@@ -183,15 +183,9 @@ const external = safeUrl?.startsWith("https://") ?? false;
     }
 
     @media (hover: hover) {
+                /* M3 卡片悬停：state layer 由 md-ripple 提供，这里只抬升一级阴影。 */
         .friend-card:hover {
-            border-radius: var(--md-sys-shape-corner-extra-large);
-            background: var(--md-sys-color-surface-container-high);
             box-shadow: var(--md-sys-elevation-level1);
-            translate: 0 -3px;
-        }
-
-        .friend-card:hover .friend-screenshot img {
-            scale: 1.035;
         }
 
         .friend-card:hover .friend-action {

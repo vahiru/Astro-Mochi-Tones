@@ -295,7 +295,6 @@ const { labels } = themeConfig;
 
   #search-input::placeholder {
     color: var(--md-sys-color-on-surface-variant);
-    opacity: 0.8;
   }
 
   .icon-button {
@@ -385,7 +384,7 @@ const { labels } = themeConfig;
   :global(.item-title) {
     overflow: hidden;
     font-size: var(--md-sys-typescale-title-medium-size);
-    font-weight: 600;
+    font-weight: var(--md-sys-typescale-title-medium-weight);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -402,7 +401,6 @@ const { labels } = themeConfig;
   :global(.result-item:hover .item-description),
   :global(.result-item:focus-visible .item-description) {
     color: currentColor;
-    opacity: 0.78;
   }
 
   :global(.result-arrow) {

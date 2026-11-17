@@ -106,9 +106,9 @@
   --md-sys-state-pressed-opacity: 0.1;
   --md-sys-state-disabled-opacity: 0.38;
   --md-sys-state-disabled-container-opacity: 0.12;
-  --md-sys-focus-ring-color: var(--md-sys-color-primary);
+  --md-sys-focus-ring-color: var(--md-sys-color-secondary);
   --md-sys-focus-ring-width: 3px;
-  --md-sys-focus-ring-offset: 3px;
+  --md-sys-focus-ring-offset: 2px;
   --md-sys-touch-target-size: 48px;
   --md-sys-elevation-level0: none;
   --md-sys-elevation-level1: 0 1px 2px rgb(0 0 0 / 30%), 0 1px 3px 1px rgb(0 0 0 / 15%);

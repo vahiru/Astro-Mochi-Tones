@@ -121,7 +121,7 @@ const pageInfo = labels.pageInfoTemplate
     padding: 0 14px;
     border-radius: var(--md-sys-shape-corner-full);
     color: inherit;
-    font-weight: 650;
+    font-weight: var(--md-sys-typescale-title-medium-weight);
     transition: background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
   }
 
@@ -175,28 +175,27 @@ const pageInfo = labels.pageInfoTemplate
   .section-eyebrow {
     margin: 0;
     font-weight: 750;
-    letter-spacing: 0.11em;
+    font-size: var(--md-sys-typescale-label-large-size);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking);
     text-transform: uppercase;
   }
 
   .hero-eyebrow {
-    opacity: 0.72;
   }
 
   .hero-copy h1 {
     margin: 6px 0 8px;
     overflow-wrap: anywhere;
     font-family: var(--md-ref-typeface-brand);
-    font-size: clamp(36px, 6vw, 56px);
-    font-weight: 500;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
+    font-size: var(--md-sys-typescale-display-medium-size);
+    font-weight: var(--md-sys-typescale-display-medium-weight);
+    letter-spacing: var(--md-sys-typescale-display-medium-tracking);
+    line-height: var(--md-sys-typescale-display-medium-line-height);
   }
 
   .hero-description {
     max-width: 620px;
     margin: 0;
-    opacity: 0.8;
   }
 
   .post-count {
@@ -220,7 +219,6 @@ const pageInfo = labels.pageInfoTemplate
   }
 
   .post-count span {
-    opacity: 0.75;
   }
 
   .post-section {
@@ -330,7 +328,9 @@ const pageInfo = labels.pageInfoTemplate
     }
 
     .hero-copy h1 {
-      font-size: clamp(34px, 12vw, 46px);
+      font-size: var(--md-sys-typescale-display-small-size);
+      letter-spacing: var(--md-sys-typescale-display-small-tracking);
+      line-height: var(--md-sys-typescale-display-small-line-height);
     }
 
     .post-count {

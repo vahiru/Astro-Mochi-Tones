@@ -93,7 +93,7 @@ const { title = "Table of Contents", wiki, open = true } = Astro.props;
 
     .toc-title {
         font-size: var(--md-sys-typescale-title-medium-size);
-        font-weight: 650;
+        font-weight: var(--md-sys-typescale-title-medium-weight);
         letter-spacing: var(--md-sys-typescale-title-medium-tracking);
         line-height: var(--md-sys-typescale-title-medium-line-height);
     }
@@ -156,7 +156,7 @@ const { title = "Table of Contents", wiki, open = true } = Astro.props;
     .toc-body :global(a[aria-current="location"]) {
         background: var(--md-sys-color-secondary-container);
         color: var(--md-sys-color-on-secondary-container);
-        font-weight: 650;
+        font-weight: var(--md-sys-typescale-title-medium-weight);
     }
 
     .toc-body :global(ul ul) {

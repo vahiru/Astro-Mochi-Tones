@@ -187,7 +187,8 @@ const yearGroups = [...postsByYear.entries()].sort(([left], [right]) => {
     margin: 0;
     color: var(--md-sys-color-primary);
     font-weight: 750;
-    letter-spacing: 0.1em;
+    font-size: var(--md-sys-typescale-label-large-size);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking);
     text-transform: uppercase;
   }
 
@@ -211,16 +212,15 @@ const yearGroups = [...postsByYear.entries()].sort(([left], [right]) => {
   .archive-hero h1 {
     margin: 20px 0 14px;
     font-family: var(--md-ref-typeface-brand);
-    font-size: clamp(40px, 6vw, 64px);
-    font-weight: 500;
-    letter-spacing: -0.035em;
-    line-height: 1.08;
+    font-size: var(--md-sys-typescale-display-medium-size);
+    font-weight: var(--md-sys-typescale-display-medium-weight);
+    letter-spacing: var(--md-sys-typescale-display-medium-tracking);
+    line-height: var(--md-sys-typescale-display-medium-line-height);
   }
 
   .hero-description {
     max-width: 640px;
     margin: 0;
-    opacity: 0.8;
   }
 
   .hero-stats {
@@ -248,7 +248,7 @@ const yearGroups = [...postsByYear.entries()].sort(([left], [right]) => {
     margin: 0;
     font-family: var(--md-ref-typeface-brand);
     font-size: var(--md-sys-typescale-headline-medium-size);
-    font-weight: 650;
+    font-weight: var(--md-sys-typescale-headline-medium-weight);
     line-height: var(--md-sys-typescale-headline-medium-line-height);
   }
 
@@ -256,7 +256,7 @@ const yearGroups = [...postsByYear.entries()].sort(([left], [right]) => {
     margin-top: 2px;
     overflow: hidden;
     font-size: var(--md-sys-typescale-label-medium-size);
-    font-weight: 650;
+    font-weight: var(--md-sys-typescale-label-medium-weight);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -331,7 +331,7 @@ const yearGroups = [...postsByYear.entries()].sort(([left], [right]) => {
 
   .category-name {
     overflow: hidden;
-    font-weight: 650;
+    font-weight: var(--md-sys-typescale-title-medium-weight);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -389,12 +389,11 @@ const yearGroups = [...postsByYear.entries()].sort(([left], [right]) => {
     margin: 0;
     font-family: var(--md-ref-typeface-brand);
     font-size: var(--md-sys-typescale-title-large-size);
-    font-weight: 650;
+    font-weight: var(--md-sys-typescale-title-large-weight);
     line-height: var(--md-sys-typescale-title-large-line-height);
   }
 
   .year-marker span {
-    opacity: 0.78;
   }
 
   .posts-grid {
@@ -460,7 +459,9 @@ const yearGroups = [...postsByYear.entries()].sort(([left], [right]) => {
 
     .archive-hero h1 {
       margin-top: 18px;
-      font-size: clamp(36px, 12vw, 48px);
+      font-size: var(--md-sys-typescale-display-small-size);
+      letter-spacing: var(--md-sys-typescale-display-small-tracking);
+      line-height: var(--md-sys-typescale-display-small-line-height);
     }
 
     .hero-stats div {

@@ -119,7 +119,7 @@ const previewSupporting = isRepo ? owner : `@${target}`;
         overflow: hidden;
         color: var(--md-sys-color-on-surface);
         font-size: var(--md-sys-typescale-title-medium-size);
-        font-weight: 650;
+        font-weight: var(--md-sys-typescale-title-medium-weight);
         letter-spacing: var(--md-sys-typescale-title-medium-tracking);
         line-height: var(--md-sys-typescale-title-medium-line-height);
         text-overflow: ellipsis;
@@ -162,7 +162,7 @@ const previewSupporting = isRepo ? owner : `@${target}`;
         margin-block-end: 6px;
         color: var(--md-sys-color-primary);
         font-size: var(--md-sys-typescale-label-large-size);
-        font-weight: 700;
+        font-weight: var(--md-sys-typescale-label-large-weight);
         letter-spacing: 0.08em;
         line-height: var(--md-sys-typescale-label-large-line-height);
         text-transform: uppercase;
@@ -207,11 +207,9 @@ const previewSupporting = isRepo ? owner : `@${target}`;
     }
 
     @media (hover: hover) {
+                /* M3 卡片悬停：state layer 由 md-ripple 提供，这里只抬升一级阴影。 */
         .gh-card:hover {
-            border-radius: var(--md-sys-shape-corner-extra-large);
-            background: var(--md-sys-color-surface-container-high);
             box-shadow: var(--md-sys-elevation-level1);
-            translate: 0 -3px;
         }
 
         .gh-card:hover .gh-action {
@@ -221,7 +219,6 @@ const previewSupporting = isRepo ? owner : `@${target}`;
         .gh-card:hover .preview-symbol {
             opacity: 0.4;
             rotate: 0deg;
-            scale: 1.08;
         }
     }
 

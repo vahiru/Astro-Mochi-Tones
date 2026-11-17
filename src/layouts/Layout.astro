@@ -59,7 +59,7 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
         root.classList.toggle("dark", useDark);
 
         try {
-          const raw = localStorage.getItem("source-color-vars");
+          const raw = localStorage.getItem("source-color-vars-v2");
           if (!raw) return;
           const vars = JSON.parse(raw)?.[useDark ? "dark" : "light"];
           if (!vars || typeof vars !== "object") return;
@@ -94,6 +94,7 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
           title={themeConfig.nav.colorLabel}
         >
           <md-icon>{themeConfig.nav.colorIcon}</md-icon>
+          <md-ripple></md-ripple>
         </button>
         <button
           class="icon-button"
@@ -105,6 +106,7 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
           title={themeConfig.nav.themeLabel}
         >
           <md-icon class="theme-icon">{themeConfig.nav.darkIcon}</md-icon>
+          <md-ripple></md-ripple>
         </button>
         <button
           class="icon-button search-trigger"
@@ -113,6 +115,7 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
           title={themeConfig.labels.search}
         >
           <md-icon>search</md-icon>
+          <md-ripple></md-ripple>
         </button>
       </div>
     </header>
@@ -137,6 +140,11 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
       import "@material/web/divider/divider.js";
       import "@material/web/icon/icon.js";
       import "@material/web/ripple/ripple.js";
+
+      const syncTopAppBar = () =>
+        document.querySelector(".compact-top-app-bar")?.classList.toggle("scrolled", window.scrollY > 0);
+      window.addEventListener("scroll", syncTopAppBar, { passive: true });
+      syncTopAppBar();
 
       const bindSearchTriggers = () => {
         document.querySelectorAll<HTMLButtonElement>(".search-trigger, .search-fab").forEach((button) => {
@@ -201,15 +209,7 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
     background: transparent;
     color: var(--md-sys-color-on-surface-variant);
     cursor: pointer;
-    transition:
-      background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
-      color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
-  }
-
-  .icon-button:hover {
-    background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
-    color: var(--md-sys-color-on-surface);
-  }
+    }
 
   @media (max-width: 599px) {
     .compact-top-app-bar {
@@ -222,9 +222,13 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
       justify-content: space-between;
       gap: 4px;
       padding: 8px max(8px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
-      border-bottom: 1px solid var(--md-sys-color-outline-variant);
-      background: color-mix(in srgb, var(--md-sys-color-surface) 92%, transparent);
-      backdrop-filter: blur(18px);
+      background: var(--md-sys-color-surface);
+      transition: background-color var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-effects);
+    }
+
+    /* M3 small top app bar：静止时与页面同为 surface，内容滚到其下方后切到 surface-container。 */
+    .compact-top-app-bar.scrolled {
+      background: var(--md-sys-color-surface-container);
     }
 
     .compact-brand {
@@ -240,8 +244,9 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
       min-width: 0;
       overflow: hidden;
       color: var(--md-sys-color-on-surface);
-      font-size: var(--md-sys-typescale-title-medium-size);
-      font-weight: 600;
+      font-size: var(--md-sys-typescale-title-large-size);
+      font-weight: var(--md-sys-typescale-title-large-weight);
+      line-height: var(--md-sys-typescale-title-large-line-height);
       text-overflow: ellipsis;
       white-space: nowrap;
     }

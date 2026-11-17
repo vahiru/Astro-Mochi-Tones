@@ -147,11 +147,7 @@ const coverSizes = featured
     border-radius: var(--md-sys-shape-corner-large-increased);
     background: var(--md-sys-color-surface-container-low);
     color: var(--md-sys-color-on-surface);
-    transition:
-      background-color var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
-      border-radius var(--md-sys-motion-duration-default) var(--md-sys-motion-easing-spatial),
-      box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects),
-      translate var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-spatial);
+    transition: box-shadow var(--md-sys-motion-duration-fast) var(--md-sys-motion-easing-effects);
   }
 
   .blog-card.featured {
@@ -193,7 +189,7 @@ const coverSizes = featured
   .placeholder-letter {
     font-family: var(--md-ref-typeface-brand);
     font-size: clamp(44px, 9vw, 72px);
-    font-weight: 650;
+    font-weight: var(--md-sys-typescale-title-medium-weight);
     opacity: 0.58;
   }
 
@@ -225,7 +221,7 @@ const coverSizes = featured
     border-radius: var(--md-sys-shape-corner-full);
     background: var(--md-sys-color-primary-container);
     color: var(--md-sys-color-on-primary-container);
-    font-weight: 700;
+    font-weight: var(--md-sys-typescale-title-medium-weight);
   }
 
   .featured-badge md-icon {
@@ -241,7 +237,7 @@ const coverSizes = featured
     overflow: hidden;
     color: var(--md-sys-color-on-surface);
     font-size: var(--md-sys-typescale-title-medium-size);
-    font-weight: 650;
+    font-weight: var(--md-sys-typescale-title-medium-weight);
     line-height: var(--md-sys-typescale-title-medium-line-height);
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
@@ -289,16 +285,9 @@ const coverSizes = featured
   }
 
   @media (hover: hover) {
+        /* M3 卡片悬停：state layer 由 md-ripple 提供，这里只抬升一级阴影。 */
     .blog-card:hover {
-      border-color: var(--md-sys-color-outline-variant);
-      border-radius: var(--md-sys-shape-corner-extra-large);
-      background: var(--md-sys-color-surface-container-high);
       box-shadow: var(--md-sys-elevation-level1);
-      translate: 0 -3px;
-    }
-
-    .blog-card:hover .card-image {
-      scale: 1.035;
     }
   }
 
